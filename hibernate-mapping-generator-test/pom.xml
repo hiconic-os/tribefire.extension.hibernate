@@ -71,14 +71,16 @@ You should have received a copy of the GNU Lesser General Public License along w
             <version>${V.tribefire.extension.hibernate}</version>
         </dependency>
         <!-- 3rd party desp -->
+        <!-- 
         <dependency>
             <groupId>com.microsoft.jdbc</groupId>
             <artifactId>sqljdbc4</artifactId>
             <version>${V.com.microsoft.jdbc}</version>
         </dependency>
+        -->
         <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc6</artifactId>
+            <groupId>com.oracle.ojdbc</groupId>
+            <artifactId>ojdbc8</artifactId>
             <version>${V.com.oracle}</version>
         </dependency>
         <dependency>
