@@ -38,7 +38,7 @@ import com.braintribe.model.processing.session.api.managed.ManagedGmSession;
 import com.braintribe.model.resource.AdaptiveIcon;
 import com.braintribe.model.resource.FileResource;
 import com.braintribe.model.resource.Resource;
-import com.braintribe.model.resource.source.FileUploadSource;
+import com.braintribe.model.resource.source.FileSystemSource;
 import com.braintribe.model.service.api.callback.AsynchronousRequestProcessorCallback;
 import com.braintribe.model.service.api.callback.AsynchronousRequestRestCallback;
 import com.braintribe.model.service.persistence.ServiceRequestJob;
@@ -140,8 +140,8 @@ public class HibernateInitializerSpace implements WireSpace {
 		private Resource icon(String fileName) {
 			Path path = tfPlatform.resources().publicResources("hibernateaccess/" + fileName).asPath();
 
-			FileUploadSource source = session.create(FileUploadSource.T, "hibernate-access:icon-resource-source:" + fileName);
-			source.setLocalFilePath(path.toString());
+			FileSystemSource source = session.create(FileSystemSource.T, "hibernate-access:icon-resource-source:" + fileName);
+			source.setPath(path.toString());
 
 			Resource result = session.create(Resource.T, "hibernate-access:icon-resource:" + fileName);
 			result.setResourceSource(source);
@@ -155,7 +155,7 @@ public class HibernateInitializerSpace implements WireSpace {
 
 			AccessModelExtension result = session.create(AccessModelExtension.T, "access-model-extension:hibernate/basic-hbm");
 			result.getModels().add(basicHbmConfigModel);
-			result.setAllowTypeExtension(true); // should not play a role, but just in case 
+			result.setAllowTypeExtension(true); // should not play a role, but just in case
 
 			return result;
 		}
