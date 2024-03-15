@@ -14,13 +14,13 @@ package com.braintribe.persistence.hibernate;
 import static com.braintribe.utils.lcd.CollectionTools2.isEmpty;
 import static com.braintribe.utils.lcd.CollectionTools2.newList;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import javax.sql.DataSource;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.hibernate.HibernateException;
 import org.hibernate.SessionFactory;
@@ -41,6 +42,7 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.context.spi.CurrentSessionContext;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.w3c.dom.Document;
 
 import com.braintribe.cfg.Configurable;
 import com.braintribe.cfg.LifecycleAware;
@@ -52,17 +54,16 @@ import com.braintribe.persistence.hibernate.adaptor.TemporaryFolderCacheAdaptor;
 import com.braintribe.utils.CommonTools;
 import com.braintribe.utils.StringTools;
 import com.braintribe.utils.lcd.StopWatch;
+import com.braintribe.utils.xml.XmlTools;
 
 import net.sf.ehcache.hibernate.SingletonEhCacheRegionFactory;
 
 /**
- * Factory for hibernate {@link SessionFactory} instances. It uses a {@link DataSource} to provide the actual
- * {@link Connection}.
+ * Factory for hibernate {@link SessionFactory} instances. It uses a {@link DataSource} to provide the actual {@link Connection}.
  *
  * @see #setDataSource(DataSource)
  *
- *      All important hibernate properties can be configured typesafe while meaningful defaults are already set for non
- *      required properties.
+ *      All important hibernate properties can be configured typesafe while meaningful defaults are already set for non required properties.
  *
  * @see #setCurrentSessionContextClass(Class)
  * @see #setDialect(Class)
@@ -107,6 +108,8 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 	protected boolean updateSchema = true;
 	protected final List<Runnable> beforeSchemaCreationTasks = newList();
 	protected final List<Runnable> afterSchemaCreationTasks = newList();
+
+	protected final static DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
 
 	/**
 	 * default constructor
@@ -154,7 +157,7 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 	@Override
 	public void postConstruct() {
 		run(beforeSchemaCreationTasks);
-		
+
 		setHbm2DdlAuto(updateSchema ? "update" : "none");
 
 		afterPropertiesSet();
@@ -182,44 +185,44 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 			}
 		}
 
+		Document ehCacheConfigurationXml = null;
+
 		if (this.ehCacheConfiguration == null) {
-			FileOutputStream fos = null;
 			try {
-				URL ehCfgResource = getClass().getResource("ehcache.xml");
-				ReadableByteChannel rbc = Channels.newChannel(ehCfgResource.openStream());
+				try (InputStream in = new BufferedInputStream(getClass().getResource("ehcache.xml").openStream())) {
+					ehCacheConfigurationXml = docBuilderFactory.newDocumentBuilder().parse(in);
+				}
+
 				this.ehCacheConfiguration = File.createTempFile("ehcache", ".xml");
 				this.temporaryEhCacheConfiguration = this.ehCacheConfiguration;
-				fos = new FileOutputStream(this.ehCacheConfiguration);
-				fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
 
 			} catch (Exception e) {
-				logger.debug("Cannot access resource ehcache.xml.", e);
+				logger.warn(() -> "Cannot access resource ehcache.xml.", e);
+				this.ehCacheConfiguration = null;
+			}
+		} else {
+			try (InputStream in = new BufferedInputStream(new FileInputStream(this.ehCacheConfiguration))) {
+				ehCacheConfigurationXml = docBuilderFactory.newDocumentBuilder().parse(in);
+			} catch (Exception e) {
+				logger.warn(() -> "Cannot access configured ehcache file: " + ehCacheConfiguration.getAbsolutePath(), e);
 				this.ehCacheConfiguration = null;
 
-			} finally {
-				if (fos != null) {
-					try {
-						fos.close();
-					} catch (Exception e) {
-						logger.error("Could not close output stream to " + this.ehCacheConfiguration, e);
-					}
-				}
 			}
 		}
 
 		stopWatch.intermediate("ehcache.xml creation");
 
-		if (this.ehCacheConfiguration != null) {
+		if (ehCacheConfigurationXml != null && ehCacheConfiguration != null) {
 
 			if (this.configAdaptor != null) {
 				try {
-					this.configAdaptor.adaptEhCacheConfigurationResource(this.ehCacheConfiguration);
+					this.configAdaptor.adaptEhCacheConfigurationResource(ehCacheConfigurationXml);
 				} catch (Exception e) {
 					logger.error("Could not adapt Hibernate configuration paths.", e);
 				}
 			}
-
 			try {
+				XmlTools.writeXml(ehCacheConfigurationXml, ehCacheConfiguration, "UTF-8");
 				String location = this.ehCacheConfiguration.toURI().toURL().toString();
 				properties.setProperty(SingletonEhCacheRegionFactory.NET_SF_EHCACHE_CONFIGURATION_RESOURCE_NAME, location);
 			} catch (Exception e) {

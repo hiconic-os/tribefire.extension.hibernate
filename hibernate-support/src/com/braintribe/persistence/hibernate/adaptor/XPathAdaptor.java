@@ -11,25 +11,25 @@
 // ============================================================================
 package com.braintribe.persistence.hibernate.adaptor;
 
-import java.io.File;
-import java.util.Map;
+import java.util.Set;
 
-import org.apache.commons.jxpath.JXPathContext;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
-import org.xml.sax.EntityResolver;
+import org.w3c.dom.Node;
 
-import com.braintribe.cfg.Configurable;
 import com.braintribe.cfg.Required;
 import com.braintribe.logging.Logger;
-import com.braintribe.utils.xml.XmlTools;
 
 /**
- * Implementation of the {@link HibernateConfigurationAdaptor} that is able to change attribute
- * values in arbitrary XML files. The attributes are identified by XPath expressions.
- * A regular expression to identify the target files can (and should) also be configured.
+ * Implementation of the {@link HibernateConfigurationAdaptor} that is able to change attribute values in arbitrary XML files. The attributes are
+ * identified by XPath expressions. A regular expression to identify the target files can (and should) also be configured.
  * 
- * Reason for this implementation is the need to change an attribute value in an
- * hibernate mapping file (e.g., change the type of an attribute from clob to text)
+ * Reason for this implementation is the need to change an attribute value in an hibernate mapping file (e.g., change the type of an attribute from
+ * clob to text)
  * 
  * @author roman.kurmanowytsch
  */
@@ -37,22 +37,18 @@ public class XPathAdaptor implements HibernateConfigurationAdaptor {
 
 	private static Logger logger = Logger.getLogger(XPathAdaptor.class);
 
-	protected Map<String,String> valueMap = null;
-	protected boolean disableXMLValidation = true;
-	protected EntityResolver entityResolver = null;
+	protected Set<XpathAdapterSpecification> specifications = null;
 
 	@Override
 	public void cleanup() {
-		//do nothing
+		// do nothing
 	}
-	
+
 	@Override
-	public void adaptEhCacheConfigurationResource(File configFile) throws Exception {
+	public void adaptEhCacheConfigurationResource(Document configDocument) throws Exception {
 
-		if (configFile.exists()) {
-			logger.debug("Adapting file "+configFile);
-
-			this.adaptResourceFile(configFile);
+		if (configDocument != null) {
+			this.adaptResourceFile(configDocument);
 		}
 
 		return;
@@ -61,79 +57,54 @@ public class XPathAdaptor implements HibernateConfigurationAdaptor {
 	/**
 	 * Adapts a single file
 	 * 
-	 * @param resourceFile The file to be adapted
-	 * @throws Exception If the file adaptation fails
+	 * @param configDocument
+	 *            The cache document as XML
+	 * @throws Exception
+	 *             If the file adaptation fails
 	 */
-	protected void adaptResourceFile(File resourceFile) throws Exception {
+	protected void adaptResourceFile(Document configDocument) throws Exception {
 
-		boolean trace = logger.isTraceEnabled();
+		if (specifications == null || specifications.isEmpty()) {
+			return;
+		}
 
 		try {
-			if (trace) {
-				logger.trace("Loading file "+resourceFile.getAbsolutePath());
-			}
-			// Load the XML into the memory
-			Document doc = XmlTools.parseXMLFile(resourceFile, (String) null, this.disableXMLValidation, this.entityResolver);
 
 			// Apply the XPath expression to get a pointer to the right place
 
-			JXPathContext context = JXPathContext.newContext(doc);
-
-			boolean contentChanged = false;
+			XPath xpathInstance = XPathFactory.newInstance().newXPath();
 
 			// Note: the current implementation only replaces the value of the first entry identified by the XPath
-			for (Map.Entry<String,String> mapEntry : this.valueMap.entrySet()) {
+			for (XpathAdapterSpecification spec : this.specifications) {
 
-				String xpath = mapEntry.getKey();
-				String value = mapEntry.getValue();
+				String xpath = spec.nodePath();
+				String attrName = spec.attributeName();
+				String value = spec.value();
 
-				logger.debug("Setting value "+value+" at path "+xpath+" in file "+resourceFile.getAbsolutePath());
+				logger.debug(() -> "Setting value " + value + " at path " + xpath + "/@" + attrName);
 
-				String oldValue = (String) context.getValue(xpath);
+				Node node = (Node) xpathInstance.evaluate(xpath, configDocument, XPathConstants.NODE);
+				Attr attribute = (Attr) node.getAttributes().getNamedItem(attrName);
+				String oldValue = attribute.getValue();
+
+				// String oldValue = (String) context.getValue(xpath);
 				if (oldValue != null) {
 					if (value.equals(oldValue)) {
 						continue;
 					}
 				}
 
-				contentChanged = true;
-
-				context.setValue(xpath, value);
+				attribute.setValue(value);
 			}
 
-			if (contentChanged) {
-				// Write the XML back into the file
-				XmlTools.writeXml(doc, resourceFile, "UTF-8");
-			}
-
-		} catch(Exception e) {
-			throw new Exception("Error while trying to apply xpath on " + resourceFile.getAbsolutePath(), e);
+		} catch (Exception e) {
+			throw new Exception("Error while trying to apply xpath.", e);
 		}
 	}
 
-	public boolean isDisableXMLValidation() {
-		return disableXMLValidation;
-	}
-	@Configurable
-	public void setDisableXMLValidation(boolean disableXMLValidation) {
-		this.disableXMLValidation = disableXMLValidation;
-	}
-
-	public EntityResolver getEntityResolver() {
-		return entityResolver;
-	}
-	@Configurable
-	public void setEntityResolver(EntityResolver entityResolver) {
-		this.entityResolver = entityResolver;
-	}
-
-	public static String getBuildVersion() {
-		return "$Build_Version$ $Id: XPathAdaptor.java 102500 2017-12-13 19:17:52Z andre.goncalves $";
-	}
-
 	@Required
-	public void setValueMap(Map<String, String> valueMap) {
-		this.valueMap = valueMap;
+	public void setSpecifications(Set<XpathAdapterSpecification> specifications) {
+		this.specifications = specifications;
 	}
 
 }

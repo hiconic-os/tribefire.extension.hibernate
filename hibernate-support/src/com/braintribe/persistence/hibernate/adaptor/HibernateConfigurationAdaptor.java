@@ -11,17 +11,16 @@
 // ============================================================================
 package com.braintribe.persistence.hibernate.adaptor;
 
-import java.io.File;
+import org.w3c.dom.Document;
 
 /**
- * An interface that allows implementations to adapt hibernate mapping files before they are
- * parsed.
+ * An interface that allows implementations to adapt hibernate mapping files before they are parsed.
  * 
  * @author roman.kurmanowytsch
  */
 public interface HibernateConfigurationAdaptor {
 
-	public void adaptEhCacheConfigurationResource(File configurationResourceUrl) throws Exception;
-	
+	public void adaptEhCacheConfigurationResource(Document configDocument) throws Exception;
+
 	public void cleanup();
 }

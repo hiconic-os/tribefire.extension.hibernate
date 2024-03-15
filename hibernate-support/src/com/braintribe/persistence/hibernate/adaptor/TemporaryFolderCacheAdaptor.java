@@ -12,8 +12,7 @@
 package com.braintribe.persistence.hibernate.adaptor;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 
 import com.braintribe.cfg.Configurable;
 import com.braintribe.cfg.DestructionAware;
@@ -31,39 +30,35 @@ public class TemporaryFolderCacheAdaptor extends XPathAdaptor implements Destruc
 			this.temporaryCacheFolder = File.createTempFile("ehcache", null);
 			this.temporaryCacheFolder.delete();
 			if (!this.temporaryCacheFolder.mkdirs()) {
-				throw new Exception("Could not create directory "+this.temporaryCacheFolder);
+				throw new Exception("Could not create directory " + this.temporaryCacheFolder);
 			}
-			if (logger.isDebugEnabled()) logger.debug("Created cache directory: "+this.temporaryCacheFolder.getAbsolutePath());
-		} catch(Exception e) {
+			if (logger.isDebugEnabled())
+				logger.debug("Created cache directory: " + this.temporaryCacheFolder.getAbsolutePath());
+		} catch (Exception e) {
 			throw new Exception("Error while creating temporary cache folder.", e);
 		}
 
-		super.valueMap = new HashMap<String,String>();
-		super.valueMap.put("/ehcache/diskStore/@path", this.temporaryCacheFolder.getAbsolutePath());
+		super.specifications = new HashSet<>();
+		super.specifications.add(new XpathAdapterSpecification("/ehcache/diskStore", "path", this.temporaryCacheFolder.getAbsolutePath()));
 	}
 
 	@Override
 	public void preDestroy() {
 		if (this.temporaryCacheFolder != null) {
 			try {
-				if (logger.isDebugEnabled()) logger.debug("Cleaning directory: "+this.temporaryCacheFolder.getAbsolutePath());
+				if (logger.isDebugEnabled())
+					logger.debug("Cleaning directory: " + this.temporaryCacheFolder.getAbsolutePath());
 				FileTools.deleteDirectoryRecursivelyOnExit(this.temporaryCacheFolder);
-			} catch(Exception e) {
-				logger.error("Error while cleaning up temporary cache folder: "+this.temporaryCacheFolder, e);
+			} catch (Exception e) {
+				logger.error("Error while cleaning up temporary cache folder: " + this.temporaryCacheFolder, e);
 			}
 			this.temporaryCacheFolder = null;
 		}
 	}
-	
+
 	@Override
 	public void cleanup() {
 		this.preDestroy();
-	}
-
-	@Override
-	@Configurable
-	public void setValueMap(Map<String, String> valueMap) {
-		this.valueMap = valueMap;
 	}
 
 	@Configurable

@@ -11,18 +11,18 @@
 // ============================================================================
 package com.braintribe.persistence.hibernate.adaptor;
 
-import java.io.File;
+import org.w3c.dom.Document;
 
 public class NopAdaptor implements HibernateConfigurationAdaptor {
 
 	@Override
-	public void adaptEhCacheConfigurationResource(File configurationResourceUrl) throws Exception {
-		//do nothing
+	public void adaptEhCacheConfigurationResource(Document doc) throws Exception {
+		// do nothing
 	}
 
 	@Override
 	public void cleanup() {
-		//do nothing
+		// do nothing
 	}
 
 }

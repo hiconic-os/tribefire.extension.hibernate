@@ -11,14 +11,15 @@
 // ============================================================================
 package com.braintribe.persistence.hibernate.adaptor;
 
-import java.io.File;
 import java.util.List;
+
+import org.w3c.dom.Document;
 
 import com.braintribe.cfg.Required;
 import com.braintribe.logging.Logger;
 
 public class CompoundHibernateConfigurationAdaptor implements HibernateConfigurationAdaptor {
-	
+
 	private List<HibernateConfigurationAdaptor> adaptors;
 
 	protected static Logger log = Logger.getLogger(CompoundHibernateConfigurationAdaptor.class);
@@ -27,21 +28,21 @@ public class CompoundHibernateConfigurationAdaptor implements HibernateConfigura
 	public void setAdaptors(List<HibernateConfigurationAdaptor> adaptors) {
 		this.adaptors = adaptors;
 	}
-	
+
 	@Override
-	public void adaptEhCacheConfigurationResource(File configurationResourceUrl) throws Exception {
+	public void adaptEhCacheConfigurationResource(Document configurationDocument) throws Exception {
 		for (HibernateConfigurationAdaptor adaptor : adaptors) {
-			adaptor.adaptEhCacheConfigurationResource(configurationResourceUrl);
+			adaptor.adaptEhCacheConfigurationResource(configurationDocument);
 		}
 	}
-	
+
 	@Override
 	public void cleanup() {
 		for (HibernateConfigurationAdaptor adaptor : adaptors) {
 			try {
 				adaptor.cleanup();
 			} catch (Throwable t) {
-				log.error("Failed to cleanup adaptor "+adaptor, t);
+				log.error("Failed to cleanup adaptor " + adaptor, t);
 			}
 		}
 	}

@@ -13,11 +13,11 @@ package tribefire.extension.hibernate.wire.space;
 
 import static com.braintribe.wire.api.scope.InstanceConfiguration.currentInstance;
 import static com.braintribe.wire.api.util.Lists.list;
-import static com.braintribe.wire.api.util.Maps.map;
 
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -63,6 +63,7 @@ import com.braintribe.persistence.hibernate.adaptor.CompoundHibernateConfigurati
 import com.braintribe.persistence.hibernate.adaptor.HibernateConfigurationAdaptor;
 import com.braintribe.persistence.hibernate.adaptor.TemporaryFolderCacheAdaptor;
 import com.braintribe.persistence.hibernate.adaptor.XPathAdaptor;
+import com.braintribe.persistence.hibernate.adaptor.XpathAdapterSpecification;
 import com.braintribe.persistence.hibernate.dialects.HibernateDialectMapping;
 import com.braintribe.persistence.hibernate.dialects.HibernateDialectMappings;
 import com.braintribe.persistence.hibernate.sql.HibernateEnhancedDataSource;
@@ -70,7 +71,6 @@ import com.braintribe.utils.lcd.StopWatch;
 import com.braintribe.wire.api.annotation.Import;
 import com.braintribe.wire.api.annotation.Managed;
 import com.braintribe.wire.api.space.WireSpace;
-import com.braintribe.wire.api.util.Maps;
 
 import net.sf.ehcache.CacheManager;
 import tribefire.module.wire.contract.TribefireWebPlatformContract;
@@ -323,7 +323,7 @@ public class HibernateDeployablesSpace implements WireSpace {
 	@Managed
 	private HibernateConfigurationAdaptor cacheNameAdaptor(ExpertContext<HibernateAccess> context) {
 		XPathAdaptor bean = new XPathAdaptor();
-		bean.setValueMap(map(Maps.entry("/ehcache/@name", cacheName(context))));
+		bean.setSpecifications(Set.of(new XpathAdapterSpecification("/ehcache", "name", cacheName(context))));
 		return bean;
 	}
 
