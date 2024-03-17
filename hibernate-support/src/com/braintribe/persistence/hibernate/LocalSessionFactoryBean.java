@@ -13,29 +13,40 @@ package com.braintribe.persistence.hibernate;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import javax.sql.DataSource;
 
 import org.hibernate.Interceptor;
 import org.hibernate.SessionFactory;
+import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
+import org.hibernate.boot.spi.XmlMappingBinderAccess;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 
 import com.braintribe.common.lcd.function.CheckedSupplier;
+import com.braintribe.logging.Logger;
+import com.braintribe.utils.FileTools;
 
 /**
- * A temporary clone of org.springframework.orm.hibernate4.LocalSessionFactoryBean 
- * tobe used while the dependency to spring is being removed.
+ * A temporary clone of org.springframework.orm.hibernate4.LocalSessionFactoryBean tobe used while the dependency to spring is being removed.
  */
 public class LocalSessionFactoryBean {
+
+	private static final Logger log = Logger.getLogger(LocalSessionFactoryBean.class);
 
 	private DataSource dataSource;
 	private URL[] configLocations;
@@ -51,31 +62,31 @@ public class LocalSessionFactoryBean {
 	private SessionFactory sessionFactory;
 
 	/**
-	 * Set the DataSource to be used by the SessionFactory.
-	 * If set, this will override corresponding settings in Hibernate properties.
-	 * <p>If this is set, the Hibernate settings should not define
-	 * a connection provider to avoid meaningless double configuration.
+	 * Set the DataSource to be used by the SessionFactory. If set, this will override corresponding settings in Hibernate properties.
+	 * <p>
+	 * If this is set, the Hibernate settings should not define a connection provider to avoid meaningless double configuration.
 	 */
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
 
 	/**
-	 * Set the location of a single Hibernate XML config file, for example as
-	 * classpath resource "classpath:hibernate.cfg.xml".
-	 * <p>Note: Can be omitted when all necessary properties and mapping
-	 * resources are specified locally via this bean.
+	 * Set the location of a single Hibernate XML config file, for example as classpath resource "classpath:hibernate.cfg.xml".
+	 * <p>
+	 * Note: Can be omitted when all necessary properties and mapping resources are specified locally via this bean.
+	 * 
 	 * @see org.hibernate.cfg.Configuration#configure(java.net.URL)
 	 */
 	public void setConfigLocation(URL configLocation) {
-		this.configLocations = new URL[] {configLocation};
+		this.configLocations = new URL[] { configLocation };
 	}
 
 	/**
-	 * Set the locations of multiple Hibernate XML config files, for example as
-	 * classpath resources "classpath:hibernate.cfg.xml,classpath:extension.cfg.xml".
-	 * <p>Note: Can be omitted when all necessary properties and mapping
-	 * resources are specified locally via this bean.
+	 * Set the locations of multiple Hibernate XML config files, for example as classpath resources
+	 * "classpath:hibernate.cfg.xml,classpath:extension.cfg.xml".
+	 * <p>
+	 * Note: Can be omitted when all necessary properties and mapping resources are specified locally via this bean.
+	 * 
 	 * @see org.hibernate.cfg.Configuration#configure(java.net.URL)
 	 */
 	public void setConfigLocations(URL... configLocations) {
@@ -83,12 +94,11 @@ public class LocalSessionFactoryBean {
 	}
 
 	/**
-	 * Set locations of Hibernate mapping files, for example as classpath
-	 * resource "classpath:example.hbm.xml". Supports any resource location
-	 * via Spring's resource abstraction, for example relative paths like
-	 * "WEB-INF/mappings/example.hbm.xml" when running in an application context.
-	 * <p>Can be used to add to mappings from a Hibernate XML config file,
-	 * or to specify all mappings locally.
+	 * Set locations of Hibernate mapping files, for example as classpath resource "classpath:example.hbm.xml". Supports any resource location via
+	 * Spring's resource abstraction, for example relative paths like "WEB-INF/mappings/example.hbm.xml" when running in an application context.
+	 * <p>
+	 * Can be used to add to mappings from a Hibernate XML config file, or to specify all mappings locally.
+	 * 
 	 * @see org.hibernate.cfg.Configuration#addInputStream
 	 */
 	public void setMappingLocations(URL... mappingLocations) {
@@ -100,12 +110,11 @@ public class LocalSessionFactoryBean {
 	}
 
 	/**
-	 * Set locations of cacheable Hibernate mapping files, for example as web app
-	 * resource "/WEB-INF/mapping/example.hbm.xml". Supports any resource location
-	 * via Spring's resource abstraction, as long as the resource can be resolved
-	 * in the file system.
-	 * <p>Can be used to add to mappings from a Hibernate XML config file,
-	 * or to specify all mappings locally.
+	 * Set locations of cacheable Hibernate mapping files, for example as web app resource "/WEB-INF/mapping/example.hbm.xml". Supports any resource
+	 * location via Spring's resource abstraction, as long as the resource can be resolved in the file system.
+	 * <p>
+	 * Can be used to add to mappings from a Hibernate XML config file, or to specify all mappings locally.
+	 * 
 	 * @see org.hibernate.cfg.Configuration#addCacheableFile(java.io.File)
 	 */
 	public void setCacheableMappingLocations(File... cacheableMappingLocations) {
@@ -113,10 +122,10 @@ public class LocalSessionFactoryBean {
 	}
 
 	/**
-	 * Set locations of jar files that contain Hibernate mapping resources,
-	 * like "WEB-INF/lib/example.hbm.jar".
-	 * <p>Can be used to add to mappings from a Hibernate XML config file,
-	 * or to specify all mappings locally.
+	 * Set locations of jar files that contain Hibernate mapping resources, like "WEB-INF/lib/example.hbm.jar".
+	 * <p>
+	 * Can be used to add to mappings from a Hibernate XML config file, or to specify all mappings locally.
+	 * 
 	 * @see org.hibernate.cfg.Configuration#addJar(java.io.File)
 	 */
 	public void setMappingJarLocations(File... mappingJarLocations) {
@@ -124,10 +133,10 @@ public class LocalSessionFactoryBean {
 	}
 
 	/**
-	 * Set locations of directories that contain Hibernate mapping resources,
-	 * like "WEB-INF/mappings".
-	 * <p>Can be used to add to mappings from a Hibernate XML config file,
-	 * or to specify all mappings locally.
+	 * Set locations of directories that contain Hibernate mapping resources, like "WEB-INF/mappings".
+	 * <p>
+	 * Can be used to add to mappings from a Hibernate XML config file, or to specify all mappings locally.
+	 * 
 	 * @see org.hibernate.cfg.Configuration#addDirectory(java.io.File)
 	 */
 	public void setMappingDirectoryLocations(File... mappingDirectoryLocations) {
@@ -135,9 +144,9 @@ public class LocalSessionFactoryBean {
 	}
 
 	/**
-	 * Set a Hibernate entity interceptor that allows to inspect and change
-	 * property values before writing to and reading from the database.
-	 * Will get applied to any new Session created by this factory.
+	 * Set a Hibernate entity interceptor that allows to inspect and change property values before writing to and reading from the database. Will get
+	 * applied to any new Session created by this factory.
+	 * 
 	 * @see org.hibernate.cfg.Configuration#setInterceptor
 	 */
 	public void setEntityInterceptor(Interceptor entityInterceptor) {
@@ -146,9 +155,10 @@ public class LocalSessionFactoryBean {
 
 	/**
 	 * Set Hibernate properties, such as "hibernate.dialect".
-	 * <p>Note: Do not specify a transaction provider here when using
-	 * Spring-driven transactions. It is also advisable to omit connection
-	 * provider settings and use a Spring-set DataSource instead.
+	 * <p>
+	 * Note: Do not specify a transaction provider here when using Spring-driven transactions. It is also advisable to omit connection provider
+	 * settings and use a Spring-set DataSource instead.
+	 * 
 	 * @see #setDataSource
 	 */
 	public void setHibernateProperties(Properties hibernateProperties) {
@@ -159,10 +169,9 @@ public class LocalSessionFactoryBean {
 	public void setClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
 	}
-	
+
 	/**
-	 * Return the Hibernate properties, if any. Mainly available for
-	 * configuration through property paths that specify individual keys.
+	 * Return the Hibernate properties, if any. Mainly available for configuration through property paths that specify individual keys.
 	 */
 	public Properties getHibernateProperties() {
 		if (hibernateProperties == null)
@@ -172,13 +181,13 @@ public class LocalSessionFactoryBean {
 
 	public void afterPropertiesSet() {
 		Configuration cfg = new Configuration(bootstrapServiceRegistry());
-		
+
 		if (dataSource != null)
 			cfg.getProperties().put(Environment.DATASOURCE, dataSource);
 
 		if (configLocations != null)
 			// Load Hibernate configuration from given location.
-			for (URL url: configLocations)
+			for (URL url : configLocations)
 				cfg.configure(url);
 
 		if (mappingLocations != null)
@@ -193,18 +202,35 @@ public class LocalSessionFactoryBean {
 
 		if (cacheableMappingLocations != null)
 			// Register given cacheable Hibernate mapping definitions, read from the file system.
-			for (File file: cacheableMappingLocations)
+			for (File file : cacheableMappingLocations)
 				cfg.addCacheableFile(file);
 
 		if (mappingJarLocations != null)
 			// Register given Hibernate mapping definitions, contained in jar files.
-			for (File file: mappingJarLocations)
+			for (File file : mappingJarLocations)
 				cfg.addJar(file);
 
-		if (mappingDirectoryLocations != null)
+		if (mappingDirectoryLocations != null) {
 			// Register all Hibernate mapping definitions in the given directories.
-			for (File file : mappingDirectoryLocations)
-				cfg.addDirectory(requireDirectory(file));
+			XmlMappingBinderAccess binderAccess = cfg.getXmlMappingBinderAccess();
+			for (File folder : mappingDirectoryLocations) {
+				List<File> fileList = FileTools.listFiles(folder, f -> f.getName().endsWith(".hbm.xml"));
+				Binding<?>[] bindings = new Binding[fileList.size()];
+				try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+					for (int i = 0; i < fileList.size(); ++i) {
+						final int pos = i;
+						executor.submit(() -> {
+							try (InputStream in = new BufferedInputStream(new FileInputStream(fileList.get(pos)))) {
+								bindings[pos] = binderAccess.bind(in);
+							} catch (IOException ioe) {
+								throw new UncheckedIOException(ioe);
+							}
+						});
+					}
+				}
+				Arrays.stream(bindings).forEach(b -> cfg.addXmlMapping(b));
+			}
+		}
 
 		if (entityInterceptor != null)
 			cfg.setInterceptor(entityInterceptor);
@@ -232,9 +258,11 @@ public class LocalSessionFactoryBean {
 	}
 
 	/**
-	 * Return the Hibernate Configuration object used to build the SessionFactory.
-	 * Allows for access to configuration metadata stored there (rarely needed).
-	 * @throws IllegalStateException if the Configuration object has not been initialized yet
+	 * Return the Hibernate Configuration object used to build the SessionFactory. Allows for access to configuration metadata stored there (rarely
+	 * needed).
+	 * 
+	 * @throws IllegalStateException
+	 *             if the Configuration object has not been initialized yet
 	 */
 	public final Configuration getConfiguration() {
 		return requireNonNull(configuration, "Configuration not initialized yet");
@@ -243,7 +271,7 @@ public class LocalSessionFactoryBean {
 	public SessionFactory getObject() {
 		if (sessionFactory == null)
 			afterPropertiesSet();
-		
+
 		return sessionFactory;
 	}
 

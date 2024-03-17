@@ -15,6 +15,7 @@ import static com.braintribe.persistence.hibernate.dialects.HibernateDialectMapp
 import static com.braintribe.utils.lcd.CollectionTools2.asList;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.dialect.DB2Dialect;
 import org.hibernate.dialect.Dialect;
@@ -47,6 +48,8 @@ import com.braintribe.utils.ReflectionTools;
 /* This information is also leveraged for our JDBC code, where we extract some information from the dialects (like SQL types names for given DB
  * vendor) - see hibernate-access-test, class HibernateDialectKnowledgeThief */
 public class HibernateDialectMappings {
+
+	private static ConcurrentHashMap<String, Class<? extends Dialect>> cache = new ConcurrentHashMap<>();
 
 	@SuppressWarnings("deprecation")
 	public static List<HibernateDialectMapping> mapppings() {
@@ -209,20 +212,24 @@ public class HibernateDialectMappings {
 	 * @throws IllegalArgumentException
 	 *             if no dialect for given name is found.
 	 */
+	@SuppressWarnings("unchecked")
 	public static Class<? extends Dialect> loadDialect(String dialectName) {
-		String saneClassName = "org.hibernate.dialect.sane.Sane" + dialectName;
+		return cache.computeIfAbsent(dialectName, __ -> {
+			String saneClassName = "org.hibernate.dialect.sane.Sane" + dialectName;
 
-		Class<?> saneDialectClass = ReflectionTools.getClassOrNull(saneClassName, SaneDerbyTenSevenDialect.class.getClassLoader());
-		if (saneDialectClass != null)
-			return (Class<? extends Dialect>) saneDialectClass;
+			Class<?> saneDialectClass = ReflectionTools.getClassOrNull(saneClassName, SaneDerbyTenSevenDialect.class.getClassLoader());
+			if (saneDialectClass != null)
+				return (Class<? extends Dialect>) saneDialectClass;
 
-		String className = "org.hibernate.dialect." + dialectName;
-		try {
-			return (Class<? extends Dialect>) Class.forName(className);
+			String className = "org.hibernate.dialect." + dialectName;
+			try {
+				return (Class<? extends Dialect>) Class.forName(className);
 
-		} catch (Exception e) {
-			throw Exceptions.unchecked(e, "Failed to load dialect class " + className, IllegalArgumentException::new);
-		}
+			} catch (Exception e) {
+				throw Exceptions.unchecked(e, "Failed to load dialect class " + className, IllegalArgumentException::new);
+			}
+
+		});
 	}
 
 }

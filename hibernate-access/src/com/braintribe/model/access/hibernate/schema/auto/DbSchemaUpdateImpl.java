@@ -20,8 +20,11 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -57,13 +60,11 @@ import com.braintribe.utils.lcd.StopWatch;
 // - no/initial entry in DB; error during schema update: no schema update (hash=initial; errorCount>=1)
 // - no/initial entry in DB; error after schema update (outside this code): no schema update (hash=initial; errorCount>=1)
 /**
- * Checks if a DB schema update needs to be done for a Hibernate access. It creates a hash over all hbm files which then
- * gets compared to the existing hash stored in a technical table {@link DbSchemaUpdateImpl#TABLE_NAME}. If the hashes
- * are equal then the DB schema update mechanism of Hibernate is skipped. Otherwise the update is run and noted in
- * {@link DbSchemaUpdateImpl#TABLE_NAME}.
+ * Checks if a DB schema update needs to be done for a Hibernate access. It creates a hash over all hbm files which then gets compared to the existing
+ * hash stored in a technical table {@link DbSchemaUpdateImpl#TABLE_NAME}. If the hashes are equal then the DB schema update mechanism of Hibernate is
+ * skipped. Otherwise the update is run and noted in {@link DbSchemaUpdateImpl#TABLE_NAME}.
  * 
- * The mechanism can be overridden by 'TF_HIBERNATE_SCHEMA_UPDATE' runtime property to be forced to be disabled or
- * enabled.
+ * The mechanism can be overridden by 'TF_HIBERNATE_SCHEMA_UPDATE' runtime property to be forced to be disabled or enabled.
  * 
  */
 public class DbSchemaUpdateImpl implements LifecycleAware {
@@ -98,6 +99,8 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 	private String instanceId;
 	private Supplier<String> dbSchemaUpdateContextProvider;
 	private Boolean overrideDbSchemaUpdate;
+
+	private static boolean tableExistenceEnsured = false;
 
 	// @formatter:off
 	@Required public void setLocking(Locking locking) { this.locking = locking; }
@@ -136,7 +139,9 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 
 		lock(BEFORE_ENSURE);
 		try {
-			ensureSchemaUpdateTable();
+			if (!tableExistenceEnsured) {
+				ensureSchemaUpdateTable();
+			}
 			ensureSchemaUpdateEntry();
 		} finally {
 			unlock(AFTER_ENSURE);
@@ -347,11 +352,21 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 	}
 
 	private String mappingDirectoryHash() {
-		// get String content of all files in all directories in a sorted order and concatenate them (stable ordering)
-		String value = FileTools.listFiles(mappingDirectory, File::isFile).stream() //
-				.sorted(Comparator.comparing(File::getName)) //
-				.map(file -> FileTools.readStringFromFile(file)) //
-				.collect(Collectors.joining("||"));
+
+		List<File> list = FileTools.listFiles(mappingDirectory, File::isFile).stream() //
+				.sorted(Comparator.comparing(File::getName)).toList();
+		String[] contentArray = new String[list.size()];
+
+		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+
+			for (int i = 0; i < list.size(); ++i) {
+				final int pos = i;
+				executor.submit(() -> {
+					contentArray[pos] = FileTools.readStringFromFile(list.get(pos));
+				});
+			}
+		}
+		String value = Arrays.stream(contentArray).collect(Collectors.joining("||"));
 
 		return hashCodec.encode(value);
 	}
@@ -450,7 +465,6 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 
 	private void ensureSchemaUpdateTable() {
 		String tableName = TABLE_NAME;
-		String sqlStatement = resolveCreateTableStatement();
 
 		try {
 			Connection connection = dataSource.getConnection();
@@ -459,17 +473,23 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 					logger.debug(() -> "Table '" + tableName + "' does not exist.");
 					Statement statement = connection.createStatement();
 					try {
+						String sqlStatement = resolveCreateTableStatement();
 						logger.debug(() -> "Creating table with statement: " + sqlStatement);
 						statement.executeUpdate(sqlStatement);
 						logger.debug(() -> "Successfully created table '" + tableName + "'");
+						tableExistenceEnsured = true;
 					} catch (SQLException e) {
-						if (tableExists(connection, tableName) != null)
+						if (tableExists(connection, tableName) != null) {
+							tableExistenceEnsured = true;
 							return;
-						else
+						} else {
 							throw e;
+						}
 					} finally {
 						statement.close();
 					}
+				} else {
+					tableExistenceEnsured = true;
 				}
 			} finally {
 				connection.close();
@@ -479,11 +499,10 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 		}
 	}
 
-	/* IMPLEMENTATION NOTE: Originally, the third parameter for the MetaData.getTables(...) invocation (i.e.
-	 * tableNamePattern) was not null, but the actual name of the table (i.e. "TF_DSTLCK"). This, however, caused
-	 * problems for the PostreSQL DB, because calling "create table TF_DSTLCK" there creates a table called "tf_dstlck"
-	 * (i.e. all chars uncapitalized). To avoid this problem, and possible future problems with different conventions,
-	 * we simply retrieve all the tables and then perform a case-insensitive check for each table name. */
+	/* IMPLEMENTATION NOTE: Originally, the third parameter for the MetaData.getTables(...) invocation (i.e. tableNamePattern) was not null, but the
+	 * actual name of the table (i.e. "TF_DSTLCK"). This, however, caused problems for the PostreSQL DB, because calling "create table TF_DSTLCK"
+	 * there creates a table called "tf_dstlck" (i.e. all chars uncapitalized). To avoid this problem, and possible future problems with different
+	 * conventions, we simply retrieve all the tables and then perform a case-insensitive check for each table name. */
 	private String tableExists(Connection connection, String tablename) throws SQLException {
 		Instant start = NanoClock.INSTANCE.instant();
 		ResultSet rs = connection.getMetaData().getTables(null, null, null, new String[] { "TABLE" });

@@ -404,7 +404,8 @@ public class HbmEntityTypeMapBuilder {
 		int propertiesIntroduced = -1;
 		for (String commonSuperType : types) {
 			propertiesIntroduced = (hbmEntityTypes.get(commonSuperType).getType().getProperties() != null)
-					? hbmEntityTypes.get(commonSuperType).getType().getProperties().size() : 0;
+					? hbmEntityTypes.get(commonSuperType).getType().getProperties().size()
+					: 0;
 			inheritedPropertiesRank.put(commonSuperType, propertiesIntroduced);
 		}
 
@@ -537,7 +538,7 @@ public class HbmEntityTypeMapBuilder {
 	 */
 	private Set<String> memberReferencedTypes() throws UnmappableModelException {
 		Set<String> typesWithAllPropsSkipped = unmappedTypesWithNoMappedSubType();
-		
+
 		Set<String> memberReferencedTypes = newSet();
 		for (GmEntityType gmEntityType : context.getEntityTypes()) {
 
@@ -573,8 +574,8 @@ public class HbmEntityTypeMapBuilder {
 				String gmTypeSignature = gmType.getTypeSignature();
 
 				if (isSkipped(gmType)) {
-					throw new UnmappableModelException(entitySignature + ":" + gmProperty.getName() + " is of type "
-							+ gmType.getTypeSignature() + " which was marked not to be mapped");
+					throw new UnmappableModelException(entitySignature + ":" + gmProperty.getName() + " is of type " + gmType.getTypeSignature()
+							+ " which was marked not to be mapped");
 				}
 
 				// non-entity types and types already mapped are not considered
@@ -582,8 +583,8 @@ public class HbmEntityTypeMapBuilder {
 					continue;
 
 				if (gmTypeSignature.equals(GenericEntity.class.getName()))
-					throw new UnmappableModelException("Unmappable model: \"" + entitySignature + ":" + gmProperty.getName()
-							+ "\" is of type " + gmTypeSignature);
+					throw new UnmappableModelException(
+							"Unmappable model: \"" + entitySignature + ":" + gmProperty.getName() + "\" is of type " + gmTypeSignature);
 
 				memberReferencedTypes.add(gmTypeSignature);
 			}

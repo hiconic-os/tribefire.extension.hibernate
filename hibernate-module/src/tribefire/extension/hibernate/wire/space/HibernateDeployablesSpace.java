@@ -18,6 +18,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -88,6 +89,8 @@ public class HibernateDeployablesSpace implements WireSpace {
 	private static final String ENV_VALUE_TF_HIBERNATE_SCHEMA_UPDATE_TRUE = "TRUE";
 	private static final String ENV_VALUE_TF_HIBERNATE_SCHEMA_UPDATE_FALSE = "FALSE";
 
+	private static ConcurrentHashMap<String, Class<? extends Dialect>> dialectCache = new ConcurrentHashMap<>();
+
 	public void bindDeployables(DenotationBindingBuilder bindings) {
 		ComponentBinder<DatabaseConnectionPool, DataSource> binder = new PlainComponentBinder<>(DatabaseConnectionPool.T, DataSource.class);
 
@@ -122,15 +125,20 @@ public class HibernateDeployablesSpace implements WireSpace {
 
 	@Managed
 	private com.braintribe.model.access.hibernate.HibernateAccess access(ExpertContext<HibernateAccess> context) {
-
+		StopWatch stopWatch = new StopWatch();
 		HibernateAccess deployable = context.getDeployable();
 
 		com.braintribe.model.access.hibernate.HibernateAccess bean = new com.braintribe.model.access.hibernate.HibernateAccess();
+		stopWatch.intermediate("Init");
 		currentInstance().onDestroy(() -> shutdownCacheManagerIfNeeded(context)); // CAN'T TOUCH THIS
+		stopWatch.intermediate("OnDestroy");
 		bean.setHibernateSessionFactory(sessionFactory(context));
+		stopWatch.intermediate("SessionFactory");
 		bean.setModelSupplier(deployable::getMetaModel);
+		stopWatch.intermediate("MetaModel");
 		bean.setAccessId(deployable.getExternalId());
 		bean.setExpertRegistry(expertRegistry(context));
+		stopWatch.intermediate("ExpertRegistry");
 		bean.setLogging(deployable.getLogging());
 		bean.setDeadlockRetryLimit(deployable.getDeadlockRetryLimit());
 		bean.setDurationWarningThreshold(deployable.getDurationWarningThreshold());
@@ -204,7 +212,8 @@ public class HibernateDeployablesSpace implements WireSpace {
 		// Setting the additional properties last as these must be prioritized over inferred default values.
 		bean.setAdditionalProperties(deployable.getProperties());
 
-		logger.debug(() -> "Creating HibernateSessionFactoryBean " + deployable.getConnector() + ": " + stopWatch);
+		logger.debug(
+				() -> "Creating HibernateSessionFactoryBean " + deployable.getConnector() + " for " + deployable.getExternalId() + ": " + stopWatch);
 
 		return bean;
 	}
@@ -438,8 +447,11 @@ public class HibernateDeployablesSpace implements WireSpace {
 		if (dialect != null)
 			return dialect(dialect);
 
-		Class<? extends Dialect> result = dialect(dataSource);
-		logger.debug("Auto-detected dialect " + result.getClass().getSimpleName() + " for hibernate access: " + deployable.getExternalId());
+		DatabaseConnectionPool connector = deployable.getConnector();
+		String connectorExternalId = connector != null ? connector.getExternalId() : null;
+
+		Class<? extends Dialect> result = dialect(connectorExternalId, dataSource);
+		logger.debug(() -> "Auto-detected dialect " + result.getClass().getSimpleName() + " for hibernate access: " + deployable.getExternalId());
 		return result;
 	}
 
@@ -455,11 +467,21 @@ public class HibernateDeployablesSpace implements WireSpace {
 		}
 	}
 
-	private Class<? extends Dialect> dialect(DataSource dataSource) {
-		try {
-			return dialectAutoSense().senseDialect(dataSource);
-		} catch (Exception e) {
-			throw Exceptions.unchecked(e, "Failed to detect dialect based on " + dataSource);
+	private Class<? extends Dialect> dialect(String connectorExternalId, DataSource dataSource) {
+		if (connectorExternalId != null) {
+			return dialectCache.computeIfAbsent(connectorExternalId, __ -> {
+				try {
+					return dialectAutoSense().senseDialect(dataSource);
+				} catch (Exception e) {
+					throw Exceptions.unchecked(e, "Failed to detect dialect based on " + dataSource);
+				}
+			});
+		} else {
+			try {
+				return dialectAutoSense().senseDialect(dataSource);
+			} catch (Exception e) {
+				throw Exceptions.unchecked(e, "Failed to detect dialect based on " + dataSource);
+			}
 		}
 	}
 
