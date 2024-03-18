@@ -17,6 +17,7 @@ import static com.braintribe.wire.api.util.Lists.list;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -42,6 +43,7 @@ import com.braintribe.model.accessdeployment.hibernate.HibernateAccess;
 import com.braintribe.model.accessdeployment.hibernate.HibernateComponent;
 import com.braintribe.model.accessdeployment.hibernate.HibernateDialect;
 import com.braintribe.model.accessdeployment.hibernate.HibernateEnhancedConnectionPool;
+import com.braintribe.model.deployment.Deployable;
 import com.braintribe.model.deployment.database.pool.DatabaseConnectionPool;
 import com.braintribe.model.generic.processing.IdGenerator;
 import com.braintribe.model.meta.GmMetaModel;
@@ -49,6 +51,8 @@ import com.braintribe.model.processing.bootstrapping.TribefireRuntime;
 import com.braintribe.model.processing.core.expert.api.GmExpertRegistry;
 import com.braintribe.model.processing.core.expert.impl.ConfigurableGmExpertRegistry;
 import com.braintribe.model.processing.deployment.api.ComponentBinder;
+import com.braintribe.model.processing.deployment.api.DeployRegistryListener;
+import com.braintribe.model.processing.deployment.api.DeployedUnit;
 import com.braintribe.model.processing.deployment.api.ExpertContext;
 import com.braintribe.model.processing.deployment.api.PlainComponentBinder;
 import com.braintribe.model.processing.deployment.api.binding.DenotationBindingBuilder;
@@ -435,6 +439,25 @@ public class HibernateDeployablesSpace implements WireSpace {
 		result.dataSource = resolveDataSource(context);
 		result.dialectClass = resolveDialectClass(deployable, result.dataSource);
 		result.dialect = resolveDialect(deployable, result.dialectClass);
+
+		final String connectorExternalId = Optional.ofNullable(deployable.getConnector()).map(Deployable::getExternalId).orElse(null);
+		if (connectorExternalId != null) {
+			tfPlatform.deployment().deployRegistry().addListener(new DeployRegistryListener() {
+				@Override
+				public void onUndeploy(Deployable deployable, DeployedUnit deployedUnit) {
+					String externalId = deployable.getExternalId();
+					if (connectorExternalId.equals(externalId)) {
+						dialectCache.remove(externalId);
+					}
+				}
+
+				@Override
+				public void onDeploy(Deployable deployable, DeployedUnit deployedUnit) {
+					// Nothing to do
+				}
+			});
+		}
+
 		return result;
 	}
 
