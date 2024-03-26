@@ -16,10 +16,12 @@ import static com.braintribe.wire.api.util.Lists.list;
 
 import java.io.File;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -93,7 +95,8 @@ public class HibernateDeployablesSpace implements WireSpace {
 	private static final String ENV_VALUE_TF_HIBERNATE_SCHEMA_UPDATE_TRUE = "TRUE";
 	private static final String ENV_VALUE_TF_HIBERNATE_SCHEMA_UPDATE_FALSE = "FALSE";
 
-	private static ConcurrentHashMap<String, Class<? extends Dialect>> dialectCache = new ConcurrentHashMap<>();
+	private static ReentrantLock dialectCacheLock = new ReentrantLock();
+	private static Map<String, Class<? extends Dialect>> dialectCache = new HashMap<>();
 
 	public void bindDeployables(DenotationBindingBuilder bindings) {
 		ComponentBinder<DatabaseConnectionPool, DataSource> binder = new PlainComponentBinder<>(DatabaseConnectionPool.T, DataSource.class);
@@ -447,7 +450,12 @@ public class HibernateDeployablesSpace implements WireSpace {
 				public void onUndeploy(Deployable deployable, DeployedUnit deployedUnit) {
 					String externalId = deployable.getExternalId();
 					if (connectorExternalId.equals(externalId)) {
-						dialectCache.remove(externalId);
+						dialectCacheLock.lock();
+						try {
+							dialectCache.remove(externalId);
+						} finally {
+							dialectCacheLock.unlock();
+						}
 					}
 				}
 
@@ -492,13 +500,27 @@ public class HibernateDeployablesSpace implements WireSpace {
 
 	private Class<? extends Dialect> dialect(String connectorExternalId, DataSource dataSource) {
 		if (connectorExternalId != null) {
-			return dialectCache.computeIfAbsent(connectorExternalId, __ -> {
-				try {
-					return dialectAutoSense().senseDialect(dataSource);
-				} catch (Exception e) {
-					throw Exceptions.unchecked(e, "Failed to detect dialect based on " + dataSource);
+
+			// Note: The computeIfAbsent method of the originally used ConcurrentHashMap uses "synchronized"
+			// when doing the computation. Hence, it would pin the carrier thread, leading to thread starvation
+			// of other threads.
+			// computeIfAbsent is anyway not supposed to be used for expensive operations.
+			dialectCacheLock.lock();
+			try {
+				Class<? extends Dialect> cls = dialectCache.get(connectorExternalId);
+				if (cls != null) {
+					return cls;
 				}
-			});
+
+				cls = dialectAutoSense().senseDialect(dataSource);
+				dialectCache.put(connectorExternalId, cls);
+
+				return cls;
+
+			} finally {
+				dialectCacheLock.unlock();
+			}
+
 		} else {
 			try {
 				return dialectAutoSense().senseDialect(dataSource);
