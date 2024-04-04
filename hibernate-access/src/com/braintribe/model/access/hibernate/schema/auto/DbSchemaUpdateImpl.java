@@ -23,10 +23,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
@@ -97,10 +98,10 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 	private DataSource dataSource;
 	private String accessId;
 	private String instanceId;
-	private Supplier<String> dbSchemaUpdateContextProvider;
+	private SimpleDbSchemaUpdateContextProvider dbSchemaUpdateContextProvider;
 	private Boolean overrideDbSchemaUpdate;
 
-	private static boolean tableExistenceEnsured = false;
+	private static Map<String, Boolean> tableExistenceEnsuredMap = new ConcurrentHashMap<>();
 
 	// @formatter:off
 	@Required public void setLocking(Locking locking) { this.locking = locking; }
@@ -108,7 +109,7 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 	@Required public void setDataSource(DataSource dataSource) { this.dataSource = dataSource; }
 	@Required public void setAccessId(String accessId) { this.accessId = accessId; }
 	@Required public void setInstanceId(String instanceId) { this.instanceId = instanceId; }
-	@Required public void setDbSchemaUpdateContextProvider(Supplier<String> dbSchemaUpdateContextProvider) { this.dbSchemaUpdateContextProvider = dbSchemaUpdateContextProvider; }
+	@Required public void setDbSchemaUpdateContextProvider(SimpleDbSchemaUpdateContextProvider dbSchemaUpdateContextProvider) { this.dbSchemaUpdateContextProvider = dbSchemaUpdateContextProvider; }
 	@Required public void setOverrideDbSchemaUpdate(Boolean overrideDbSchemaUpdate) { this.overrideDbSchemaUpdate = overrideDbSchemaUpdate; }
 	// @formatter:on
 
@@ -137,11 +138,10 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 
 		schemaUpdateSuccessfullyFinished = false;
 
+		ensureSchemaUpdateTableWithLockingPerCpUrl();
+
 		lock(BEFORE_ENSURE);
 		try {
-			if (!tableExistenceEnsured) {
-				ensureSchemaUpdateTable();
-			}
 			ensureSchemaUpdateEntry();
 		} finally {
 			unlock(AFTER_ENSURE);
@@ -149,6 +149,48 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 
 		logger.debug(() -> "Finished initialize schema update mechanism for " + stringify());
 
+	}
+
+	private void ensureSchemaUpdateTableWithLockingPerCpUrl() {
+
+		if (tableExistanceEnsured()) {
+			return;
+		}
+
+		String cpUrl = dbSchemaUpdateContextProvider.getConnectionUrl();
+		if (cpUrl == null) {
+			// If we don't have a URL, we use a generic name, just to be safe
+			cpUrl = "generic-db-schema-update";
+		}
+
+		Lock cpLock = locking.forIdentifier(cpUrl).writeLock();
+		cpLock.lock();
+		try {
+			if (!tableExistanceEnsured()) {
+				ensureSchemaUpdateTable();
+			}
+		} finally {
+			cpLock.unlock();
+		}
+	}
+
+	private boolean tableExistanceEnsured() {
+		String key = dbSchemaUpdateContextProvider.getConnectionUrl();
+		if (StringTools.isBlank(key)) {
+			return false;
+		}
+		Boolean result = tableExistenceEnsuredMap.get(key);
+		if (result == null) {
+			return false;
+		}
+		return result.booleanValue();
+	}
+	private void tableExistanceEnsured(boolean ensuredFlag) {
+		String key = dbSchemaUpdateContextProvider.getConnectionUrl();
+		if (StringTools.isBlank(key)) {
+			return;
+		}
+		tableExistenceEnsuredMap.put(key, ensuredFlag);
 	}
 
 	@Override
@@ -467,8 +509,7 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 		String tableName = TABLE_NAME;
 
 		try {
-			Connection connection = dataSource.getConnection();
-			try {
+			try (Connection connection = dataSource.getConnection()) {
 				if (tableExists(connection, tableName) == null) {
 					logger.debug(() -> "Table '" + tableName + "' does not exist.");
 					Statement statement = connection.createStatement();
@@ -477,10 +518,10 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 						logger.debug(() -> "Creating table with statement: " + sqlStatement);
 						statement.executeUpdate(sqlStatement);
 						logger.debug(() -> "Successfully created table '" + tableName + "'");
-						tableExistenceEnsured = true;
+						tableExistanceEnsured(true);
 					} catch (SQLException e) {
 						if (tableExists(connection, tableName) != null) {
-							tableExistenceEnsured = true;
+							tableExistanceEnsured(true);
 							return;
 						} else {
 							throw e;
@@ -489,10 +530,8 @@ public class DbSchemaUpdateImpl implements LifecycleAware {
 						statement.close();
 					}
 				} else {
-					tableExistenceEnsured = true;
+					tableExistanceEnsured(true);
 				}
-			} finally {
-				connection.close();
 			}
 		} catch (Exception e) {
 			throw Exceptions.unchecked(e, "Could not ensure schema update table for " + stringify());

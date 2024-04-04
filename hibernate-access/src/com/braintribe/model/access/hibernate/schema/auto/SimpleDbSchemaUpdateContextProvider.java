@@ -77,6 +77,10 @@ public class SimpleDbSchemaUpdateContextProvider implements Supplier<String> {
 		return id;
 	}
 
+	protected String getConnectionUrl() {
+		return connectionUrlSupplier.get();
+	}
+
 	// -----------------------------------------------------------------------
 	// GETTER & SETTER
 	// -----------------------------------------------------------------------

@@ -293,8 +293,8 @@ public class HibernateDeployablesSpace implements WireSpace {
 		return bean;
 	}
 
-	private Supplier<String> simpleDbSchemaUpdateContextProvider(Supplier<String> connectionUrlSupplier, Supplier<String> schemaSupplier,
-			String tableNamePrefix) {
+	private SimpleDbSchemaUpdateContextProvider simpleDbSchemaUpdateContextProvider(Supplier<String> connectionUrlSupplier,
+			Supplier<String> schemaSupplier, String tableNamePrefix) {
 		SimpleDbSchemaUpdateContextProvider bean = new SimpleDbSchemaUpdateContextProvider();
 		bean.setConnectionUrlSupplier(connectionUrlSupplier);
 		bean.setSchemaSupplier(schemaSupplier);
