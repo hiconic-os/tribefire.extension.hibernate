@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.dialect.DB2Dialect;
 import org.hibernate.dialect.Dialect;
+import org.hibernate.dialect.H2Dialect;
 import org.hibernate.dialect.HSQLDialect;
 import org.hibernate.dialect.MySQL55Dialect;
 import org.hibernate.dialect.MySQL57Dialect;
@@ -169,6 +170,11 @@ public class HibernateDialectMappings {
 					"(?i)hsql.*", 
 					"hsql", 
 					HSQLDialect.class
+			),
+			mapping(
+					"(?i)h2.*", 
+					"h2", 
+					H2Dialect.class
 			),
 			mapping(
 					"(?i)postgre.*version:\\s*\\d\\d.*", // 10+  

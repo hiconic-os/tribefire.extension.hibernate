@@ -362,7 +362,10 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 			// defined at this stage, but we leave the GmProperty check here in case this changes again in the future...
 			String idType = explicitType == null ? gmProperty.getType().getTypeSignature() : explicitType;
 
-			idGenerator = isIntegerType(idType) ? "native" : "assigned";
+			if (context.generateJpaOrm)
+				idGenerator = isIntegerType(idType) ? "AUTO" : null;
+			else
+				idGenerator = isIntegerType(idType) ? "native" : "assigned";
 		}
 	}
 

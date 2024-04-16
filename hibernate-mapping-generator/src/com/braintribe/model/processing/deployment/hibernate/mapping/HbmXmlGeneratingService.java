@@ -12,6 +12,7 @@
 package com.braintribe.model.processing.deployment.hibernate.mapping;
 
 import java.io.File;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.braintribe.model.accessdeployment.hibernate.HibernateDialect;
@@ -85,7 +86,7 @@ public class HbmXmlGeneratingService {
 	public void setOutputFolder(File outputFolder) {
 		context.outputFolder = outputFolder;
 	}
-
+	
 	public void setOutputFolder(String outputFolderPath) throws HbmXmlGeneratingServiceException {
 		setOutputFolder(createFile(outputFolderPath));
 	}
@@ -174,6 +175,22 @@ public class HbmXmlGeneratingService {
 		context.setCmdResolver(cmdResolver);
 		return this;
 	}
+	
+	public HbmXmlGeneratingService generateJpaOrm() {
+		context.generateJpaOrm = true;
+		return this;
+	}
+	
+	/**
+	 * Configures the {@link CmdResolver} and also its the GmMetaModel via {@link #setGmMetaModel(GmMetaModel)}
+	 * @param cmdResolver
+	 * @return
+	 */
+	public HbmXmlGeneratingService cmdResolverAndModel(CmdResolver cmdResolver) {
+		context.setCmdResolver(cmdResolver);
+		context.setGmMetaModel(cmdResolver.getModelOracle().getGmMetaModel());
+		return this;
+	}
 
 	public HbmXmlGeneratingService cmdResolverFactory(Function<GmMetaModel, CmdResolverBuilder> cmdResolverFactory) {
 		context.setCmdResolverFactory(cmdResolverFactory);
@@ -182,6 +199,11 @@ public class HbmXmlGeneratingService {
 	
 	public HbmXmlGeneratingService dialect(HibernateDialect dialect) {
 		context.setDialect(dialect);
+		return this;
+	}
+	
+	public HbmXmlGeneratingService entityMappingConsumer(Consumer<SourceDescriptor> consumer) {
+		context.entityMappingConsumer = consumer;
 		return this;
 	}
 

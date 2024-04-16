@@ -48,7 +48,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 		<V.org.apache.derby>10.13.1.1</V.org.apache.derby>
 		<V.org.glassfish.jaxb_jaxb-core>2.3.0.1</V.org.glassfish.jaxb_jaxb-core>
 		<V.org.glassfish.jaxb_jaxb-runtime>2.3.2</V.org.glassfish.jaxb_jaxb-runtime>
-		<V.org.hibernate>5.6.0.Final</V.org.hibernate>
+		<V.org.hibernate>5.6.5.Final</V.org.hibernate>
 		<V.org.mariadb.jdbc>1.1.8</V.org.mariadb.jdbc>
 		<V.org.postgresql>9.4-1202-jdbc41</V.org.postgresql>
 		<V.xmlunit>1.4</V.xmlunit>	</properties>

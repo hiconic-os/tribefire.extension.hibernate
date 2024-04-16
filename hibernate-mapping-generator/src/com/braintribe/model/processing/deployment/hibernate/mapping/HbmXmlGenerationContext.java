@@ -15,6 +15,7 @@ import static com.braintribe.utils.lcd.NullSafe.nonNull;
 
 import java.io.File;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,7 @@ public class HbmXmlGenerationContext {
 	private MappingMetaDataResolver metaDataResolver;
 	private EntityHintProvider entityHintProvider;
 
+	public Consumer<SourceDescriptor> entityMappingConsumer;
 	public File outputFolder;
 	public String tablePrefix;
 	public String foreignKeyNamePrefix;
@@ -59,6 +61,7 @@ public class HbmXmlGenerationContext {
 	public File typeHintsOutputFile;
 	public String defaultSchema;
 	public String defaultCatalog;
+	public boolean generateJpaOrm;
 
 	private static final String JPA_USE_CASE = "jpa";
 
