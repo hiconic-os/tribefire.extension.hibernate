@@ -11,35 +11,16 @@
 // ============================================================================
 package com.braintribe.model.access.hibernate.time;
 
-import static com.braintribe.utils.lcd.CollectionTools2.asList;
-
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.hibernate.SessionFactory;
-import org.hibernate.dialect.Dialect;
-import org.hibernate.engine.spi.QueryParameters;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.engine.spi.TypedValue;
-import org.hibernate.hql.internal.ast.ASTQueryTranslatorFactory;
-import org.hibernate.hql.internal.ast.QueryTranslatorImpl;
-import org.hibernate.hql.spi.QueryTranslatorFactory;
-import org.hibernate.param.NamedParameterSpecification;
-import org.hibernate.param.ParameterSpecification;
-import org.hibernate.query.internal.QueryImpl;
-import org.hibernate.type.LiteralType;
-import org.hibernate.type.Type;
 
-import com.braintribe.exception.Exceptions;
 import com.braintribe.logging.Logger;
 import com.braintribe.logging.Logger.LogLevel;
 import com.braintribe.model.access.hibernate.HibernateAccess;
@@ -47,7 +28,6 @@ import com.braintribe.model.access.hibernate.HibernateApplyStatistics;
 import com.braintribe.model.accessdeployment.hibernate.HibernateLogging;
 import com.braintribe.model.processing.query.stringifier.BasicQueryStringifier;
 import com.braintribe.utils.StringTools;
-import com.braintribe.utils.lcd.CollectionTools;
 import com.braintribe.utils.logging.LogLevels;
 
 /**
@@ -392,80 +372,8 @@ public class HibernateAccessTiming {
 	}
 
 	private String tryGetSqlFromHqlQuery(boolean enrichSQLParameters) {
-		try {
-			final QueryTranslatorFactory ast = new ASTQueryTranslatorFactory();
-			final QueryTranslatorImpl newQueryTranslator = (QueryTranslatorImpl) ast.createQueryTranslator("", this.hqlQuery.getQueryString(),
-					Collections.EMPTY_MAP, (SessionFactoryImplementor) this.hibernateSessionFactory, null);
-			newQueryTranslator.compile(null, false);
-			String sql = newQueryTranslator.getSQLString();
-
-			Map<String, List<String>> parameters = new HashMap<>();
-			if (enrichSQLParameters) {
-				Dialect dialect = null;
-				if (hibernateSessionFactory instanceof SessionFactoryImplementor) {
-					SessionFactoryImplementor hibernateSessionFactoryImpl = (SessionFactoryImplementor) hibernateSessionFactory;
-					dialect = hibernateSessionFactoryImpl.getJdbcServices().getDialect();
-				}
-
-				TreeMap<ParameterKey, String> params = new TreeMap<>();
-				if (this.hqlQuery instanceof QueryImpl) {
-					QueryImpl<?> queryImpl = (QueryImpl<?>) hqlQuery;
-					QueryParameters queryParameters = queryImpl.getQueryParameters();
-					Map<String, TypedValue> namedParameters = queryParameters.getNamedParameters();
-
-					for (Map.Entry<String, TypedValue> namedParameter : namedParameters.entrySet()) {
-						TypedValue typedValue = namedParameter.getValue();
-						Type type = typedValue.getType();
-
-						String objectToSQLString = null;
-						if (type instanceof LiteralType) {
-							LiteralType<Object> literalType = (LiteralType<Object>) type;
-							try {
-								objectToSQLString = literalType.objectToSQLString(typedValue.getValue(), dialect);
-							} catch (Exception e) {
-								throw Exceptions.unchecked(e,
-										"Could not get SQL string from '" + typedValue.getValue() + "' using dialect: '" + dialect + "'");
-							}
-						}
-
-						ParameterKey parameterKey = new ParameterKey(namedParameter.getKey());
-						params.put(parameterKey, objectToSQLString);
-					}
-				}
-				params.forEach((k, v) -> {
-					if (k.parameterIndex == -1) {
-						parameters.put(k.parameterName, asList(v));
-					} else {
-						if (parameters.containsKey(k.parameterName)) {
-							parameters.get(k.parameterName).add(v);
-						} else {
-							parameters.put(k.parameterName, asList(v));
-						}
-					}
-				});
-			}
-
-			final List<ParameterSpecification> parameterSpecifications = newQueryTranslator.getCollectedParameterSpecifications();
-			if (!CollectionTools.isEmpty(parameterSpecifications)) {
-				for (ParameterSpecification parameter : parameterSpecifications) {
-					if (parameter instanceof NamedParameterSpecification) {
-						NamedParameterSpecification namedParameter = (NamedParameterSpecification) parameter;
-						if (enrichSQLParameters) {
-							String parameterName = namedParameter.getName();
-							String parameterValue = StringTools.createStringFromCollection(parameters.get(parameterName), ",");
-							sql = StringTools.replaceOnce(sql, "?", parameterValue);
-						} else {
-							sql = StringTools.replaceOnce(sql, "?", ":" + namedParameter.getName());
-						}
-
-					}
-				}
-			}
-			return sql;
-		} catch (Exception e) {
-			myLogger.debug("Could not get SQL query from HQL query " + this.hqlQuery.getQueryString(), e);
-			return "n/a - '" + e.getMessage() + "'";
-		}
+		// TODO: find a way how to get the SQL. Currently that seems not to be supported in Hibernate 6 without obscure reflection hacks
+		return "n/a";
 	}
 
 	public void addManipulationEvent(long startNanos, String context) {

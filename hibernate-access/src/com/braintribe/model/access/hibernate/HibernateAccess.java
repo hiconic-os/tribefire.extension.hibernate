@@ -34,11 +34,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import javax.persistence.OptimisticLockException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-
 import org.hibernate.FlushMode;
 import org.hibernate.PessimisticLockException;
 import org.hibernate.Session;
@@ -111,6 +106,12 @@ import com.braintribe.model.usersession.UserSessionType;
 import com.braintribe.utils.lcd.CollectionTools2;
 import com.braintribe.utils.lcd.CommonTools;
 import com.braintribe.utils.lcd.NullSafe;
+
+import jakarta.persistence.OptimisticLockException;
+import jakarta.persistence.RollbackException;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 /**
  * Implements the {@link IncrementalAccess} interface to a Hibernate-managed database persistence layer.
@@ -436,7 +437,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 				return result;
 
 			} catch (LockAcquisitionException | LockingStrategyException | PessimisticLockException | OptimisticLockException
-					| javax.persistence.PessimisticLockException e) {
+					| jakarta.persistence.PessimisticLockException e) {
 				/* I don't actually know if all of these can even be thrown, or if they indicate deadlock. I've seen
 				 * LockAcquisitionException and OptimisticLockException (not JPA but hibernate one). Either way, to be safe we consider
 				 * all these as possible deadlock. Worst case we'll get the same error over and over again. */
@@ -816,7 +817,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 
 				// I'm a simple man. I see 'Lock' in the name of the exception and I add it to this list.
 			} catch (LockAcquisitionException | LockingStrategyException | PessimisticLockException | OptimisticLockException
-					| javax.persistence.PessimisticLockException e) {
+					| jakarta.persistence.PessimisticLockException e) {
 
 				rollbackTransaction(actionType, transaction, e);
 				throw new PossibleDeadlockException(e);

@@ -14,10 +14,6 @@ package com.braintribe.persistence.hibernate;
 import static com.braintribe.utils.lcd.CollectionTools2.isEmpty;
 import static com.braintribe.utils.lcd.CollectionTools2.newList;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
@@ -38,25 +34,20 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.hibernate.HibernateException;
 import org.hibernate.SessionFactory;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cfg.Environment;
 import org.hibernate.context.spi.CurrentSessionContext;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
-import org.w3c.dom.Document;
 
 import com.braintribe.cfg.Configurable;
 import com.braintribe.cfg.LifecycleAware;
 import com.braintribe.cfg.Required;
 import com.braintribe.logging.Logger;
 import com.braintribe.model.processing.bootstrapping.TribefireRuntime;
-import com.braintribe.persistence.hibernate.adaptor.HibernateConfigurationAdaptor;
-import com.braintribe.persistence.hibernate.adaptor.TemporaryFolderCacheAdaptor;
 import com.braintribe.utils.CommonTools;
 import com.braintribe.utils.StringTools;
 import com.braintribe.utils.lcd.StopWatch;
-import com.braintribe.utils.xml.XmlTools;
-
-import net.sf.ehcache.hibernate.SingletonEhCacheRegionFactory;
 
 /**
  * Factory for hibernate {@link SessionFactory} instances. It uses a {@link DataSource} to provide the actual {@link Connection}.
@@ -101,10 +92,6 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 
 	private String beanName;
 
-	protected File ehCacheConfiguration = null;
-	protected File temporaryEhCacheConfiguration = null;
-	protected HibernateConfigurationAdaptor configAdaptor = null;
-
 	protected boolean updateSchema = true;
 	protected final List<Runnable> beforeSchemaCreationTasks = newList();
 	protected final List<Runnable> afterSchemaCreationTasks = newList();
@@ -120,9 +107,11 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 		properties.setProperty("factoryBeanId", getId());
 
 		// caching
-		setRegionFactory("ehcache-singleton");
-		setUseQueryCache(true);
-		setUseSecondLevelCache(true);
+		// setUseQueryCache(true);
+
+		// TODO: check if we need second level cache at all and how to configure it after ehcache has gone extinct
+		// setRegionFactory(null);
+		// setUseSecondLevelCache(true);
 
 		// update schema if desired
 		setHbm2DdlAuto("update");
@@ -138,20 +127,6 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 		}
 
 		unregister(this);
-
-		if (this.temporaryEhCacheConfiguration != null) {
-			try {
-				if (this.temporaryEhCacheConfiguration.exists()) {
-					this.temporaryEhCacheConfiguration.deleteOnExit();
-					this.temporaryEhCacheConfiguration = null;
-				}
-			} catch (Exception e) {
-				logger.error("Could not delete " + this.temporaryEhCacheConfiguration, e);
-			}
-		}
-		if (this.configAdaptor != null) {
-			this.configAdaptor.cleanup();
-		}
 	}
 
 	@Override
@@ -174,63 +149,6 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 	public void afterPropertiesSet() {
 
 		StopWatch stopWatch = new StopWatch();
-
-		if (this.configAdaptor == null) {
-			try {
-				this.configAdaptor = new TemporaryFolderCacheAdaptor();
-
-			} catch (Exception e) {
-				logger.error("Could not initialize the default TemporaryFolderCacheAdaptor", e);
-				this.configAdaptor = null;
-			}
-		}
-
-		Document ehCacheConfigurationXml = null;
-
-		if (this.ehCacheConfiguration == null) {
-			try {
-				try (InputStream in = new BufferedInputStream(getClass().getResource("ehcache.xml").openStream())) {
-					ehCacheConfigurationXml = docBuilderFactory.newDocumentBuilder().parse(in);
-				}
-
-				this.ehCacheConfiguration = File.createTempFile("ehcache", ".xml");
-				this.temporaryEhCacheConfiguration = this.ehCacheConfiguration;
-
-			} catch (Exception e) {
-				logger.warn(() -> "Cannot access resource ehcache.xml.", e);
-				this.ehCacheConfiguration = null;
-			}
-		} else {
-			try (InputStream in = new BufferedInputStream(new FileInputStream(this.ehCacheConfiguration))) {
-				ehCacheConfigurationXml = docBuilderFactory.newDocumentBuilder().parse(in);
-			} catch (Exception e) {
-				logger.warn(() -> "Cannot access configured ehcache file: " + ehCacheConfiguration.getAbsolutePath(), e);
-				this.ehCacheConfiguration = null;
-
-			}
-		}
-
-		stopWatch.intermediate("ehcache.xml creation");
-
-		if (ehCacheConfigurationXml != null && ehCacheConfiguration != null) {
-
-			if (this.configAdaptor != null) {
-				try {
-					this.configAdaptor.adaptEhCacheConfigurationResource(ehCacheConfigurationXml);
-				} catch (Exception e) {
-					logger.error("Could not adapt Hibernate configuration paths.", e);
-				}
-			}
-			try {
-				XmlTools.writeXml(ehCacheConfigurationXml, ehCacheConfiguration, "UTF-8");
-				String location = this.ehCacheConfiguration.toURI().toURL().toString();
-				properties.setProperty(SingletonEhCacheRegionFactory.NET_SF_EHCACHE_CONFIGURATION_RESOURCE_NAME, location);
-			} catch (Exception e) {
-				logger.error("Could not set EHCache configuration file.", e);
-			}
-		}
-
-		stopWatch.intermediate("Config Adapter");
 
 		super.setHibernateProperties(properties);
 		try {
@@ -290,13 +208,6 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 
 	public void setAutoCommit(boolean autoCommit) {
 		properties.setProperty(Environment.AUTOCOMMIT, "" + autoCommit);
-	}
-
-	/**
-	 * optional configuration when using ehcache as a cache or region provider
-	 */
-	public void setEhCacheConfiguration(File ehCacheConfigurationLocation) {
-		this.ehCacheConfiguration = ehCacheConfigurationLocation;
 	}
 
 	@Override
@@ -477,15 +388,6 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 			throw new UnsupportedOperationException("Method 'HibernateSessionFactoryBean.ConnectionProviderImpl.unwrap' is not supported!");
 		}
 
-	}
-
-	public HibernateConfigurationAdaptor getConfigAdaptor() {
-		return configAdaptor;
-	}
-
-	@Configurable
-	public void setConfigAdaptor(HibernateConfigurationAdaptor configAdaptor) {
-		this.configAdaptor = configAdaptor;
 	}
 
 	@Override

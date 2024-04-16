@@ -16,12 +16,14 @@ import static com.braintribe.utils.lcd.CollectionTools2.isEmpty;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.braintribe.logging.Logger;
 import com.braintribe.model.processing.deployment.hibernate.mapping.db.NamingStrategyProvider;
 import com.braintribe.model.processing.deployment.hibernate.mapping.hints.EntityHintPersistence;
 import com.braintribe.model.processing.deployment.hibernate.mapping.hints.MetaModelEnricher;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.HbmXmlFastRenderer;
+import com.braintribe.model.processing.deployment.hibernate.mapping.render.OrmXmlFastRenderer;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityDescriptorFactory;
 import com.braintribe.model.processing.deployment.hibernate.mapping.wrapper.HbmEntityType;
@@ -94,12 +96,19 @@ class HbmXmlGenerator {
 			log.warn("No descriptors to be rendered.");
 			return;
 		}
-
-		SourceSerializer sourceSerializer = new SourceSerializer(context.outputFolder);
-
+		
+		var consumer = context.entityMappingConsumer;
+		
+		if (consumer == null) {
+			consumer = new SourceSerializer(context.outputFolder)::writeSourceFile;	
+		}
+		
 		for (EntityDescriptor ed : entityDescriptors) {
-			SourceDescriptor sd = HbmXmlFastRenderer.renderEntityType(ed);
-			sourceSerializer.writeSourceFile(sd);
+			SourceDescriptor sd = context.generateJpaOrm? //
+					OrmXmlFastRenderer.renderEntityType(ed): //
+					HbmXmlFastRenderer.renderEntityType(ed);
+			
+			consumer.accept(sd);
 		}
 	}
 

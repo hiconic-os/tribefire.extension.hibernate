@@ -14,10 +14,10 @@ You should have received a copy of the GNU Lesser General Public License along w
     <parent>
         <groupId>tribefire.extension.hibernate</groupId>
         <artifactId>parent</artifactId>
-        <version>[2.0,2.1)</version>
+        <version>[3.0,3.1)</version>
     </parent>
     <artifactId>hibernate-mapping-generator-test</artifactId>
-    <version>2.0.10</version>
+    <version>3.0.1</version>
     <properties>
         <archetype>test</archetype>
     </properties>

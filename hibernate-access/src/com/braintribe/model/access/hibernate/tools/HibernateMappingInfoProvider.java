@@ -19,16 +19,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.metamodel.Attribute;
-import javax.persistence.metamodel.Metamodel;
-
 import com.braintribe.model.access.hibernate.gm.CompositeIdValues;
 import com.braintribe.model.generic.GMF;
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.Property;
 import com.braintribe.model.meta.GmEntityType;
+
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.Metamodel;
 
 /**
  * @author peter.gazdik
@@ -42,11 +42,11 @@ public class HibernateMappingInfoProvider {
 	public HibernateMappingInfoProvider(EntityManagerFactory emFactory) {
 		Metamodel metamodel = emFactory.getMetamodel();
 
-		for (javax.persistence.metamodel.EntityType<?> javaxEntityType : metamodel.getEntities())
+		for (jakarta.persistence.metamodel.EntityType<?> javaxEntityType : metamodel.getEntities())
 			index(javaxEntityType);
 	}
 
-	private void index(javax.persistence.metamodel.EntityType<?> javaxEntityType) {
+	private void index(jakarta.persistence.metamodel.EntityType<?> javaxEntityType) {
 		String entityName = javaxEntityType.getJavaType().getName();
 
 		if (hasCompositeId(javaxEntityType))
@@ -64,7 +64,7 @@ public class HibernateMappingInfoProvider {
 				.collect(toCollection(() -> mappedProperties));
 	}
 
-	private boolean hasCompositeId(javax.persistence.metamodel.EntityType<?> javaxEntityType) {
+	private boolean hasCompositeId(jakarta.persistence.metamodel.EntityType<?> javaxEntityType) {
 		return javaxEntityType.getIdType().getJavaType() == CompositeIdValues.class;
 	}
 

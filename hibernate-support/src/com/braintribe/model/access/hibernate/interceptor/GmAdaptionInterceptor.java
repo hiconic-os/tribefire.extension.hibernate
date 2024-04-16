@@ -11,10 +11,9 @@
 // ============================================================================
 package com.braintribe.model.access.hibernate.interceptor;
 
-import java.io.Serializable;
-
-import org.hibernate.EmptyInterceptor;
-import org.hibernate.EntityMode;
+import org.hibernate.CallbackException;
+import org.hibernate.Interceptor;
+import org.hibernate.metamodel.RepresentationMode;
 
 import com.braintribe.model.generic.GMF;
 import com.braintribe.model.generic.GenericEntity;
@@ -24,7 +23,7 @@ import com.braintribe.model.generic.reflection.GenericModelTypeReflection;
 /**
  * Interceptor which provides correct instances for {@link GenericEntity}s and resolves their names.
  */
-public class GmAdaptionInterceptor extends EmptyInterceptor {
+public class GmAdaptionInterceptor implements Interceptor {
 
 	private static final long serialVersionUID = -5221026406788869293L;
 	private static final GenericModelTypeReflection typeReflection = GMF.getTypeReflection();
@@ -35,24 +34,21 @@ public class GmAdaptionInterceptor extends EmptyInterceptor {
 			return ((GenericEntity) object).entityType().getTypeSignature();
 
 		} else {
-			return super.getEntityName(object);
+			return Interceptor.super.getEntityName(object);
 		}
 	}
 
 	@Override
-	public Object instantiate(String entityName, EntityMode entityMode, Serializable id) {
-		if (entityMode == EntityMode.POJO) {
-			EntityType<?> entityType = typeReflection.getType(entityName);
+	public Object instantiate(String entityName, RepresentationMode representationMode, Object id)
+			throws CallbackException {
+		if (representationMode != RepresentationMode.POJO) 
+			return Interceptor.super.instantiate(entityName, representationMode, id);
+		
+		EntityType<?> entityType = typeReflection.getType(entityName);
 
-			GenericEntity ge = entityType.createPlain();
-			ge.setId(id);
+		GenericEntity ge = entityType.createPlain();
+		ge.setId(id);
 
-			return ge;
-
-		} else {
-			return super.instantiate(entityName, entityMode, id);
-		}
-
+		return ge;
 	}
-
 }

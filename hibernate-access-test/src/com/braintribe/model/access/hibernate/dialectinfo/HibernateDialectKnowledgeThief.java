@@ -19,7 +19,7 @@ import java.util.StringJoiner;
 
 import org.hibernate.dialect.DB2Dialect;
 import org.hibernate.dialect.Dialect;
-import org.hibernate.dialect.PostgreSQL81Dialect;
+import org.hibernate.dialect.PostgreSQLDialect;
 
 import com.braintribe.persistence.hibernate.dialects.HibernateDialectMapping;
 import com.braintribe.persistence.hibernate.dialects.HibernateDialectMappings;
@@ -42,6 +42,10 @@ public class HibernateDialectKnowledgeThief {
 	StringJoiner sj;
 
 	private void run() {
+		// TODO: find out how Dialect.getTypeName() can be replaced as it is gone in hibernate 6
+		if (true) 
+			throw new UnsupportedOperationException("find out how Dialect.getTypeName() can be replaced as it is gone in hibernate 6 and correct TODO in this class:" + getClass());
+		
 		for (HibernateDialectMapping m : HibernateDialectMappings.mapppings()) {
 			dialect = resolveDialect(m);
 
@@ -83,21 +87,23 @@ public class HibernateDialectKnowledgeThief {
 			return "clob";
 
 		typeCode = sanitizeType(typeCode);
-		String result = dialect.getTypeName(typeCode);
+		
+		String result = null; // TODO: value was dialect.getTypeName(typeCode);
 
 		return result;
 	}
 
 	private void addType(int typeCode, int length, int precision, int scale) {
 		typeCode = sanitizeType(typeCode);
-		addArgument(dialect.getTypeName(typeCode, length, precision, scale));
+		String typeName = null; // TODO: value was dialect.getTypeName(typeCode, length, precision, scale)
+		addArgument(typeName);
 	}
 
 	private int sanitizeType(int typeCode) {
 		// Derby/DB2 does not support nvarchar2 (or other N-things) but allegedly the regular varchar is already unicode
 		// PostgreSQL doesn't seem to support nvarchar either
 		if (typeCode == Types.NVARCHAR && //
-				(dialect instanceof DB2Dialect || dialect instanceof PostgreSQL81Dialect))
+				(dialect instanceof DB2Dialect || dialect instanceof PostgreSQLDialect))
 			return Types.VARCHAR;
 
 		return typeCode;

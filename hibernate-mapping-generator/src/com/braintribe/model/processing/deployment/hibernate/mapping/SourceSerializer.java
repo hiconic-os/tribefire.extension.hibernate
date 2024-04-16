@@ -24,7 +24,6 @@ import com.braintribe.logging.Logger;
 class SourceSerializer {
 
 	private File outputDirectory;
-
 	private static final Logger log = Logger.getLogger(SourceSerializer.class);
 
 	public SourceSerializer(File outputDirectory) {

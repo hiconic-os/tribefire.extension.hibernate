@@ -13,10 +13,10 @@ You should have received a copy of the GNU Lesser General Public License along w
 	<parent>
 		<groupId>tribefire.extension.hibernate</groupId>
 		<artifactId>parent</artifactId>
-		<version>[2.0,2.1)</version>
+		<version>[3.0,3.1)</version>
 	</parent>
 	<artifactId>hibernate-lab-setup</artifactId>
-	<version>2.0.8</version>
+	<version>3.0.1</version>
 	<properties>
 	</properties>
     <licenses>
@@ -31,7 +31,7 @@ You should have received a copy of the GNU Lesser General Public License along w
         <dependency>
             <groupId>tribefire.cortex.services</groupId>
             <artifactId>tribefire-web-platform</artifactId>
-            <version>[2.0,2.1)</version>
+            <version>[3.0,3.1)</version>
             <classifier>asset</classifier>
             <type>man</type>
             <?tag asset?>
@@ -39,7 +39,7 @@ You should have received a copy of the GNU Lesser General Public License along w
         <dependency>
             <groupId>tribefire.cortex.assets</groupId>
             <artifactId>tribefire-initial-aggregator</artifactId>
-            <version>[2.0,2.1)</version>
+            <version>[3.0,3.1)</version>
             <classifier>asset</classifier>
             <type>man</type>
             <?tag asset?>
@@ -83,7 +83,7 @@ You should have received a copy of the GNU Lesser General Public License along w
         <dependency>
             <groupId>tribefire.extension.jdbcdriver</groupId>
             <artifactId>postgresql</artifactId>
-            <version>[2.0,2.1)</version>
+            <version>[3.0,3.1)</version>
             <classifier>asset</classifier>
             <type>man</type>
             <?tag asset?>

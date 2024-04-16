@@ -1,4 +1,4 @@
-<!--
+<?xml version="1.0" encoding="UTF-8"?><!--
 Copyright BRAINTRIBE TECHNOLOGY GMBH, Austria, 2002-2022
 
 This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
@@ -13,10 +13,10 @@ You should have received a copy of the GNU Lesser General Public License along w
     <parent>
         <groupId>tribefire.extension.hibernate</groupId>
         <artifactId>parent</artifactId>
-        <version>[2.0,2.1)</version>
+        <version>[3.0,3.1)</version>
     </parent>
     <artifactId>hibernate-support</artifactId>
-    <version>2.0.19</version>
+    <version>3.0.1</version>
     <properties>
         <archetype>library</archetype>
     </properties>
@@ -45,9 +45,14 @@ You should have received a copy of the GNU Lesser General Public License along w
             <version>${V.org.hibernate}</version>
         </dependency>
         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-ehcache</artifactId>
-            <version>${V.org.hibernate}</version>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>4.9.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4</artifactId>
+            <version>4.9.3</version>
         </dependency>
         <dependency>
             <groupId>cglib</groupId>
@@ -94,6 +99,11 @@ You should have received a copy of the GNU Lesser General Public License along w
             <groupId>com.braintribe.gm</groupId>
             <artifactId>meta-model-api</artifactId>
             <version>${V.com.braintribe.gm}</version>
+        </dependency>
+        <dependency>
+            <groupId>tribefire.extension.hibernate</groupId>
+            <artifactId>hibernate-mapping-generator</artifactId>
+            <version>${V.tribefire.extension.hibernate}</version>
         </dependency>
     </dependencies>
 </project>

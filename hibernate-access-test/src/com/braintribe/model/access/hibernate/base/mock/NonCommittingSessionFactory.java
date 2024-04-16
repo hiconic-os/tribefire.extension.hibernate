@@ -142,9 +142,8 @@ class NonCommittingJustFlushingTransaction implements Transaction {
 	@Override public boolean getRollbackOnly() { return false; }
 	@Override public boolean isActive() { return false;	}
 	@Override public TransactionStatus getStatus() { return null; }
-	@Override public void registerSynchronization(Synchronization synchronization) throws HibernateException { /* NOOP*/ }
 	@Override public void setTimeout(int seconds) { /* NOOP*/ }
 	@Override public int getTimeout() { return 0; }
-	// @formatter:on
+	@Override public void registerSynchronization(jakarta.transaction.Synchronization synchronization) { /* NOOP */ }
 
 }

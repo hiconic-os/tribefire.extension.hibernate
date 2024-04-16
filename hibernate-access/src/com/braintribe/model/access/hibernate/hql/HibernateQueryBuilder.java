@@ -14,8 +14,9 @@ package com.braintribe.model.access.hibernate.hql;
 import java.util.Collection;
 
 import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.Query;
-import org.hibernate.type.Type;
+import org.hibernate.type.BasicType;
 
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.persistence.NativeQueryParameter;
@@ -56,8 +57,10 @@ public class HibernateQueryBuilder<T> {
 		} else if (value instanceof GenericEntity) {
 			GenericEntity entity = (GenericEntity) value;
 			Class<?> entityClass = entity.entityType().getJavaType();
-			Type hibernateType = session.getSessionFactory().getTypeHelper().entity(entityClass);
-			result.setParameter(name, value, hibernateType);
+			
+			SessionFactoryImplementor implementor = session.getSessionFactory().unwrap(SessionFactoryImplementor.class);
+			BasicType<Object> registeredType = (BasicType<Object>) implementor.getTypeConfiguration().getBasicTypeRegistry().getRegisteredType(entityClass);
+			result.setParameter(name, value, registeredType);
 
 		} else {
 			result.setParameter(name, value);

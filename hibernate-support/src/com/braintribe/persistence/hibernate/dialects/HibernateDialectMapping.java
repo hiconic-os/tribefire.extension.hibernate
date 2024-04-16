@@ -11,6 +11,8 @@
 // ============================================================================
 package com.braintribe.persistence.hibernate.dialects;
 
+import java.util.regex.Pattern;
+
 import org.hibernate.dialect.Dialect;
 
 /**
@@ -21,11 +23,13 @@ import org.hibernate.dialect.Dialect;
 public class HibernateDialectMapping {
 
 	public String productRegex;
+	public Pattern productPattern;
 	public String variant;
 	public Class<? extends Dialect> dialectType;
 
 	public HibernateDialectMapping(String productRegex, String variant, Class<? extends Dialect> dialectType) {
 		this.productRegex = productRegex;
+		this.productPattern = Pattern.compile(productRegex);
 		this.variant = variant;
 		this.dialectType = dialectType;
 	}
@@ -33,5 +37,4 @@ public class HibernateDialectMapping {
 	public static HibernateDialectMapping mapping(String productRegex, String variant, Class<? extends Dialect> dialectType) {
 		return new HibernateDialectMapping(productRegex, variant, dialectType);
 	}
-
 }

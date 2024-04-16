@@ -34,6 +34,7 @@ import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.spi.XmlMappingBinderAccess;
+import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 
@@ -183,7 +184,7 @@ public class LocalSessionFactoryBean {
 		Configuration cfg = new Configuration(bootstrapServiceRegistry());
 
 		if (dataSource != null)
-			cfg.getProperties().put(Environment.DATASOURCE, dataSource);
+			cfg.getProperties().put(AvailableSettings.JAKARTA_JTA_DATASOURCE, dataSource);
 
 		if (configLocations != null)
 			// Load Hibernate configuration from given location.
