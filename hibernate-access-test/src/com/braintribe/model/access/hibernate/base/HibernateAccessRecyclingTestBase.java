@@ -14,9 +14,11 @@ package com.braintribe.model.access.hibernate.base;
 import static com.braintribe.model.access.hibernate.base.tools.HibernateAccessSetupHelper.dataSource_H2;
 import static com.braintribe.model.access.hibernate.base.tools.HibernateAccessSetupHelper.hibernateSessionFactoryBean;
 import static com.braintribe.utils.lcd.CollectionTools2.newMap;
+import static com.braintribe.utils.lcd.CollectionTools2.newSet;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.sql.DataSource;
 import javax.transaction.Transaction;
@@ -84,7 +86,7 @@ public abstract class HibernateAccessRecyclingTestBase {
 	 * This is the cache of deployed hibernate access. For each model instance we have exactly one deployed access. The models com from
 	 * {@link #hibernateModels}
 	 */
-	private final Map<GmMetaModel, HbmDeployedUnit> hbmUnits = newMap();
+	private static final Map<GmMetaModel, HbmDeployedUnit> hbmUnits = newMap();
 
 	private HbmDeployedUnit hbmUnit;
 
@@ -162,7 +164,13 @@ public abstract class HibernateAccessRecyclingTestBase {
 		return HbmTestSessionFactory.newInstance(hsfb.getObject(), false);
 	}
 
+	private static final Set<String> usedDbNames = newSet();
+
 	private static DataSource dataSource(String dbName) {
+		if (!usedDbNames.add(dbName))
+			throw new IllegalStateException("Database name '" + dbName
+					+ "' is already deployed. Cannot deploy multiple DBs with the same name, it would fail with a weird error.");
+
 		return dataSource_H2(dbName);
 	}
 

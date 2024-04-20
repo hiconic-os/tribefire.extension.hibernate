@@ -103,7 +103,7 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	@Override
 	@Managed
 	public GmMetaModel basic_NoPartition() {
-		GmMetaModel result = allRaw();
+		GmMetaModel result = allRaw("basic");
 
 		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
 		unmapGlobalIdAndPartition(md);
@@ -112,8 +112,9 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	}
 
 	@Override
+	@Managed
 	public GmMetaModel compositeId() {
-		GmMetaModel result = allRaw();
+		GmMetaModel result = allRaw("compositeId");
 
 		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
 		unmapGlobalIdAndPartition(md);
@@ -145,6 +146,7 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	}
 
 	@Override
+	@Managed
 	public GmMetaModel n8ive() {
 		GmMetaModel result = nativeRaw();
 
@@ -155,6 +157,7 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	}
 
 	@Override
+	@Managed
 	public GmMetaModel graph() {
 		GmMetaModel result = graphRaw();
 
@@ -165,6 +168,7 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	}
 
 	@Override
+	@Managed
 	public GmMetaModel acl() {
 		GmMetaModel result = aclRaw();
 
@@ -175,8 +179,9 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	}
 
 	@Override
+	@Managed
 	public GmMetaModel nonClasspath() {
-		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:AllModel", asList(HasName.T));
+		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:all-nonCp-model", asList(HasName.T));
 
 		GmEntityType hasName = first(result.getTypes());
 		hasName.setTypeSignature(NON_CP_ENTITY_SIG);
@@ -203,10 +208,10 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	// ###################################################
 
 	/** Pretty much raw, but LocalizedString values are configured with length 1000 */
-	private GmMetaModel allRaw() {
+	private GmMetaModel allRaw(String name) {
 		GmMetaModel i18nModel = LocalizedString.T.getModel().getMetaModel();
 
-		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:all-model", ALL_TYPES, asList(i18nModel));
+		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:all-" + name + "-model", ALL_TYPES, asList(i18nModel));
 		addMd(result, this::addLocalizedStringMd);
 
 		return result;
