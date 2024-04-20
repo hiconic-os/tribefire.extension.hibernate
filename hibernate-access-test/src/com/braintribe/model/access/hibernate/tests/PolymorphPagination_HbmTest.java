@@ -26,9 +26,7 @@ import com.braintribe.model.query.SelectQuery;
 import com.braintribe.testing.category.KnownIssue;
 
 /**
- * This is more a test for a bug in hibernate.
- * 
- * @see "https://jira.braintribe.com/browse/COREHA-23"
+ * This is more a test for a bug in Hibernate.
  * 
  * @see HibernateAccessRecyclingTestBase
  * 
@@ -41,9 +39,9 @@ public class PolymorphPagination_HbmTest extends HibernateBaseModelTestBase {
 
 	/* The pagination works in Eclipse, and probably also in Tomcat, but doesn't work in a unit test.
 	 * 
-	 * There is a pagination bug in hibernate, and the fix is in HQLQueryPlan in hibernate-access, which is a fixed version of that class from
-	 * hibernate-core. The fix works as long as hibernate-access is earlier on classpath than hibernate-core, thus the fixed class is loaded. This is
-	 * usually the case - it's alphabetically, but not for unit tests. There the absolute path are sorted, including group-id, and
+	 * There is a pagination bug in hibernate, and the fix is in AggregatedSelectQueryPlanImpl in hibernate-access, which is a fixed version of that
+	 * class from hibernate-core. The fix works as long as hibernate-access is earlier on classpath than hibernate-core, thus the fixed class is
+	 * loaded. This is usually the case - it's alphabetically, but not for unit tests. There the absolute path are sorted, including group-id, and
 	 * tribefire/extension/hibernate comes after org/hibernate. This also explains why it worked in com.braintribe.gm.hibernate worked. */
 
 	/* Once the extraction of Hibernate stuff from core is over, we switch to hibernate 6. Then we'll see if the but is still there, if it is, I will
