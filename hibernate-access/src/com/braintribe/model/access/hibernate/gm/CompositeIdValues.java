@@ -16,14 +16,13 @@ import java.util.Arrays;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
-import com.braintribe.model.accessdeployment.jpa.meta.JpaCompositeId;
 import com.braintribe.model.generic.tools.GmValueCodec;
 
 /**
  * Serializable object used as id value for hibernate. This can be used to support composite-id mappings with composite keys consisting of up to 30
  * columms.
  * 
- * @see JpaCompositeId
+ * See JpaCompositeId.
  * 
  * @author peter.gazdik
  */

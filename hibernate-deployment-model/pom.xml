@@ -1,4 +1,4 @@
-<!--
+<?xml version="1.0" encoding="UTF-8"?><!--
 Copyright BRAINTRIBE TECHNOLOGY GMBH, Austria, 2002-2022
 
 This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
@@ -48,6 +48,12 @@ You should have received a copy of the GNU Lesser General Public License along w
             <groupId>tribefire.cortex</groupId>
             <artifactId>database-deployment-model</artifactId>
             <version>${V.tribefire.cortex}</version>
+            <?tag asset ?>
+        </dependency>
+        <dependency>
+            <groupId>tribefire.extension.hibernate</groupId>
+            <artifactId>hibernate-meta-data-model</artifactId>
+            <version>${V.tribefire.extension.hibernate}</version>
             <?tag asset ?>
         </dependency>
     </dependencies>

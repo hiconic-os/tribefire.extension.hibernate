@@ -66,7 +66,6 @@ import com.braintribe.model.access.hibernate.tools.HibernateMappingInfoProvider;
 import com.braintribe.model.access.hibernate.tools.HibernatePropertyReferenceAnalyzer;
 import com.braintribe.model.accessapi.ManipulationRequest;
 import com.braintribe.model.accessapi.ManipulationResponse;
-import com.braintribe.model.accessdeployment.hibernate.HibernateLogging;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaCompositeId;
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.commons.EntityReferenceComparator;

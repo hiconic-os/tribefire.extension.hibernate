@@ -44,11 +44,10 @@ import com.braintribe.logging.Logger;
 import com.braintribe.logging.Logger.LogLevel;
 import com.braintribe.model.access.hibernate.HibernateAccess;
 import com.braintribe.model.access.hibernate.HibernateApplyStatistics;
-import com.braintribe.model.accessdeployment.hibernate.HibernateLogging;
+import com.braintribe.model.access.hibernate.HibernateLogging;
 import com.braintribe.model.processing.query.stringifier.BasicQueryStringifier;
 import com.braintribe.utils.StringTools;
 import com.braintribe.utils.lcd.CollectionTools;
-import com.braintribe.utils.logging.LogLevels;
 
 /**
  * This class is used by the HibernateAccess to print timing information into the log. If a certain time threshold is
@@ -153,22 +152,22 @@ public class HibernateAccessTiming {
 
 		if (logging != null) {
 			StringBuilder sb = new StringBuilder();
-			if (logging.getLogTimings()) {
+			if (logging.logTimings()) {
 				enrichLogTimings(now, totalDuration, sb);
 			}
-			if (logging.getLogGMStatements()) {
+			if (logging.logGMStatements()) {
 				enrichGMStatements(sb);
 			}
-			if (logging.getLogHQLStatements()) {
+			if (logging.logHQLStatements()) {
 				enrichHQLStatements(sb);
 			}
-			if (logging.getLogSQLStatements()) {
-				enrichSQLStatments(sb, logging.getEnrichSQLParameters());
+			if (logging.logSQLStatements()) {
+				enrichSQLStatments(sb, logging.enrichSQLParameters());
 			}
-			if (logging.getLogStatistics()) {
+			if (logging.logStatistics()) {
 				enrichStatistics(sb);
 			}
-			logger.log(LogLevels.convert(logging.getLogLevel()), sb.toString().trim());
+			logger.log(logging.logLevel(), sb.toString().trim());
 		}
 
 		if (warnThresholdExceeded(totalDuration)) {

@@ -80,6 +80,7 @@ import com.braintribe.wire.api.annotation.Managed;
 import com.braintribe.wire.api.space.WireSpace;
 
 import net.sf.ehcache.CacheManager;
+import tribefire.extension.hibernate.util.HibernateLoggings;
 import tribefire.module.wire.contract.TribefireWebPlatformContract;
 
 @Managed
@@ -146,7 +147,7 @@ public class HibernateDeployablesSpace implements WireSpace {
 		bean.setAccessId(deployable.getExternalId());
 		bean.setExpertRegistry(expertRegistry(context));
 		stopWatch.intermediate("ExpertRegistry");
-		bean.setLogging(deployable.getLogging());
+		bean.setLogging(HibernateLoggings.convert(deployable.getLogging()));
 		bean.setDeadlockRetryLimit(deployable.getDeadlockRetryLimit());
 		bean.setDurationWarningThreshold(deployable.getDurationWarningThreshold());
 		return bean;
