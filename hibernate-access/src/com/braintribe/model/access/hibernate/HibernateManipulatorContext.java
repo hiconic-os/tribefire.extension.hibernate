@@ -87,13 +87,16 @@ public class HibernateManipulatorContext extends AbstractManipulatorContext {
 
 	@Override
 	public GenericEntity createPreliminaryEntity(GenericEntity preliminaryEntityReference) {
-		PreliminaryEntityReference reference = (PreliminaryEntityReference) preliminaryEntityReference;
+		EntityReference reference = (EntityReference) preliminaryEntityReference;
 		EntityType<GenericEntity> entityType = typeReflection.getType(reference.getTypeSignature());
 		GenericEntity entity = entityType.createPlainRaw();
 
 		String partition = reference.getRefPartition();
 		if (partition != null)
 			entity.setPartition(partition);
+
+		if (reference instanceof PersistentEntityReference)
+			entity.setId(reference.getRefId());
 
 		references.put(reference, entity);
 

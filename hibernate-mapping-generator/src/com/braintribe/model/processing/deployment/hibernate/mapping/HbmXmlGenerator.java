@@ -16,7 +16,6 @@ import static com.braintribe.utils.lcd.CollectionTools2.isEmpty;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Function;
 
 import com.braintribe.logging.Logger;
 import com.braintribe.model.processing.deployment.hibernate.mapping.db.NamingStrategyProvider;
@@ -104,7 +103,7 @@ class HbmXmlGenerator {
 		}
 		
 		for (EntityDescriptor ed : entityDescriptors) {
-			SourceDescriptor sd = context.generateJpaOrm? //
+			SourceDescriptor sd = context.generateJpaOrm ? //
 					OrmXmlFastRenderer.renderEntityType(ed): //
 					HbmXmlFastRenderer.renderEntityType(ed);
 			
