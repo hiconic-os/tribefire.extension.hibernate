@@ -37,10 +37,10 @@ public enum HibernateDbVendor implements EnumBase {
 	Teradata,
 	TimesTen;
 
-	public final static EnumType T = EnumTypes.T(HibernateDbVendor.class);
+	public final static EnumType<HibernateDbVendor> T = EnumTypes.T(HibernateDbVendor.class);
 
 	@Override
-	public EnumType type() {
+	public EnumType<HibernateDbVendor> type() {
 		return T;
 	}
 

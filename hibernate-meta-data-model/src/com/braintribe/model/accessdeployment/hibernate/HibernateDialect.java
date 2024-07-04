@@ -97,10 +97,10 @@ public enum HibernateDialect implements EnumBase {
 	TeradataDialect,
 	TimesTenDialect;
 
-	public static final EnumType T = EnumTypes.T(HibernateDialect.class);
+	public static final EnumType<HibernateDialect> T = EnumTypes.T(HibernateDialect.class);
 
 	@Override
-	public EnumType type() {
+	public EnumType<HibernateDialect> type() {
 		return T;
 	}
 

@@ -25,10 +25,10 @@ public enum CardInternationalCoverage implements EnumBase {
 	DISABLED,
 	NOT_ALLOWED;
 
-	public static final EnumType T = EnumTypes.T(CardInternationalCoverage.class);
+	public static final EnumType<CardInternationalCoverage> T = EnumTypes.T(CardInternationalCoverage.class);
 
 	@Override
-	public EnumType type() {
+	public EnumType<CardInternationalCoverage> type() {
 		return T;
 	}
 
