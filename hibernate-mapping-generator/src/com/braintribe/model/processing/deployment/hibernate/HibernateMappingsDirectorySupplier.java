@@ -125,8 +125,8 @@ public class HibernateMappingsDirectorySupplier implements Supplier<File>, Destr
 	}
 
 	private File newResource() {
-		tempDir = FileTools.createNewTempDir("tf_hbm", modelNamePart(metaModel.getName()) + "_" + System.nanoTime());
-		
+		tempDir = FileTools.createNewTempDir("hiconic", "hibernate", "hbm", modelNamePart(metaModel.getName()) + "_" + System.nanoTime());
+
 		HbmXmlGeneratingService hbmXmlGenerator = new HbmXmlGeneratingService(metaModel, tempDir) //
 			.defaultSchema(defaultSchema) //
 			.defaultCatalog(defaultCatalog) //

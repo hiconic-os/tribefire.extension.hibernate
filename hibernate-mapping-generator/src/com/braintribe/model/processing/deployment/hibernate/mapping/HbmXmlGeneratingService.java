@@ -187,8 +187,6 @@ public class HbmXmlGeneratingService {
 	
 	/**
 	 * Configures the {@link CmdResolver} and also its the GmMetaModel via {@link #setGmMetaModel(GmMetaModel)}
-	 * @param cmdResolver
-	 * @return
 	 */
 	public HbmXmlGeneratingService cmdResolverAndModel(CmdResolver cmdResolver) {
 		context.setCmdResolver(cmdResolver);
