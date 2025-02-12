@@ -40,7 +40,7 @@ limitations under the License.
 
 		<!-- 3rd party -->
 		<V.cglib>2.2</V.cglib>
-		<V.com.fasterxml.jackson.core>2.12.1</V.com.fasterxml.jackson.core>
+		<V.com.fasterxml.jackson.core>2.18.2</V.com.fasterxml.jackson.core>
 		<V.com.h2database>1.4.196</V.com.h2database>
 		<V.com.mchange>0.9.5.5</V.com.mchange>
 		<V.com.microsoft.jdbc>4.0.2206.100</V.com.microsoft.jdbc>
