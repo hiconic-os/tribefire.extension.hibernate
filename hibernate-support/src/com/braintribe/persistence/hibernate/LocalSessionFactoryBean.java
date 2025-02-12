@@ -42,15 +42,12 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 
 import com.braintribe.common.lcd.function.CheckedSupplier;
-import com.braintribe.logging.Logger;
 import com.braintribe.utils.FileTools;
 
 /**
  * A temporary clone of org.springframework.orm.hibernate4.LocalSessionFactoryBean tobe used while the dependency to spring is being removed.
  */
 public class LocalSessionFactoryBean {
-
-	private static final Logger log = Logger.getLogger(LocalSessionFactoryBean.class);
 
 	private DataSource dataSource;
 	private URL[] configLocations;
@@ -253,12 +250,6 @@ public class LocalSessionFactoryBean {
 			result.applyClassLoader(classLoader);
 
 		return result.build();
-	}
-
-	private File requireDirectory(File file) {
-		if (!file.isDirectory())
-			throw new IllegalArgumentException("Mapping directory location [" + file + "] does not denote a directory");
-		return file;
 	}
 
 	/**

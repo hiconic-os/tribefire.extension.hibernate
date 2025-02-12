@@ -70,11 +70,6 @@ import com.braintribe.model.processing.meta.cmd.CmdResolverBuilder;
 import com.braintribe.model.processing.session.api.managed.ModelAccessory;
 import com.braintribe.persistence.hibernate.GmAwareHibernateSessionFactoryBean;
 import com.braintribe.persistence.hibernate.HibernateSessionFactoryBean;
-import com.braintribe.persistence.hibernate.adaptor.CompoundHibernateConfigurationAdaptor;
-import com.braintribe.persistence.hibernate.adaptor.HibernateConfigurationAdaptor;
-import com.braintribe.persistence.hibernate.adaptor.TemporaryFolderCacheAdaptor;
-import com.braintribe.persistence.hibernate.adaptor.XPathAdaptor;
-import com.braintribe.persistence.hibernate.adaptor.XpathAdapterSpecification;
 import com.braintribe.persistence.hibernate.dialects.HibernateDialectMapping;
 import com.braintribe.persistence.hibernate.dialects.HibernateDialectMappings;
 import com.braintribe.persistence.hibernate.sql.HibernateEnhancedDataSource;
@@ -83,7 +78,6 @@ import com.braintribe.wire.api.annotation.Import;
 import com.braintribe.wire.api.annotation.Managed;
 import com.braintribe.wire.api.space.WireSpace;
 
-import net.sf.ehcache.CacheManager;
 import tribefire.extension.hibernate.util.HibernateLoggings;
 import tribefire.module.wire.contract.TribefireWebPlatformContract;
 
@@ -142,7 +136,6 @@ public class HibernateDeployablesSpace implements WireSpace {
 
 		com.braintribe.model.access.hibernate.HibernateAccess bean = new com.braintribe.model.access.hibernate.HibernateAccess();
 		stopWatch.intermediate("Init");
-		currentInstance().onDestroy(() -> shutdownCacheManagerIfNeeded(context)); // CAN'T TOUCH THIS
 		stopWatch.intermediate("OnDestroy");
 		bean.setHibernateSessionFactory(sessionFactory(context));
 		stopWatch.intermediate("SessionFactory");
@@ -156,17 +149,6 @@ public class HibernateDeployablesSpace implements WireSpace {
 		bean.setDurationWarningThreshold(deployable.getDurationWarningThreshold());
 		return bean;
 
-	}
-
-	/**
-	 * The {@link CacheManager} must be fetched and closed like this because Hibernate's {@link SessionFactory} constructor might fail (e.g. when
-	 * there is a problem with mappings) after the CM was already created. Yes, the SessionFactory does not do a proper cleanup, so there is an
-	 * existing CM with some threads and we have to take care of it.
-	 */
-	private void shutdownCacheManagerIfNeeded(ExpertContext<HibernateAccess> context) {
-		CacheManager cacheManager = CacheManager.getCacheManager(cacheName(context));
-		if (cacheManager != null)
-			cacheManager.shutdown();
 	}
 
 	@Managed
@@ -215,11 +197,6 @@ public class HibernateDeployablesSpace implements WireSpace {
 		bean.setDefaultSchema(deployable.getDefaultSchema());
 		bean.setDefaultCatalog(deployable.getDefaultCatalog());
 		bean.setDefaultBatchFetchSize(30);
-
-		bean.setUseQueryCache(!TribefireRuntime.isClustered());
-		bean.setUseSecondLevelCache(!TribefireRuntime.isClustered());
-		bean.setRegionFactory("ehcache");
-		bean.setConfigAdaptor(configAdaptor(context));
 
 		// Setting the additional properties last as these must be prioritized over inferred default values.
 		bean.setAdditionalProperties(deployable.getProperties());
@@ -325,41 +302,6 @@ public class HibernateDeployablesSpace implements WireSpace {
 		bean.add(IdGenerator.class, String.class, new UuidGenerator());
 		bean.add(IdGenerator.class, Date.class, new DateIdGenerator());
 		return bean;
-	}
-
-	@Managed
-	private HibernateConfigurationAdaptor configAdaptor(ExpertContext<HibernateAccess> context) {
-		CompoundHibernateConfigurationAdaptor bean = new CompoundHibernateConfigurationAdaptor();
-		// @formatter:off
-		bean.setAdaptors(
-				list(
-					cacheNameAdaptor(context), 
-					cacheFolderAdaptor(context)
-				)
-			);
-		// @formatter:on
-		return bean;
-	}
-
-	@Managed
-	private HibernateConfigurationAdaptor cacheNameAdaptor(ExpertContext<HibernateAccess> context) {
-		XPathAdaptor bean = new XPathAdaptor();
-		bean.setSpecifications(Set.of(new XpathAdapterSpecification("/ehcache", "name", cacheName(context))));
-		return bean;
-	}
-
-	private String cacheName(ExpertContext<HibernateAccess> context) {
-		return "cacheManager-deployed-" + context.getDeployableExternalId();
-	}
-
-	@Managed
-	private HibernateConfigurationAdaptor cacheFolderAdaptor(@SuppressWarnings("unused") ExpertContext<HibernateAccess> context) {
-		try {
-			TemporaryFolderCacheAdaptor bean = new TemporaryFolderCacheAdaptor();
-			return bean;
-		} catch (Exception e) {
-			throw Exceptions.unchecked(e, "Error creating temporary folder cache adaptor");
-		}
 	}
 
 	private void configureGeneratedMappings(ExpertContext<HibernateAccess> context, HibernateSessionFactoryBean bean, StopWatch stopWatch) {
