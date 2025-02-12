@@ -22,7 +22,7 @@ import com.braintribe.model.generic.reflection.EnumTypes;
 /**
  * @author peter.gazdik
  */
-public enum BasicColor implements EnumBase {
+public enum BasicColor implements EnumBase<BasicColor> {
 
 	red,
 	green,
