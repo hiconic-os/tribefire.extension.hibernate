@@ -16,7 +16,6 @@
 package tribefire.extension.hibernate.wire.space;
 
 import static com.braintribe.wire.api.scope.InstanceConfiguration.currentInstance;
-import static com.braintribe.wire.api.util.Lists.list;
 
 import java.io.File;
 import java.util.Date;
@@ -24,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -116,17 +114,32 @@ public class HibernateDeployablesSpace implements WireSpace {
 	private HibernateEnhancedDataSource hibernateEnhancedConnectionPool(ExpertContext<HibernateEnhancedConnectionPool> context) {
 		HibernateEnhancedConnectionPool deployable = context.getDeployable();
 
-		HibernateComponent componentDenotation = deployable.getHibernateComponent();
-		DatabaseConnectionPool connectorDenotation = componentDenotation.getConnector();
+		HibernateComponent componentDeno = deployable.getHibernateComponent();
+		DatabaseConnectionPool connectorDeno = componentDeno.getConnector();
 
-		DataSource dataSoure = context.resolve(connectorDenotation, DatabaseConnectionPool.T);
-		com.braintribe.model.access.hibernate.HibernateComponent component = context.resolve(componentDenotation, HibernateComponent.T);
+		DataSource dataSoure = context.resolve(connectorDeno, DatabaseConnectionPool.T);
+		com.braintribe.model.access.hibernate.HibernateComponent component = context.resolve(componentDeno, HibernateComponent.T);
 
 		HibernateEnhancedDataSource bean = new HibernateEnhancedDataSource();
+		bean.setName("HibernateEnhancedDataSource for " + componentDeno.entityType().getShortName() + "(" + componentDeno.getExternalId() + ")");
 		bean.setDelegate(dataSoure);
-		bean.setSessionFactory(component.getSessionFactory());
+		bean.setSessionFactorySupplier(() -> resolveSessionFactory(deployable, componentDeno, component));
 
 		return bean;
+	}
+
+	private SessionFactory resolveSessionFactory(//
+			HibernateEnhancedConnectionPool deployable, //
+			HibernateComponent componentDenotation, //
+			com.braintribe.model.access.hibernate.HibernateComponent component) {
+
+		try {
+			return component.getSessionFactory();
+
+		} catch (Exception e) {
+			throw Exceptions.unchecked(e, "Error while retrieving Hibernate SessionFactory for hibernateComponent:\n\t" + componentDenotation
+					+ "\nof HibernateEnhancedConnectionPool:\n\t" + deployable);
+		}
 	}
 
 	@Managed

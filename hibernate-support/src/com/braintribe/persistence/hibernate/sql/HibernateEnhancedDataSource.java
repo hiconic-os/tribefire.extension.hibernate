@@ -15,6 +15,8 @@
 // ============================================================================
 package com.braintribe.persistence.hibernate.sql;
 
+import java.util.function.Supplier;
+
 import org.hibernate.SessionFactory;
 
 import com.braintribe.cfg.Required;
@@ -27,15 +29,23 @@ import com.braintribe.util.jdbc.SchemaEnsuringDataSource;
  */
 public class HibernateEnhancedDataSource extends SchemaEnsuringDataSource {
 
-	private SessionFactory sessionFactory;
+	private String name; 
+	private Supplier<SessionFactory> sessionFactorySupplier;
 
-	// @formatter:off
-	@Required public void setSessionFactory(SessionFactory sessionFactory) { this.sessionFactory = sessionFactory; }
-	// @formatter:on
+	@Required
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	@Required
+	public void setSessionFactorySupplier(Supplier<SessionFactory> sessionFactorySupplier) {
+		this.sessionFactorySupplier = sessionFactorySupplier;
+	}
 
+	// This method is guaranteed only be called once
 	@Override
 	protected void updateSchema() {
-		sessionFactory.openStatelessSession().close();
+		sessionFactorySupplier.get().openStatelessSession().close();
 	}
 
 }
