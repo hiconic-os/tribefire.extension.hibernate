@@ -29,7 +29,8 @@ import com.braintribe.util.jdbc.SchemaEnsuringDataSource;
  */
 public class HibernateEnhancedDataSource extends SchemaEnsuringDataSource {
 
-	private String name; 
+	@SuppressWarnings("unused")
+	private String name; // For debugging?
 	private Supplier<SessionFactory> sessionFactorySupplier;
 
 	@Required
@@ -42,7 +43,7 @@ public class HibernateEnhancedDataSource extends SchemaEnsuringDataSource {
 		this.sessionFactorySupplier = sessionFactorySupplier;
 	}
 
-	// This method is guaranteed only be called once
+	// This method is guaranteed to only be called once
 	@Override
 	protected void updateSchema() {
 		sessionFactorySupplier.get().openStatelessSession().close();

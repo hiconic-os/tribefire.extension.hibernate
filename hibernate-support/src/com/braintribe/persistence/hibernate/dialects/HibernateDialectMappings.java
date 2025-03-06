@@ -71,6 +71,11 @@ public class HibernateDialectMappings {
 					DB2Dialect.class
 			),
 			mapping(
+					"(?i)H2\sVersion.*", // e.g. H2 Version:2.2.224 (2023-09-17)
+					"H2", 
+					H2Dialect.class
+			),
+			mapping(
 					"(?i).*microsoft sql server.*Version\\:9\\..*", 
 					"mssql", 
 					SQLServer2005Dialect.class
