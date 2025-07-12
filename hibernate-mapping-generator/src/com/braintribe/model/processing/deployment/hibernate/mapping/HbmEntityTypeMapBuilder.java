@@ -96,12 +96,9 @@ public class HbmEntityTypeMapBuilder {
 		categorizeEntities();
 
 		if (log.isDebugEnabled()) {
-
 			StringBuilder entityClassification = new StringBuilder();
-			for (Map.Entry<String, HbmEntityType> hbmEntityTypeEntry : hbmEntityTypes.entrySet()) {
-				entityClassification.append("[" + hbmEntityTypeEntry.getKey() + "]: " + hbmEntityTypeEntry.getValue().getTypeCategory())
-						.append("\r\n");
-			}
+			for (Map.Entry<String, HbmEntityType> e : hbmEntityTypes.entrySet())
+				entityClassification.append("[" + e.getKey() + "]: " + e.getValue().getTypeCategory()).append("\n");
 
 			log.debug("Entities' Hibernate Categorization:\r\n" + entityClassification.toString());
 
@@ -148,10 +145,10 @@ public class HbmEntityTypeMapBuilder {
 			}
 		}
 
-		if (log.isDebugEnabled())
-			log.debug("Top-level classes selection - Instantiable leaf node enlisted:\n" + nodes.stream() //
+		if (log.isDebugEnabled() && !nodes.isEmpty())
+			log.debug("Top-level classes selection - Instantiable leaf node enlisted:\n\t" + nodes.stream() //
 					.map(hbmEt -> hbmEt.getType().getTypeSignature()) //
-					.collect(Collectors.joining("\n")) //
+					.collect(Collectors.joining("\n\t")) //
 			);
 	}
 
@@ -165,10 +162,10 @@ public class HbmEntityTypeMapBuilder {
 			}
 		}
 
-		if (log.isDebugEnabled())
-			log.debug("Top-level classes selection - Forced mapping:\n" + nodes.stream() //
+		if (log.isDebugEnabled() && !nodes.isEmpty())
+			log.debug("Top-level classes selection - Forced mapping:\n\t" + nodes.stream() //
 					.map(hbmEt -> hbmEt.getType().getTypeSignature()) //
-					.collect(Collectors.joining("\n")) //
+					.collect(Collectors.joining("\n\t")) //
 			);
 	}
 
@@ -178,7 +175,8 @@ public class HbmEntityTypeMapBuilder {
 		for (String memberReferencedType : types)
 			applyTopLevelCandidate(memberReferencedType);
 
-		log.debug(() -> "Top-level classes selection - Referenced type enlisted:\n" + types.stream().collect(Collectors.joining("\n")));
+		if (log.isDebugEnabled() && !types.isEmpty())
+			log.debug("Top-level classes selection - Referenced type enlisted:\n\t" + types.stream().collect(Collectors.joining("\n\t")));
 	}
 
 	/**
