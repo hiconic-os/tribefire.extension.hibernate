@@ -18,6 +18,7 @@ package com.braintribe.model.processing.deployment.hibernate.mapping;
 import static com.braintribe.utils.lcd.CollectionTools2.first;
 import static com.braintribe.utils.lcd.CollectionTools2.newLinkedMap;
 import static com.braintribe.utils.lcd.CollectionTools2.newLinkedSet;
+import static com.braintribe.utils.lcd.CollectionTools2.newList;
 import static com.braintribe.utils.lcd.CollectionTools2.newMap;
 import static com.braintribe.utils.lcd.CollectionTools2.newSet;
 import static java.util.Collections.emptyMap;
@@ -28,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -136,31 +138,47 @@ public class HbmEntityTypeMapBuilder {
 	}
 
 	private void enlistLeafNodeTopLevelCandidates() {
-		for (Map.Entry<String, HbmEntityType> hbmEntityTypeEntry : hbmEntityTypes.entrySet()) {
-			bindFlattenedHierarchy(hbmEntityTypeEntry.getValue());
-			if (hbmEntityTypeEntry.getValue().getSubTypes().isEmpty()
-					&& !Boolean.TRUE.equals(hbmEntityTypeEntry.getValue().getType().getIsAbstract())) {
-				log.trace(() -> "Top-level classes selection: Instantiable leaf node enlisted: "
-						+ hbmEntityTypeEntry.getValue().getType().getTypeSignature());
-				topLevelCandidates.add(hbmEntityTypeEntry.getValue().getType().getTypeSignature());
+		List<HbmEntityType> nodes = newList();
+
+		for (HbmEntityType hbmEntityType : hbmEntityTypes.values()) {
+			bindFlattenedHierarchy(hbmEntityType);
+			if (hbmEntityType.getSubTypes().isEmpty() && !hbmEntityType.getType().getIsAbstract()) {
+				nodes.add(hbmEntityType);
+				topLevelCandidates.add(hbmEntityType.getType().getTypeSignature());
 			}
 		}
+
+		if (log.isDebugEnabled())
+			log.debug("Top-level classes selection - Instantiable leaf node enlisted:\n" + nodes.stream() //
+					.map(hbmEt -> hbmEt.getType().getTypeSignature()) //
+					.collect(Collectors.joining("\n")) //
+			);
 	}
 
 	private void enlistForcedMappingEntities() {
-		for (Map.Entry<String, HbmEntityType> hbmEntityTypeEntry : hbmEntityTypes.entrySet()) {
-			if (MappingHelper.isForcedMappingEntity(hbmEntityTypeEntry.getValue().getType(), context.getMappingMetaDataResolver())) {
-				log.debug(() -> "Top-level classes selection: Forced mapping: " + hbmEntityTypeEntry.getValue().getType().getTypeSignature());
-				applyTopLevelCandidate(hbmEntityTypeEntry.getValue().getType().getTypeSignature());
+		List<HbmEntityType> nodes = newList();
+
+		for (HbmEntityType hbmEntityType : hbmEntityTypes.values()) {
+			if (MappingHelper.isForcedMappingEntity(hbmEntityType.getType(), context.getMappingMetaDataResolver())) {
+				nodes.add(hbmEntityType);
+				applyTopLevelCandidate(hbmEntityType.getType().getTypeSignature());
 			}
 		}
+
+		if (log.isDebugEnabled())
+			log.debug("Top-level classes selection - Forced mapping:\n" + nodes.stream() //
+					.map(hbmEt -> hbmEt.getType().getTypeSignature()) //
+					.collect(Collectors.joining("\n")) //
+			);
 	}
 
 	private void enlistMemberReferencedTopLevelCandidates() throws UnmappableModelException {
-		for (String memberReferencedType : CollectionsUtils.nullSafe(memberReferencedTypes())) {
-			log.debug(() -> "Top-level classes selection: Referenced type enlisted: " + memberReferencedType);
+		Set<String> types = memberReferencedTypes();
+
+		for (String memberReferencedType : types)
 			applyTopLevelCandidate(memberReferencedType);
-		}
+
+		log.debug(() -> "Top-level classes selection - Referenced type enlisted:\n" + types.stream().collect(Collectors.joining("\n")));
 	}
 
 	/**
@@ -408,8 +426,7 @@ public class HbmEntityTypeMapBuilder {
 		int propertiesIntroduced = -1;
 		for (String commonSuperType : types) {
 			propertiesIntroduced = (hbmEntityTypes.get(commonSuperType).getType().getProperties() != null)
-					? hbmEntityTypes.get(commonSuperType).getType().getProperties().size()
-					: 0;
+					? hbmEntityTypes.get(commonSuperType).getType().getProperties().size() : 0;
 			inheritedPropertiesRank.put(commonSuperType, propertiesIntroduced);
 		}
 
