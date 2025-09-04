@@ -34,6 +34,7 @@ import com.braintribe.model.access.hibernate.base.model.simple.HierarchyBase;
 import com.braintribe.model.access.hibernate.base.model.simple.HierarchySubA;
 import com.braintribe.model.access.hibernate.base.model.simple.HierarchySubB;
 import com.braintribe.model.access.hibernate.base.model.simple.StringIdEntity;
+import com.braintribe.model.access.hibernate.base.model.simple.StringIdWithCascadingEntity;
 import com.braintribe.model.access.hibernate.base.wire.contract.HibernateModelsContract;
 import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaColumn;
@@ -72,6 +73,7 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 			BasicScalarEntity.T, //
 			BasicCollectionEntity.T, //
 			StringIdEntity.T, //
+			StringIdWithCascadingEntity.T, //
 
 			HierarchySubA.T, //
 			HierarchySubB.T, //
@@ -111,6 +113,16 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
 		unmapGlobalIdAndPartition(md);
+
+		md.onEntityType(StringIdWithCascadingEntity.T) //
+				.addPropertyMetaData(StringIdWithCascadingEntity.others, cascadeAll());
+
+		return result;
+	}
+
+	private PropertyMapping cascadeAll() {
+		PropertyMapping result = PropertyMapping.T.create();
+		result.setCascade("all");
 
 		return result;
 	}

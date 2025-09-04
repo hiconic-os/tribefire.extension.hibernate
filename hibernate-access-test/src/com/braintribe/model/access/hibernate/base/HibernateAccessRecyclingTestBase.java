@@ -165,7 +165,7 @@ public abstract class HibernateAccessRecyclingTestBase {
 		hsfb.setShowSql(SHOW_SQL);
 		hsfb.setFormatSql(FORMAT_SQL);
 
-		return HbmTestSessionFactory.newInstance(hsfb.getObject(), false);
+		return HbmTestSessionFactory.newInstance(hsfb.getObject(), COMMIT_HIB_SESSION);
 	}
 
 	private static final Set<String> usedDbNames = newSet();

@@ -18,6 +18,7 @@ package com.braintribe.model.access.hibernate.base.tools;
 import static com.braintribe.utils.lcd.CollectionTools2.newList;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -25,9 +26,15 @@ import javax.sql.DataSource;
 
 import org.hibernate.SessionFactory;
 
+import com.braintribe.common.db.DbTestDataSources;
 import com.braintribe.model.access.hibernate.HibernateAccess;
+import com.braintribe.model.generic.processing.IdGenerator;
 import com.braintribe.model.meta.GmMetaModel;
+import com.braintribe.model.processing.core.expert.api.GmExpertRegistry;
+import com.braintribe.model.processing.core.expert.impl.ConfigurableGmExpertRegistry;
 import com.braintribe.model.processing.deployment.hibernate.HibernateMappingsDirectorySupplier;
+import com.braintribe.model.processing.idgenerator.basic.DateIdGenerator;
+import com.braintribe.model.processing.idgenerator.basic.UuidGenerator;
 import com.braintribe.persistence.hibernate.GmAwareHibernateSessionFactoryBean;
 import com.braintribe.persistence.hibernate.HibernateSessionFactoryBean;
 
@@ -47,7 +54,15 @@ public class HibernateAccessSetupHelper {
 		bean.setAccessId(accessId);
 		bean.setModelSupplier(modelSupplier);
 		bean.setHibernateSessionFactory(hibernateSessionFactory);
+		bean.setExpertRegistry(expertRegistry());
 
+		return bean;
+	}
+
+	private static GmExpertRegistry expertRegistry() {
+		ConfigurableGmExpertRegistry bean = new ConfigurableGmExpertRegistry();
+		bean.add(IdGenerator.class, String.class, new UuidGenerator());
+		bean.add(IdGenerator.class, Date.class, new DateIdGenerator());
 		return bean;
 	}
 
@@ -83,6 +98,10 @@ public class HibernateAccessSetupHelper {
 		bean.setPassword(""); // null causes NPE
 
 		return bean;
+	}
+
+	public static DataSource dataSource_Postgres() {
+		return DbTestDataSources.newPostgres(65432);
 	}
 
 	public static void close() {

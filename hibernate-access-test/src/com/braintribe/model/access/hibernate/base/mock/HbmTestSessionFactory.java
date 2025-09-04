@@ -44,7 +44,7 @@ public interface HbmTestSessionFactory extends SessionFactory {
 		Class<?>[] ifaces = { HbmTestSessionFactory.class };
 		InvocationHandler handler = new CommittingSessionFactoryHandler(delegate);
 
-		return (NonCommittingSessionFactory) Proxy.newProxyInstance(HbmTestSessionFactory.class.getClassLoader(), ifaces, handler);
+		return (HbmTestSessionFactory) Proxy.newProxyInstance(HbmTestSessionFactory.class.getClassLoader(), ifaces, handler);
 	}
 
 	static HbmTestSessionFactory newNonCommitting(SessionFactory delegate) {

@@ -27,7 +27,6 @@ import com.braintribe.model.access.hibernate.base.HibernateAccessRecyclingTestBa
 import com.braintribe.model.access.hibernate.base.HibernateBaseModelTestBase;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicColor;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicScalarEntity;
-import com.braintribe.model.access.hibernate.base.model.simple.StringIdEntity;
 import com.braintribe.model.processing.query.fluent.SelectQueryBuilder;
 import com.braintribe.model.query.SelectQuery;
 
@@ -109,42 +108,4 @@ public class Scalars_HbmTest extends HibernateBaseModelTestBase {
 		resetGmSession();
 	}
 
-	@Test
-	public void withExplicitId() throws Exception {
-		StringIdEntity sie = session.create(StringIdEntity.T);
-		sie.setId("ONE");
-		sie.setName("SIE-1");
-
-		session.commit();
-
-		resetGmSession();
-
-		sie = accessDriver.requireEntityByProperty(StringIdEntity.T, BasicScalarEntity.name, "SIE-1");
-		assertThat(sie.<String> getId()).isEqualTo("ONE");
-		assertThat(sie.getPartition()).isNotEmpty().isEqualTo(access.getAccessId());
-
-	}
-
-	/**
-	 * This makes sense despite partition not being mapped. We make sure the handling of partition change is handled correctly for the references used
-	 * internally.
-	 */
-	@Test
-	public void withExplicitIdAndPartition() throws Exception {
-		assertThat(access.getAccessId()).isNotEmpty();
-
-		StringIdEntity sie = session.create(StringIdEntity.T);
-		sie.setId("ONE");
-		sie.setPartition(access.getAccessId());
-		sie.setName("SIE-1");
-
-		session.commit();
-
-		resetGmSession();
-
-		sie = accessDriver.requireEntityByProperty(StringIdEntity.T, BasicScalarEntity.name, "SIE-1");
-		assertThat(sie.<String> getId()).isEqualTo("ONE");
-		assertThat(sie.getPartition()).isEqualTo(access.getAccessId());
-
-	}
 }

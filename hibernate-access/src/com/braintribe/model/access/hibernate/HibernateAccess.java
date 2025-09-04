@@ -514,8 +514,8 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 			// save preliminary entities after they were manipulated (which allows do mandatory stuff before saving)
 			Map<PreliminaryEntityReference, GenericEntity> preliminaryReferences = refMap(manipulatorContext.getPreliminaryReferenceMap());
 
-			/* collect all preliminary entity references before we save them so that we know which do NOT have an assigned ID. This
-			 * is necessary because save() will create IDs recursively */
+			/* collect all preliminary entity references before we save them so that we know which do NOT have an assigned ID. This is necessary
+			 * because save() will create IDs recursively */
 			Set<GenericEntity> unassignedIdGenericEntities = preliminaryReferences.values().stream() //
 					.filter(e -> e.getId() == null) //
 					.collect(Collectors.toSet());
@@ -528,8 +528,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 				String typeSignature = reference.getTypeSignature();
 
 				if (unassignedIdGenericEntities.contains(newEntity) && !idPropertyIsNative(typeSignature))
-					// We found an unassigned id and the id property is not natively created. Thus we try to ensure the
-					// id value.
+					// newEntity has no id and the id type is not native (won't be assigned by DB)
 					ensureId(newEntity);
 
 				if (hasCompositeId(typeSignature))
@@ -540,6 +539,13 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 								+ " The format for different types is a `GM string` (see ScalarType.instanceToGmString)");
 					else
 						newEntity.setId(CompositeIdValues.from(newEntity.getId()));
+			}
+
+			for (Map.Entry<PreliminaryEntityReference, GenericEntity> entry : preliminaryReferences.entrySet()) {
+				PreliminaryEntityReference reference = entry.getKey();
+				GenericEntity newEntity = entry.getValue();
+
+				String typeSignature = reference.getTypeSignature();
 
 				String info = "Saving entity: " + reference + ". Instance: " + newEntity;
 				log.trace(info);
@@ -562,11 +568,11 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 					// also handle if compositeId
 					inducedManipulations.add(createChangeIdManipulation(reference, newEntity.getId()));
 
+				// TODO wtf is this? what's the point of assigning partition after the entity was already saved?
 				if (newEntity.getPartition() == null) {
 					EntityReference persistentReference = HibernateAccessTools.createReference(newEntity);
 
-					// In case property is mapped, we set it here and thus store in the DB; If not mapped, no foul, no
-					// harm
+					// In case property is mapped, we set it here and thus store in the DB; If not mapped, no foul, no harm
 					ensurePartition(newEntity);
 
 					inducedManipulations.add(createPartitionAssignmentManipulationForReference(persistentReference));

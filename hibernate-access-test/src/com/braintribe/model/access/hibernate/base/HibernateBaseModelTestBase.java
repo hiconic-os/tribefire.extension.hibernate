@@ -19,6 +19,8 @@ import com.braintribe.model.access.hibernate.base.model.simple.BasicEntity;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicScalarEntity;
 import com.braintribe.model.access.hibernate.base.model.simple.HierarchySubA;
 import com.braintribe.model.access.hibernate.base.model.simple.HierarchySubB;
+import com.braintribe.model.access.hibernate.base.model.simple.StringIdEntity;
+import com.braintribe.model.access.hibernate.base.model.simple.StringIdWithCascadingEntity;
 import com.braintribe.model.meta.GmMetaModel;
 
 /**
@@ -27,7 +29,7 @@ import com.braintribe.model.meta.GmMetaModel;
 public abstract class HibernateBaseModelTestBase extends HibernateAccessRecyclingTestBase {
 
 	@Override
-	protected GmMetaModel model() {
+	protected final GmMetaModel model() {
 		return HibernateAccessRecyclingTestBase.hibernateModels.basic_NoPartition();
 	}
 
@@ -51,4 +53,11 @@ public abstract class HibernateBaseModelTestBase extends HibernateAccessRecyclin
 		return create(HierarchySubB.T, name);
 	}
 
+	protected StringIdEntity createSie(String name) {
+		return create(StringIdEntity.T, name);
+	}
+
+	protected StringIdWithCascadingEntity createSieWithCascading(String name) {
+		return create(StringIdWithCascadingEntity.T, name);
+	}
 }
