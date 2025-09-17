@@ -81,7 +81,7 @@ import com.braintribe.model.query.conditions.ValueComparison;
  * 
  * <code><pre>
  * SELECT... FROM Entity e WHERE EXISTS (
- * 		SELECT ee FROM Entity e2 JOIN ee.colors c WHERE e2.id = e.id  AND c IN ('red', 'blue', 'green')
+ * 		SELECT e2 FROM Entity e2 JOIN e2.colors c WHERE e2.id = e.id  AND c IN ('red', 'blue', 'green')
  * )
  * </pre></code>
  * 

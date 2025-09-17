@@ -948,7 +948,7 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 		builder.append(" and ");
 		builder.append(propAlias);
 		builder.append(" in ");
-		encodeSimpleOperand(values, false);
+		encodeOperand(values, true, false);
 		builder.append(")");
 	}
 

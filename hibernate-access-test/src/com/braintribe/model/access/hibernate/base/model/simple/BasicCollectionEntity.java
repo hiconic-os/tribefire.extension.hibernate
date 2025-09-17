@@ -16,6 +16,7 @@
 package com.braintribe.model.access.hibernate.base.model.simple;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.braintribe.model.access.hibernate.base.model.HibernateAccessEntity;
 import com.braintribe.model.generic.reflection.EntityType;
@@ -30,4 +31,8 @@ public interface BasicCollectionEntity extends HibernateAccessEntity {
 
 	Map<BasicCollectionEntity, String> getEntityToString();
 	void setEntityToString(Map<BasicCollectionEntity, String> entityToString);
+
+	Set<BasicColor> getColorsSet();
+	void setColorsSet(Set<BasicColor> colorsSet);
+
 }

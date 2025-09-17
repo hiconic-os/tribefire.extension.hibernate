@@ -26,6 +26,8 @@ import org.junit.Test;
 import com.braintribe.model.access.hibernate.base.HibernateAccessRecyclingTestBase;
 import com.braintribe.model.access.hibernate.base.HibernateBaseModelTestBase;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicCollectionEntity;
+import com.braintribe.model.access.hibernate.base.model.simple.BasicColor;
+import com.braintribe.model.access.hibernate.hql.Intersects;
 import com.braintribe.model.processing.query.fluent.SelectQueryBuilder;
 import com.braintribe.model.query.SelectQuery;
 
@@ -38,12 +40,11 @@ import com.braintribe.model.query.SelectQuery;
  */
 public class Collections_HbmTest extends HibernateBaseModelTestBase {
 
-	private static final String ENTITY_TO_DELETE_NAME = "entityToDelete";
-	private static final String MAP_OWNER_NAME = "mapOwner";
-
 	@Test
 	public void queryOwnerByMapKey() throws Exception {
-		BasicCollectionEntity keyEntity = newCe(ENTITY_TO_DELETE_NAME);
+		String MAP_OWNER_NAME = "mapOwner";
+
+		BasicCollectionEntity keyEntity = newCe("entityToDelete");
 
 		BasicCollectionEntity mapOwner = newCe(MAP_OWNER_NAME);
 		mapOwner.getEntityToString().put(keyEntity, "value");
@@ -64,6 +65,38 @@ public class Collections_HbmTest extends HibernateBaseModelTestBase {
 
 		BasicCollectionEntity e = first(entities);
 		assertThat(e.getName()).isEqualTo(MAP_OWNER_NAME);
+	}
+
+	/**
+	 * Tests a query with a special disjunction eligible for the {@link Intersects} condition, used by
+	 * {@link com.braintribe.model.access.hibernate.hql.DisjunctedInOptimizer}
+	 */
+	@Test
+	public void queryEntityViaIntersectsClaus() throws Exception {
+		BasicCollectionEntity entityWithEnums = newCe("e1");
+
+		entityWithEnums.getColorsSet().addAll(List.of(BasicColor.red));
+
+		commitAndReset();
+
+		// @formatter:off
+		SelectQuery query = new SelectQueryBuilder()
+				.select("e")
+				.from(BasicCollectionEntity.T, "e")
+				.where()
+					.disjunction()
+						.value(BasicColor.red).in().property("e","colorsSet")
+						.value(BasicColor.green).in().property("e","colorsSet")
+					.close()
+				.done();
+		// @formatter:on
+
+		List<BasicCollectionEntity> entities = session.query().select(query).list();
+
+		assertThat(entities).hasSize(1);
+
+		BasicCollectionEntity e = first(entities);
+		assertThat(e.getName()).isEqualTo("e1");
 	}
 
 	private void commitAndReset() {
