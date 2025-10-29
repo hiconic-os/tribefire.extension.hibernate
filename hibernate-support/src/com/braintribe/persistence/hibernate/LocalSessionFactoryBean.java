@@ -141,6 +141,7 @@ public class LocalSessionFactoryBean {
 	 * @see org.hibernate.cfg.Configuration#addDirectory(java.io.File)
 	 */
 	public void setMappingDirectoryLocations(File... mappingDirectoryLocations) {
+		// This is actually used, with exactly one folder...
 		this.mappingDirectoryLocations = mappingDirectoryLocations;
 	}
 

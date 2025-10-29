@@ -94,14 +94,24 @@ public class HibernateAccessSetupHelper {
 
 		// DB_CLOSE_DELAY -> https://stackoverflow.com/questions/5763747/h2-in-memory-database-table-not-found
 		bean.setUrl("jdbc:h2:mem:" + dbName + ";DB_CLOSE_DELAY=-1");
-		bean.setUser("sa");
-		bean.setPassword(""); // null causes NPE
+
+		return bean;
+	}
+
+	public static DataSource dataSource_H2_File(String relativeFileName) {
+		org.h2.jdbcx.JdbcDataSource bean = new org.h2.jdbcx.JdbcDataSource();
+
+		bean.setUrl("jdbc:h2:file:" + new File(relativeFileName).getAbsolutePath() + ";DB_CLOSE_DELAY=-1");
 
 		return bean;
 	}
 
 	public static DataSource dataSource_Postgres() {
-		return DbTestDataSources.newPostgres(65432);
+		return dataSource_Postgres(65432);
+	}
+
+	public static DataSource dataSource_Postgres(int port) {
+		return DbTestDataSources.newPostgres(port);
 	}
 
 	public static void close() {

@@ -407,7 +407,7 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 	private void renderDiscriminatorMaybe(PropertyDescriptor pd) {
 		EntityDescriptor ped = pd.entityDescriptor;
 		if (pd.isIdProperty && ped.isTopLevel && ped.hasSubTypes) {
-			print("<discriminator");
+			openTag("discriminator");
 			if (empty(ped.discriminatorFormula)) {
 				attr("column", ped.getQuotedDiscriminatorColumnName());
 				attr("type", valueOrDefault(ped.discriminatorType, "string"));

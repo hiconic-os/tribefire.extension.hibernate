@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.braintribe.model.access.hibernate.base.model.acl.AclHaTestEntity;
+import com.braintribe.model.access.hibernate.base.model.index.IndexedEntity;
+import com.braintribe.model.access.hibernate.base.model.index.ReferencedEntity;
 import com.braintribe.model.access.hibernate.base.model.n8ive.AmbiguousEntity;
 import com.braintribe.model.access.hibernate.base.model.n8ive.Player;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicCollectionEntity;
@@ -52,6 +54,7 @@ import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.meta.GmType;
 import com.braintribe.model.meta.data.MetaData;
 import com.braintribe.model.meta.data.constraint.TypeSpecification;
+import com.braintribe.model.meta.data.query.Index;
 import com.braintribe.model.processing.meta.editor.BasicModelMetaDataEditor;
 import com.braintribe.model.processing.meta.editor.ModelMetaDataEditor;
 import com.braintribe.model.processing.meta.oracle.BasicModelOracle;
@@ -90,15 +93,20 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 			AmbiguousEntity.T, //
 			com.braintribe.model.access.hibernate.base.model.n8ive.sub.AmbiguousEntity.T //
 	);
-	
+
 	private static final List<EntityType<?>> graphTypes = asList( //
 			GraphNodeEntity.T //
 	);
-	
+
 	private static final List<EntityType<?>> aclTypes = asList( //
 			Acl.T,
 			AclHaTestEntity.T //
 			
+	);
+
+	private static final List<EntityType<?>> indexedTypes = asList( //
+			IndexedEntity.T, //
+			ReferencedEntity.T //
 	);
 	// @formatter:on
 
@@ -208,6 +216,23 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 		return result;
 	}
 
+	@Override
+	public GmMetaModel indexed() {
+		GmMetaModel result = indexedRaw();
+
+		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
+		unmapGlobalIdAndPartition(md);
+
+		Index index = Index.T.create();
+
+		md.onEntityType(IndexedEntity.T) //
+				.addPropertyMetaData("str", index) //
+				.addPropertyMetaData("ref", index) //
+				.addPropertyMetaData("strSet", index);
+
+		return result;
+	}
+
 	// ###################################################
 	// ## . . . . . . . Mapping helpers . . . . . . . . ##
 	// ###################################################
@@ -242,6 +267,13 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 	private GmMetaModel graphRaw() {
 		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:graph-model", graphTypes);
+		addMd(result, null);
+
+		return result;
+	}
+
+	private GmMetaModel indexedRaw() {
+		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:index-model", indexedTypes);
 		addMd(result, null);
 
 		return result;

@@ -15,7 +15,6 @@
 // ============================================================================
 package com.braintribe.model.processing.deployment.hibernate.mapping.render.context;
 
-import com.braintribe.model.meta.GmEnumType;
 import com.braintribe.model.meta.GmProperty;
 import com.braintribe.model.meta.GmType;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
@@ -44,7 +43,7 @@ public class EnumDescriptor extends PropertyDescriptor {
 	private static String resolveEnumClass(GmProperty gmProperty) {
 		GmType type = gmProperty.getType();
 		if (type.isGmEnum())
-			return ((GmEnumType) type).getTypeSignature();
+			return type.getTypeSignature();
 		else
 			return null;
 	}

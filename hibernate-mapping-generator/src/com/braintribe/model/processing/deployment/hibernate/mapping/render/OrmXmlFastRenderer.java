@@ -39,6 +39,7 @@ import com.braintribe.model.processing.deployment.hibernate.mapping.render.conte
                                      http://xmlns.jcp.org/xml/ns/persistence/orm_2_2.xsd"
                  version="2.2">
  */
+@SuppressWarnings("unused")
 public class OrmXmlFastRenderer extends AbstractStringifier {
 
 	public static SourceDescriptor renderEntityType(EntityDescriptor entityDescriptor) {

@@ -23,7 +23,7 @@ import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenera
 public abstract class NamingLimitations {
 	
 	HbmXmlGenerationContext context;
-	private final Set<String> reservedWords = new HashSet<String>();
+	private final Set<String> reservedWords = new HashSet<>();
 	private int tableNameMaxLength;
 	private int tableNameNonPrefixedMaxLength;
 	private int columnNameMaxLength;

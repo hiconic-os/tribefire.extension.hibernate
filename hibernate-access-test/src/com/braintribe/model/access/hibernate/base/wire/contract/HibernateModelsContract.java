@@ -15,6 +15,7 @@
 // ============================================================================
 package com.braintribe.model.access.hibernate.base.wire.contract;
 
+import com.braintribe.model.access.hibernate.base.model.index.IndexedEntity;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicEntity;
 import com.braintribe.model.acl.HasAcl;
 import com.braintribe.model.meta.GmMetaModel;
@@ -42,7 +43,10 @@ public interface HibernateModelsContract extends WireSpace {
 	/** Model for testing {@link HasAcl ACL}. */
 	GmMetaModel acl();
 
-	/** Model with a single type that is not on the classpath. */
+	/** Model with a single type that is not on the classpath, to test that dynamically generated type still works with Hibernate access. */
 	GmMetaModel nonClasspath();
+
+	/** Model for testing indices, see {@link IndexedEntity} */
+	GmMetaModel indexed();
 
 }

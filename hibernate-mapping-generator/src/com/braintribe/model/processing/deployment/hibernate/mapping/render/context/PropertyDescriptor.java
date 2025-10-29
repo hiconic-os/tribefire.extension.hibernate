@@ -34,6 +34,7 @@ import com.braintribe.model.meta.data.MetaData;
 import com.braintribe.model.meta.data.constraint.MaxLength;
 import com.braintribe.model.meta.data.constraint.TypeSpecification;
 import com.braintribe.model.meta.data.display.NameConversion;
+import com.braintribe.model.meta.data.query.Index;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
 import com.braintribe.model.processing.deployment.hibernate.mapping.hints.PropertyHint;
 import com.braintribe.model.processing.deployment.hibernate.mapping.utils.ResourceUtils;
@@ -55,6 +56,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	public String explicitType;
 	public String uniqueKey;
 	public String index;
+	public boolean hasIndexMd;
 	public String lazy;
 	public String cascade;
 	public String fetch;
@@ -79,6 +81,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		public JpaPropertyMapping jpaPropertyMapping;
 		public NameConversion nameConversion;
 		public MaxLength maxLength;
+		public Index index;
 	}
 
 	public static PropertyDescriptor create(HbmXmlGenerationContext context, EntityDescriptor descriptor, GmProperty gmProperty) {
@@ -89,6 +92,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		metaData.jpaPropertyMapping = MappingHelper.resolveJpaPropertyMapping(context, descriptor.getGmEntityType(), gmProperty);
 		metaData.nameConversion = propertyMdResolver.meta(NameConversion.T).exclusive();
 		metaData.maxLength = propertyMdResolver.meta(MaxLength.T).exclusive();
+		metaData.index = propertyMdResolver.meta(Index.T).exclusive();
 
 		return create(context, gmProperty, descriptor, metaData);
 	}
@@ -144,8 +148,8 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 			resolveIdGenerator(gmProperty);
 	}
 
-	/* This is just extracted so for now I can override this in ComponentDescriptor and return null - as I do not know
-	 * how nor have the time to do figure out how to do it properly */
+	/* This is just extracted so for now I can override this in ComponentDescriptor and return null - as I do not know how nor have the time to do
+	 * figure out how to do it properly */
 	protected PropertyHint resolvePropertyHint(GmProperty gmProperty, EntityDescriptor descriptor) {
 		return MappingHelper.optionalPropertyHint(descriptor.getEntityHint(), gmProperty.getName()).orElse(null);
 	}
@@ -211,6 +215,9 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 
 		if (metaData.maxLength != null)
 			length = metaData.maxLength.getLength();
+
+		if (metaData.index != null)
+			hasIndexMd = true;
 	}
 
 	protected void applyPropertyMappingMetaData(PropertyMapping propertyMapping) {
@@ -301,15 +308,14 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	}
 
 	/**
-	 * {@link PropertyHint}(s) are applied last, thus, its settings are able to override settings parsed from the
-	 * {@link GmProperty} or from {@link MetaData}(s).
+	 * {@link PropertyHint}(s) are applied last, thus, its settings are able to override settings parsed from the {@link GmProperty} or from
+	 * {@link MetaData}(s).
 	 * <p>
 	 * e.g.:
 	 * <p>
 	 * {@link PropertyHint#type}, if set, will overwrite the type inferred from {@link GmProperty}.
 	 * <p>
-	 * {@link PropertyHint#length}, if set, will overwrite the equivalent configuration from a any {@link MaxLength}
-	 * bound to the {@link GmProperty}.
+	 * {@link PropertyHint#length}, if set, will overwrite the equivalent configuration from a any {@link MaxLength} bound to the {@link GmProperty}.
 	 * 
 	 */
 	private void applyPropertyHint() {
@@ -381,7 +387,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	private static String resolveFkClass(GmProperty gmProperty) {
 		GmType type = gmProperty.getType();
 		if (type instanceof GmEntityType)
-			return ((GmEntityType) type).getTypeSignature();
+			return type.getTypeSignature();
 		else
 			return null;
 	}
@@ -403,7 +409,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	public String getPropertyName() {
 		return gmProperty.getName();
 	}
-	
+
 	public String getQuotedColumnName() {
 		return quoteIdentifier(columnName);
 	}
@@ -419,8 +425,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	}
 
 	/**
-	 * Currently, the only case where column property absolutely must be mapped as read-only is when that column is part
-	 * of a composite id.
+	 * Currently, the only case where column property absolutely must be mapped as read-only is when that column is part of a composite id.
 	 */
 	private void makeColumnReadOnlyIfNeeded() {
 		if (entityDescriptor.isCompositeIdColumn(columnName))
@@ -565,39 +570,35 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	}
 
 	/**
-	 * <p>
-	 * Applies the constraint prefix as given by {@link HbmXmlGenerationContext#indexNamePrefix} to index names
-	 * configured via metadata or hints.
+	 * Applies the index prefix as given by {@link HbmXmlGenerationContext#indexNamePrefix} to index names configured via metadata or hints.
 	 * 
 	 * @param hintedIndexName
-	 *            Constraint name configured via metadata or hints.
-	 * @return The constraint name possibly prefixed.
+	 *            Index name configured via metadata or hints.
+	 * @return The index name possibly prefixed.
 	 */
 	protected String prefixIndexName(String hintedIndexName) {
 		return indexNamePrefix != null ? indexNamePrefix + hintedIndexName : hintedIndexName;
 	}
 
 	/**
-	 * <p>
-	 * Applies the constraint prefix as given by {@link HbmXmlGenerationContext#uniqueKeyNamePrefix} to unique key names
-	 * configured via metadata or hints.
+	 * Applies the unique key prefix as given by {@link HbmXmlGenerationContext#uniqueKeyNamePrefix} to unique key names configured via metadata or
+	 * hints.
 	 * 
 	 * @param hintedUniqueKeyName
-	 *            Constraint name configured via metadata or hints.
-	 * @return The constraint name possibly prefixed.
+	 *            Unique key name configured via metadata or hints.
+	 * @return The unique key name possibly prefixed.
 	 */
 	protected String prefixUniqueKeyName(String hintedUniqueKeyName) {
 		return uniqueKeyNamePrefix != null ? uniqueKeyNamePrefix + hintedUniqueKeyName : hintedUniqueKeyName;
 	}
 
 	/**
-	 * <p>
-	 * Applies the constraint prefix as given by {@link HbmXmlGenerationContext#foreignKeyNamePrefix} to foreign key
-	 * names configured via metadata or hints.
+	 * Applies the foreign key prefix as given by {@link HbmXmlGenerationContext#foreignKeyNamePrefix} to foreign key names configured via metadata or
+	 * hints.
 	 * 
 	 * @param hintedForeignKeyName
-	 *            Constraint name configured via metadata or hints.
-	 * @return The constraint name possibly prefixed.
+	 *            Foreign key name configured via metadata or hints.
+	 * @return The foreign key name possibly prefixed.
 	 */
 	protected String prefixForeignKeyName(String hintedForeignKeyName) {
 		return foreignKeyNamePrefix != null ? foreignKeyNamePrefix + hintedForeignKeyName : hintedForeignKeyName;
