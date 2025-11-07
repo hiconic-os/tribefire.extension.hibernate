@@ -227,8 +227,9 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 		md.onEntityType(IndexedEntity.T) //
 				.addPropertyMetaData("str", index) //
-				.addPropertyMetaData("ref", index) //
-				.addPropertyMetaData("strSet", index);
+				.addPropertyMetaData("entity", index) //
+				.addPropertyMetaData("strSet", index) //
+		;
 
 		return result;
 	}

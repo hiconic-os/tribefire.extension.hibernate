@@ -42,6 +42,7 @@ import com.braintribe.model.access.hibernate.schema.SimpleConnectionUrlProvider;
 import com.braintribe.model.access.hibernate.schema.SimpleSchemaProvider;
 import com.braintribe.model.access.hibernate.schema.auto.DbSchemaUpdateImpl;
 import com.braintribe.model.access.hibernate.schema.auto.SimpleDbSchemaUpdateContextProvider;
+import com.braintribe.model.access.hibernate.schema.meta.DbIndexCreator;
 import com.braintribe.model.access.hibernate.schema.meta.DbUpdateStatementExecutor;
 import com.braintribe.model.accessdeployment.hibernate.HibernateAccess;
 import com.braintribe.model.accessdeployment.hibernate.HibernateComponent;
@@ -61,6 +62,8 @@ import com.braintribe.model.processing.deployment.api.ExpertContext;
 import com.braintribe.model.processing.deployment.api.PlainComponentBinder;
 import com.braintribe.model.processing.deployment.api.binding.DenotationBindingBuilder;
 import com.braintribe.model.processing.deployment.hibernate.HibernateMappingsDirectorySupplier;
+import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
+import com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor;
 import com.braintribe.model.processing.idgenerator.basic.DateIdGenerator;
 import com.braintribe.model.processing.idgenerator.basic.UuidGenerator;
 import com.braintribe.model.processing.meta.cmd.CmdResolver;
@@ -326,6 +329,10 @@ public class HibernateDeployablesSpace implements WireSpace {
 		bean.addAfterSchemaCreationTask(() -> usExecutor.runAfterSchemaCreationTasks());
 
 		stopWatch.intermediate("Configured DbUpdateStatementExecutor");
+
+		File indicesJson = new File(mappingDirectory, HbmXmlGeneratingService.INDICES_JSON_FILE_NAME);
+		if (indicesJson.exists())
+			bean.addAfterSchemaCreationTask(() -> dbIndexCreator(context, indicesJson).createIndices());
 	}
 
 	private DbUpdateStatementExecutor updateStatementExecutor(ExpertContext<HibernateAccess> context, File mappingDirectory) {
@@ -333,6 +340,17 @@ public class HibernateDeployablesSpace implements WireSpace {
 		bean.setContextDescription("HibernateAccess " + context.getDeployable().getExternalId());
 		bean.setDataSource(resolveDataSource(context));
 		bean.setMappingDirectory(mappingDirectory);
+
+		return bean;
+	}
+
+	private DbIndexCreator dbIndexCreator(ExpertContext<HibernateAccess> context, File indicesJson) {
+		List<IndexDescriptor> indexDescriptors = HbmXmlGeneratingService.readIndexDescriptors(indicesJson);
+
+		DbIndexCreator bean = new DbIndexCreator();
+		bean.setContextDescription("HibernateAccess " + context.getDeployable().getExternalId());
+		bean.setDataSource(resolveDataSource(context));
+		bean.setIndexDescriptors(indexDescriptors);
 
 		return bean;
 	}
@@ -391,6 +409,8 @@ public class HibernateDeployablesSpace implements WireSpace {
 	private static class DataSoureInfo {
 		public DataSource dataSource;
 		public Class<? extends Dialect> dialectClass;
+		// currently only used to pass to HBM XML generator for resolving MD
+		// I think the use-cases was to configure DB statements depending on Dialect
 		public HibernateDialect dialect;
 	}
 

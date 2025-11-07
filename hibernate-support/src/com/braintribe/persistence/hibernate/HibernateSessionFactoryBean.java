@@ -90,8 +90,6 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 
 	private final Properties properties = new Properties();
 
-	private DataSource dataSource;
-
 	private String beanName;
 
 	protected boolean updateSchema = true;
@@ -203,12 +201,6 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 
 	public void setAutoCommit(boolean autoCommit) {
 		properties.setProperty(Environment.AUTOCOMMIT, "" + autoCommit);
-	}
-
-	@Override
-	@Required
-	public void setDataSource(DataSource dataSource) {
-		this.dataSource = dataSource;
 	}
 
 	public void setShowSql(boolean showSql) {

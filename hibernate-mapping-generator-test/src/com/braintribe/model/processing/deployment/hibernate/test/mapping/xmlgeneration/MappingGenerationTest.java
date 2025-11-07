@@ -56,6 +56,8 @@ import com.braintribe.utils.IOTools;
  */
 public class MappingGenerationTest {
 
+	private static final String HBM_XML = ".hbm.xml";
+
 	public enum XmlComparisonMode {
 		xmlDiff,
 		custom
@@ -392,14 +394,12 @@ public class MappingGenerationTest {
 	}
 
 	protected void compareMappings(final Path outputPath, final String expectedPathFolder, int expectedItemCount) throws Exception {
-
-		if (!isXmlComparisonEnabled) {
+		if (!isXmlComparisonEnabled)
 			return;
-		}
 
 		System.out.println("Comparing mappings generated in: " + outputPath.toFile());
 
-		int outputItemCount = (outputPath.toFile().list() != null) ? outputPath.toFile().list().length : -1;
+		int outputItemCount = (outputPath.toFile().list() != null) ? outputPath.toFile().list((dir, fileName) -> fileName.endsWith(HBM_XML)).length : -1;
 
 		Assert.assertEquals(expectedItemCount + " maping files are expected, but " + outputItemCount + " were generated", expectedItemCount,
 				outputItemCount);
@@ -412,11 +412,15 @@ public class MappingGenerationTest {
 			XMLUnit.setIgnoreWhitespace(true);
 		}
 
-		Files.walkFileTree(outputPath, new SimpleFileVisitor<Path>() {
+		Files.walkFileTree(outputPath, new SimpleFileVisitor<>() {
 			@Override
 			public FileVisitResult visitFile(Path pathToGenerated, BasicFileAttributes attrs) throws IOException {
+				String fileName = pathToGenerated.getFileName().toString();
+				if (!fileName.endsWith(HBM_XML))
+					return FileVisitResult.CONTINUE;
 
-				String pathToRealExpected = expectedPathFolder + "/" + pathToGenerated.getFileName();
+				
+				String pathToRealExpected = expectedPathFolder + "/" + fileName;
 
 				String generatedXml = new String(Files.readAllBytes(pathToGenerated));
 				String realExpectedXml = getContents(pathToRealExpected);
@@ -436,11 +440,11 @@ public class MappingGenerationTest {
 					boolean similar = xmlsDiff.similar();
 
 					if (similar) {
-						System.out.println(pathToGenerated.getFileName() + ": ok");
+						System.out.println(fileName + ": ok");
 					} else {
-						System.err.println(pathToGenerated.getFileName() + ": INCOMPATIBLE");
+						System.err.println(fileName + ": INCOMPATIBLE");
 
-						String diffDetails = "Comparison failed" + "\r\n incompatible file: " + pathToGenerated.getFileName()
+						String diffDetails = "Comparison failed" + "\r\n incompatible file: " + fileName
 								+ "\r\n generated path:    " + pathToGenerated + "\r\n expected path:     " + pathToRealExpected
 								+ "\r\n diff details:      " + xmlsDiff;
 
@@ -464,7 +468,7 @@ public class MappingGenerationTest {
 						realExpectedXml = generatedXml;
 					}
 
-					Assert.assertEquals(pathToGenerated.getFileName() + ": INCOMPATIBLE", cleanUpXml(realExpectedXml), cleanUpXml(generatedXml));
+					Assert.assertEquals(fileName + ": INCOMPATIBLE", cleanUpXml(realExpectedXml), cleanUpXml(generatedXml));
 
 				}
 
@@ -490,7 +494,6 @@ public class MappingGenerationTest {
 	}
 
 	protected void compareMappings(String expectedFolderSuffix, int totalExpected) throws Exception {
-
 		if (!isXmlComparisonEnabled)
 			return;
 

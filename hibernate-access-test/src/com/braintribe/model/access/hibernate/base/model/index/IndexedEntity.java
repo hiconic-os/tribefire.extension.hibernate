@@ -31,8 +31,8 @@ public interface IndexedEntity extends HibernateAccessEntity {
 	String getStr();
 	void setStr(String str);
 
-	ReferencedEntity getRef();
-	void setRef(ReferencedEntity ref);
+	ReferencedEntity getEntity();
+	void setEntity(ReferencedEntity entity);
 
 	Set<String> getStrSet();
 	void setStrSet(Set<String> strSet);

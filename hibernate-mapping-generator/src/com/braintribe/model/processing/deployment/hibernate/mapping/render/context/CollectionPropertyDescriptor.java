@@ -35,6 +35,8 @@ import com.braintribe.utils.conversion.NameConverter;
  */
 public class CollectionPropertyDescriptor extends PropertyDescriptor {
 
+	public String ownerSimpleName;
+
 	public String many2ManyTable;
 	public String keyColumn;
 	public Boolean keyColumnNotNull;
@@ -93,7 +95,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	}
 
 	private void initCollectionType(EntityDescriptor descriptor, GmType colType, GmType elementType, GmType keyType) {
-		String ownerSimpleName = descriptor.getSimpleName();
+		ownerSimpleName = descriptor.getSimpleName();
 
 		isSimpleCollection = !(elementType instanceof GmEntityType);
 		if (isSimpleCollection) {

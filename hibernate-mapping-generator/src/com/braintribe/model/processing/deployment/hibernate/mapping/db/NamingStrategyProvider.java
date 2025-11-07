@@ -16,16 +16,21 @@
 package com.braintribe.model.processing.deployment.hibernate.mapping.db;
 
 import static com.braintribe.utils.lcd.CollectionTools2.acquireSet;
+import static com.braintribe.utils.lcd.CollectionTools2.newList;
 import static com.braintribe.utils.lcd.CollectionTools2.newMap;
 import static com.braintribe.utils.lcd.CollectionTools2.newSet;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
+import com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor;
+import com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexPurpose;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.CollectionPropertyDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityDescriptor;
+import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.OutputDescriptors;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.PropertyDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.utils.CamelCaseStringShortener;
 import com.braintribe.model.processing.deployment.hibernate.mapping.utils.Suffixer;
@@ -41,16 +46,19 @@ public class NamingStrategyProvider {
 	private final Set<String> reservedIndexNames = newSet();
 	private final Map<String, Set<String>> reservedColumnNames = newMap();
 
-	public NamingStrategyProvider(HbmXmlGenerationContext context, Collection<EntityDescriptor> entityDescriptors) {
+	private final List<IndexDescriptor> indexDescriptors = newList();
+
+	public NamingStrategyProvider(HbmXmlGenerationContext context, OutputDescriptors outputDescriptors) {
 		this.context = context;
-		this.entityDescriptors = entityDescriptors;
+		this.entityDescriptors = outputDescriptors.entityDescriptors;
 		this.namingLimitations = NamingLimitations.create(context);
+
+		outputDescriptors.indexDescriptors = indexDescriptors;
 	}
 
-	public Collection<EntityDescriptor> apply() {
+	public void apply() {
 		registerNonOverwritableNames();
 		provideDataBaseNames();
-		return entityDescriptors;
 	}
 
 	/**
@@ -74,7 +82,7 @@ public class NamingStrategyProvider {
 			registerColumnName(propertyDescriptor.entityDescriptor.tableName, propertyDescriptor.columnName);
 
 		if (propertyDescriptor.index != null)
-			reservedIndexNames.add(propertyDescriptor.index);
+			registerIndexName(propertyDescriptor.index);
 
 		if (propertyDescriptor instanceof CollectionPropertyDescriptor)
 			registerProvidedNames((CollectionPropertyDescriptor) propertyDescriptor);
@@ -104,16 +112,16 @@ public class NamingStrategyProvider {
 	private void provideDataBaseNames() {
 		for (EntityDescriptor entityDescriptor : entityDescriptors) {
 			// if (!entityDescriptor.getDbNamesFromMappingMetadata() && !entityDescriptor.getDbNamesFromGeneratorHistory()) {
-			provideDataBaseNames(entityDescriptor);
+			provideNamesForEntity(entityDescriptor);
 			// }
 			for (PropertyDescriptor propertyDescriptor : entityDescriptor.getProperties()) {
 				// if (propertyDescriptor.getDbNamesFromMappingMetadata() || propertyDescriptor.getDbNamesFromGeneratorHistory()) continue;
-				provideDataBaseNames(propertyDescriptor);
+				provideNamesForProperty(propertyDescriptor);
 			}
 		}
 	}
 
-	private void provideDataBaseNames(EntityDescriptor entityDescriptor) {
+	private void provideNamesForEntity(EntityDescriptor entityDescriptor) {
 		// table names are set only if not previously set
 		if (entityDescriptor.getTableName() == null) {
 			entityDescriptor.setTableName(generateTableName(entityDescriptor.getTableNameBase()));
@@ -127,7 +135,7 @@ public class NamingStrategyProvider {
 		}
 	}
 
-	private void provideDataBaseNames(PropertyDescriptor propertyDescriptor) {
+	private void provideNamesForProperty(PropertyDescriptor propertyDescriptor) {
 		if (propertyDescriptor.columnName == null) {
 			String tableName = propertyDescriptor.entityDescriptor.tableName;
 			propertyDescriptor.setColumnName(generateColumnName(tableName, propertyDescriptor.name));
@@ -137,16 +145,16 @@ public class NamingStrategyProvider {
 		if (propertyDescriptor.hasIndexMd && propertyDescriptor.index == null) {
 			String tableName = propertyDescriptor.entityDescriptor.tableName;
 			String columnName = propertyDescriptor.columnName;
-			propertyDescriptor.index = generateIndexName(tableName, columnName);
+			propertyDescriptor.index = generateAndRegisterIndexName(tableName, columnName);
 		}
 
-		if (propertyDescriptor instanceof CollectionPropertyDescriptor) {
-			provideDataBaseNames((CollectionPropertyDescriptor) propertyDescriptor);
+		if (propertyDescriptor instanceof CollectionPropertyDescriptor cpd) {
+			provideNamesForCollectionProperty(cpd);
+			createIndicesForCollectionProperty(cpd);
 		}
 	}
 
-	private void provideDataBaseNames(CollectionPropertyDescriptor propertyDescriptor) {
-
+	private void provideNamesForCollectionProperty(CollectionPropertyDescriptor propertyDescriptor) {
 		// many2ManyTable is only overwritten if null, as this information could have been provided to the CollectionPropertyDescriptor during its
 		// creation with a PropertyHint
 		String many2ManyTable = propertyDescriptor.getMany2ManyTable();
@@ -178,6 +186,27 @@ public class NamingStrategyProvider {
 		}
 	}
 
+	private void createIndicesForCollectionProperty(CollectionPropertyDescriptor cpd) {
+		String tableName = cpd.many2ManyTable;
+
+		createCollectionRelatedIndex(cpd, tableName, cpd.keyColumn, IndexPurpose.COLLECTION_FOREIGN_KEY);
+
+		if (cpd.hasIndexMd)
+			createCollectionRelatedIndex(cpd, tableName, cpd.elementColumn, IndexPurpose.COLLECTION_ELEMENT);
+	}
+
+	private void createCollectionRelatedIndex(CollectionPropertyDescriptor cpd, String tableName, String keyColumnName, IndexPurpose purpose) {
+		var idxDescriptor = IndexDescriptor.T.create();
+		idxDescriptor.setIndexName(generateAndRegisterCollectionIndexName(cpd.ownerSimpleName, tableName, keyColumnName));
+		idxDescriptor.setTableName(tableName);
+		idxDescriptor.setColumnName(keyColumnName);
+		idxDescriptor.setEntityTypeSignature(cpd.entityDescriptor.fullName);
+		idxDescriptor.setPropertyName(cpd.getPropertyName());
+		idxDescriptor.setPurpose(purpose);
+
+		indexDescriptors.add(idxDescriptor);
+	}
+
 	private String generateTableName(String coreTableName) {
 		coreTableName = removeIllegalTableNameChar(coreTableName);
 		if (nonPrefixedTableNameExceedsMaxLength(coreTableName)) {
@@ -194,12 +223,27 @@ public class NamingStrategyProvider {
 		return applyConfiguredCase(uniqueColumnName(tableName, columnName));
 	}
 
-	private String generateIndexName(String tableName, String columnName) {
+	private String generateAndRegisterCollectionIndexName(String ownerSimpleName, String tableName, String columnName) {
+		// Just to make the index name shorter in case we use auto-generated table and column name
+		// In that case:
+		// tableName = "${OwnerSimpleName}${PropertyName}"
+		// columnName = "${OwnerSimpleName}Id"
+		// So we use only "Id" for index name from the column name
+		if (tableName.startsWith(ownerSimpleName) && columnName.startsWith(ownerSimpleName))
+			columnName = columnName.substring(ownerSimpleName.length());
+
+		return generateAndRegisterIndexName(tableName, columnName);
+	}
+
+	private String generateAndRegisterIndexName(String tableName, String columnName) {
 		String indexName = deriveIndexName(tableName, columnName);
 		if (indexNameExceedsMaxLength(indexName))
 			indexName = generateShortEnoughIndexName(tableName, columnName);
 
-		return applyConfiguredCase(uniqueIndexName(indexName));
+		String result = applyConfiguredCase(uniqueIndexName(indexName));
+		registerIndexName(result);
+
+		return result;
 	}
 
 	private String generateShortEnoughIndexName(String tableName, String columnName) {
@@ -225,6 +269,10 @@ public class NamingStrategyProvider {
 
 	private void registerTableName(String tableName) {
 		reservedTableNames.add(tableName.toUpperCase());
+	}
+
+	private boolean registerIndexName(String indexName) {
+		return reservedIndexNames.add(indexName.toUpperCase());
 	}
 
 	private void registerColumnNameIfAssigned(String tableName, String maybeColumnName) {

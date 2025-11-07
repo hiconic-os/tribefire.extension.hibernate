@@ -949,7 +949,7 @@ public class MappingGenerationFromLocalModelsTest {
 	}
 
 	private void assertMapping(String testName, List<EntityType<?>> entityTypes) throws Exception {
-		int totalMappings = tempFolder.getRoot().list().length;
+		int totalMappings = tempFolder.getRoot().list((dir, fileName) ->  fileName.endsWith(".hbm.xml")).length;
 		int expectedMappings = entityTypes.size();
 
 		Assert.assertEquals(totalMappings + " mapping files were generated, but " + expectedMappings + " were expected", expectedMappings,

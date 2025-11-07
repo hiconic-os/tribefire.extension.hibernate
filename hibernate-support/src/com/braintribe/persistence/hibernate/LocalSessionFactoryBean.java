@@ -49,18 +49,18 @@ import com.braintribe.utils.FileTools;
  */
 public class LocalSessionFactoryBean {
 
-	private DataSource dataSource;
-	private URL[] configLocations;
-	private URL[] mappingLocations;
-	private List<Supplier<InputStream>> mappingInputSuppliers;
-	private File[] cacheableMappingLocations;
-	private File[] mappingJarLocations;
-	private File[] mappingDirectoryLocations;
-	private Interceptor entityInterceptor;
-	private Properties hibernateProperties;
-	private ClassLoader classLoader;
-	private Configuration configuration;
-	private SessionFactory sessionFactory;
+	protected DataSource dataSource;
+	protected URL[] configLocations;
+	protected URL[] mappingLocations;
+	protected List<Supplier<InputStream>> mappingInputSuppliers;
+	protected File[] cacheableMappingLocations;
+	protected File[] mappingJarLocations;
+	protected File[] mappingDirectoryLocations;
+	protected Interceptor entityInterceptor;
+	protected Properties hibernateProperties;
+	protected ClassLoader classLoader;
+	protected Configuration configuration;
+	protected SessionFactory sessionFactory;
 
 	/**
 	 * Set the DataSource to be used by the SessionFactory. If set, this will override corresponding settings in Hibernate properties.

@@ -15,8 +15,6 @@
 // ============================================================================
 package com.braintribe.model.access.hibernate.base.model.index;
 
-import java.util.Set;
-
 import com.braintribe.model.access.hibernate.base.model.HibernateAccessEntity;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EntityTypes;
@@ -27,11 +25,5 @@ import com.braintribe.model.generic.reflection.EntityTypes;
 public interface ReferencedEntity extends HibernateAccessEntity {
 
 	EntityType<ReferencedEntity> T = EntityTypes.T(ReferencedEntity.class);
-
-	String getStr();
-	void setStr(String str);
-
-	Set<String> getStrSet();
-	void setStrSet(Set<String> strSet);
 
 }

@@ -884,7 +884,24 @@ Will result in the following mappings for these properties:
 
 
 ## INDICES
-TODO
+
+Property can be marked as indexed in two ways:
+* Using the `index` property of `PropertyMapping` MD.
+* Using the * `com.braintribe.model.meta.data.query.Index` MD, which can be specified with the `@Indexed` annotation.
+
+If a simple value or an entity property are indexed, generator takes the index name or generates one (if `Index` MD is used) and writes the index name into the XML file.
+
+```xml
+<property name="myProp" column="myprop" type="string" index="IxMyPropMyEntity" />
+```
+
+If a collection is used, meaning there is another table for the values of this collection, then the information that this index should be created is written into a special file - `indices.json` - in the generated mappings folder. This file contains a `List<IndexDescriptor>`.
+
+This file automatically read when deploying the access and indices are created.
+
+**NOTE:** For every collection table we automatically create an index on the the foreign key column, i.e. the column that stored ids for the owner of the collection. This index also goes the `indices.json` path.
+
+###
 
 ## GENERAL KNOWN LIMITATIONS
 

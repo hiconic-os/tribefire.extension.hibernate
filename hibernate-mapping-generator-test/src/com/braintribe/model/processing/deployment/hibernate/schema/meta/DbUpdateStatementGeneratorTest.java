@@ -19,7 +19,6 @@ import static com.braintribe.utils.lcd.CollectionTools2.asList;
 import static com.braintribe.utils.lcd.CollectionTools2.asSet;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +47,7 @@ import com.braintribe.model.processing.deployment.hibernate.mapping.db.NamingStr
 import com.braintribe.model.processing.deployment.hibernate.mapping.exception.HbmXmlGeneratorException;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityDescriptorFactory;
+import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.OutputDescriptors;
 import com.braintribe.model.processing.deployment.hibernate.mapping.wrapper.HbmEntityType;
 import com.braintribe.model.processing.meta.editor.BasicModelMetaDataEditor;
 import com.braintribe.model.processing.meta.editor.ModelMetaDataEditor;
@@ -72,7 +72,6 @@ public class DbUpdateStatementGeneratorTest {
 
 	private HbmXmlGenerationContext context;
 	private GmMetaModel metaModel;
-	private Collection<EntityDescriptor> entityDescriptors;
 	private boolean before = false;
 
 	private static final String EMPTY = "";
@@ -118,8 +117,6 @@ public class DbUpdateStatementGeneratorTest {
 	@Before
 	public void setu() {
 		context = new HbmXmlGenerationContext();
-
-		entityDescriptors = new ArrayList<>();
 
 		tempDir = tempFolder.getRoot();
 		context.outputFolder = tempDir;
@@ -424,18 +421,21 @@ public class DbUpdateStatementGeneratorTest {
 
 		context.setGmMetaModel(metaModel);
 
-		prepareEntityDescriptors();
+		Collection<EntityDescriptor> entityDescriptors = prepareEntityDescriptors();
 
 		DbUpdateStatementGenerator.run(context, entityDescriptors);
 	}
 
-	private void prepareEntityDescriptors() {
+	private Collection<EntityDescriptor> prepareEntityDescriptors() {
 		try {
 			// simulate the steps from HbmXmlGenerator
 			Map<String, HbmEntityType> hbmEntityTypeMap = new HbmEntityTypeMapBuilder(context).generateHbmEntityTypeMap();
-			entityDescriptors = new EntityDescriptorFactory(context).createEntityDescriptors(hbmEntityTypeMap);
-			entityDescriptors = new NamingStrategyProvider(context, entityDescriptors).apply();
+			OutputDescriptors outputDescriptors = new OutputDescriptors();
+			outputDescriptors.entityDescriptors = new EntityDescriptorFactory(context).createEntityDescriptors(hbmEntityTypeMap);
+			new NamingStrategyProvider(context, outputDescriptors).apply();
 
+			return outputDescriptors.entityDescriptors;
+			
 		} catch (HbmXmlGeneratorException e) {
 			throw new RuntimeException("Hbm generation failed.", e);
 		}

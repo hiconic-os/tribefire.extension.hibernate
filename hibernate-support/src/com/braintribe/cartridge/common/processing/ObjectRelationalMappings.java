@@ -43,7 +43,6 @@ public class ObjectRelationalMappings {
 	private static final Logger log = Logger.getLogger(ObjectRelationalMappings.class);
 
 	/**
-	 * <p>
 	 * Applies to the given {@code target} the native ORM sources (see {@link NativeOrm}) resolved based on the provided
 	 * {@link HasMetaData denotation} and {@link CmdResolver metadataResolver}.
 	 * 

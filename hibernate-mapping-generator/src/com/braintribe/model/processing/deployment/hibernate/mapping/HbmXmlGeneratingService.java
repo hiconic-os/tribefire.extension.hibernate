@@ -16,6 +16,7 @@
 package com.braintribe.model.processing.deployment.hibernate.mapping;
 
 import java.io.File;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -24,19 +25,21 @@ import com.braintribe.model.accessdeployment.hibernate.meta.ModelMapping;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.meta.data.MetaData;
 import com.braintribe.model.processing.deployment.hibernate.mapping.exception.HbmXmlGeneratingServiceException;
+import com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor;
 import com.braintribe.model.processing.meta.cmd.CmdResolver;
 import com.braintribe.model.processing.meta.cmd.CmdResolverBuilder;
 
 /**
  * Not really a service, but this is the public API for Hibernate mapping generation.
  * <p>
- *	Random notes:
+ * Random notes:
  * <ul>
- * <li> All {@link MetaData} are resolved with "jpa" use-case.
+ * <li>All {@link MetaData} are resolved with "jpa" use-case.
  * </ul>
- * 
  */
 public class HbmXmlGeneratingService {
+
+	public static final String INDICES_JSON_FILE_NAME = "indices.json";
 
 	private final HbmXmlGenerationContext context = new HbmXmlGenerationContext();
 
@@ -72,7 +75,7 @@ public class HbmXmlGeneratingService {
 		setTargetDb(targetDb);
 	}
 
-	public void setGmMetaModel(GmMetaModel model) {		
+	public void setGmMetaModel(GmMetaModel model) {
 		context.setGmMetaModel(model);
 	}
 
@@ -90,7 +93,7 @@ public class HbmXmlGeneratingService {
 	public void setOutputFolder(File outputFolder) {
 		context.outputFolder = outputFolder;
 	}
-	
+
 	public void setOutputFolder(String outputFolderPath) throws HbmXmlGeneratingServiceException {
 		setOutputFolder(createFile(outputFolderPath));
 	}
@@ -179,12 +182,12 @@ public class HbmXmlGeneratingService {
 		context.setCmdResolver(cmdResolver);
 		return this;
 	}
-	
+
 	public HbmXmlGeneratingService generateJpaOrm() {
 		context.generateJpaOrm = true;
 		return this;
 	}
-	
+
 	/**
 	 * Configures the {@link CmdResolver} and also its the GmMetaModel via {@link #setGmMetaModel(GmMetaModel)}
 	 */
@@ -198,12 +201,12 @@ public class HbmXmlGeneratingService {
 		context.setCmdResolverFactory(cmdResolverFactory);
 		return this;
 	}
-	
+
 	public HbmXmlGeneratingService dialect(HibernateDialect dialect) {
 		context.setDialect(dialect);
 		return this;
 	}
-	
+
 	public HbmXmlGeneratingService entityMappingConsumer(Consumer<SourceDescriptor> consumer) {
 		context.entityMappingConsumer = consumer;
 		return this;
@@ -226,8 +229,8 @@ public class HbmXmlGeneratingService {
 		}
 	}
 
-	/* This method is here since the generator builds a CmdResolver internally and I wanted to use that. This whole
-	 * thing could be cleaned up a bit though. */
+	/* This method is here since the generator builds a CmdResolver internally and I wanted to use that. This whole thing could be cleaned up a bit
+	 * though. */
 	public boolean keepHbmXmlDir() {
 		ModelMapping mm = context.getMetaData().meta(ModelMapping.T).exclusive();
 		return mm != null && mm.getForbidDeletingOfMappingsDir();
@@ -235,6 +238,10 @@ public class HbmXmlGeneratingService {
 
 	private static File createFile(String sourceFilePath) throws HbmXmlGeneratingServiceException {
 		return new File(sourceFilePath);
+	}
+
+	public static List<IndexDescriptor> readIndexDescriptors(File indicesJson) {
+		return HbmXmlGenerator.readIndexDescriptors(indicesJson);
 	}
 
 }

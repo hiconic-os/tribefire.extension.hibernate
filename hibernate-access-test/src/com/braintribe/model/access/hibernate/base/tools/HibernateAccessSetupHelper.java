@@ -35,8 +35,6 @@ import com.braintribe.model.processing.core.expert.impl.ConfigurableGmExpertRegi
 import com.braintribe.model.processing.deployment.hibernate.HibernateMappingsDirectorySupplier;
 import com.braintribe.model.processing.idgenerator.basic.DateIdGenerator;
 import com.braintribe.model.processing.idgenerator.basic.UuidGenerator;
-import com.braintribe.persistence.hibernate.GmAwareHibernateSessionFactoryBean;
-import com.braintribe.persistence.hibernate.HibernateSessionFactoryBean;
 
 /**
  * @author peter.gazdik
@@ -70,8 +68,8 @@ public class HibernateAccessSetupHelper {
 		return hibernateSessionFactoryBean(modelSupplier, dataSource).getObject();
 	}
 
-	public static HibernateSessionFactoryBean hibernateSessionFactoryBean(Supplier<GmMetaModel> modelSupplier, DataSource dataSource) {
-		HibernateSessionFactoryBean sessionFactory = new GmAwareHibernateSessionFactoryBean();
+	public static TestHibernateSessionFactoryBean hibernateSessionFactoryBean(Supplier<GmMetaModel> modelSupplier, DataSource dataSource) {
+		TestHibernateSessionFactoryBean sessionFactory = new TestHibernateSessionFactoryBean();
 		sessionFactory.setShowSql(true);
 		sessionFactory.setMappingDirectoryLocations(mappingsFolder(modelSupplier));
 		sessionFactory.setDataSource(dataSource);
