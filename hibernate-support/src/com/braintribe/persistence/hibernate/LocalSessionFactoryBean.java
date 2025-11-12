@@ -34,9 +34,11 @@ import javax.sql.DataSource;
 
 import org.hibernate.Interceptor;
 import org.hibernate.SessionFactory;
+import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
+import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.boot.spi.XmlMappingBinderAccess;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
@@ -182,7 +184,8 @@ public class LocalSessionFactoryBean {
 	}
 
 	public void afterPropertiesSet() {
-		Configuration cfg = new Configuration(bootstrapServiceRegistry());
+		BootstrapServiceRegistry serviceRegistry = bootstrapServiceRegistry();
+		Configuration cfg = new Configuration(serviceRegistry);
 
 		if (dataSource != null)
 			cfg.getProperties().put(Environment.DATASOURCE, dataSource);
@@ -244,9 +247,13 @@ public class LocalSessionFactoryBean {
 		configuration = cfg;
 		sessionFactory = cfg.buildSessionFactory();
 	}
+	
+	protected void enrich(BootstrapServiceRegistryBuilder builder) {
+	}
 
 	private BootstrapServiceRegistry bootstrapServiceRegistry() {
 		BootstrapServiceRegistryBuilder result = new BootstrapServiceRegistryBuilder();
+		enrich(result);
 		if (classLoader != null)
 			result.applyClassLoader(classLoader);
 

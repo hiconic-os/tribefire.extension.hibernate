@@ -15,7 +15,10 @@
 // ============================================================================
 package com.braintribe.persistence.hibernate;
 
+import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
+
 import com.braintribe.model.access.hibernate.interceptor.GmAdaptionInterceptor;
+import com.braintribe.model.access.hibernate.interceptor.GmTuplizerIntegrator;
 import com.braintribe.model.generic.GMF;
 
 /**
@@ -26,6 +29,12 @@ public class GmAwareHibernateSessionFactoryBean extends HibernateSessionFactoryB
 	public GmAwareHibernateSessionFactoryBean() {
 		this.setClassLoader(itwOrModuleClassLoader());
 		this.setEntityInterceptor(new GmAdaptionInterceptor());
+	}
+	
+	
+	@Override
+	protected void enrich(BootstrapServiceRegistryBuilder builder) {
+		builder.applyIntegrator(new GmTuplizerIntegrator());
 	}
 
 	private static ClassLoader itwOrModuleClassLoader() {

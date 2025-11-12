@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<projectDescription>
+	<name>hibernate-graph-fetching-test - tribefire.extension.hibernate</name>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments/>
+		</buildCommand>
+    </buildSpec>
+    <natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+    </natures>
+</projectDescription>
