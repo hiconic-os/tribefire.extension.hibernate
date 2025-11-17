@@ -3,8 +3,6 @@ package tribefire.extension.hibernate.graphfetching;
 import java.util.List;
 
 import com.braintribe.gm.graphfetching.api.query.FetchResults;
-import com.braintribe.gm.graphfetching.processing.util.FetchingTools;
-import com.braintribe.model.generic.GenericEntity;
 
 public class HibernateSessionFetchResults implements FetchResults {
 	private final List<Object[]> rows;

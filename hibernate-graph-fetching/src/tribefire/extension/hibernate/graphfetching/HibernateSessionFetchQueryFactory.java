@@ -16,8 +16,8 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 	}
 
 	@Override
-	public FetchQuery createQuery(EntityType<?> entityType) {
-		return new HibernateSessionFetchQuery(sessionFactory, entityType);
+	public FetchQuery createQuery(EntityType<?> entityType, String defaultPartition) {
+		return new HibernateSessionFetchQuery(sessionFactory, entityType, defaultPartition);
 	}
 
 }

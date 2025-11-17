@@ -4,8 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.Tuple;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Selection;
+
 import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
+import org.hibernate.persister.collection.CollectionPersister;
 
 import com.braintribe.gm.graphfetching.api.query.FetchQuery;
 import com.braintribe.gm.graphfetching.api.query.FetchResults;
@@ -24,12 +34,19 @@ public class HibernateSessionFetchQuery implements FetchQuery {
 	private int posSeq = 0;
 	private final HibernateSessionFetchFrom from;
 	private Lazy<String> hqlLazy = new Lazy<>(this::buildHql);
+	private Lazy<CriteriaQuery<Object[]>> queryLazy = new Lazy<>(this::buildQuery);
 	private List<HibernateSessionFetchJoin> joins = new ArrayList<>();
+	private CriteriaQuery<Object[]> criteriaQuery;
+	private CriteriaBuilder criteriaBuilder;
+	private String defaultPartition;
 
-	public HibernateSessionFetchQuery(SessionFactory sessionFactory, EntityType<?> entityType) {
+	public HibernateSessionFetchQuery(SessionFactory sessionFactory, EntityType<?> entityType, String defaultPartition) {
 		super();
 		this.sessionFactory = sessionFactory;
-		this.from = new HibernateSessionFetchFrom(this, entityType);
+		this.defaultPartition = defaultPartition;
+		this.criteriaBuilder = sessionFactory.getCriteriaBuilder();
+		this.criteriaQuery  = criteriaBuilder.createQuery(Object[].class);
+		this.from = new HibernateSessionFetchFrom(this, criteriaQuery, entityType);
 	}
 
 	@Override
@@ -40,9 +57,13 @@ public class HibernateSessionFetchQuery implements FetchQuery {
 	@Override
 	public FetchResults fetchFor(Set<Object> entityIds) {
 		try (StatelessSession session = sessionFactory.openStatelessSession()) {
-			List<Object[]> rows = session.createQuery(hqlLazy.get(), Object[].class)
+			List<Object[]> rows = session.createQuery(queryLazy.get()) //
 					.setParameter(PARAMETER_NAME_IDS, entityIds)
 					.list();
+//			List<Object[]> rows = session.createQuery(hqlLazy.get(), Object[].class)
+//					.setParameter(PARAMETER_NAME_IDS, entityIds)
+//					.list();
+
 			return new HibernateSessionFetchResults(rows, this);
 		}
 	}
@@ -58,6 +79,38 @@ public class HibernateSessionFetchQuery implements FetchQuery {
 	
 	public void addJoin(HibernateSessionFetchJoin join) {
 		joins.add(join);
+	}
+	
+	private CriteriaQuery<Object[]> buildQuery() {
+		List<Selection<?>> selections = new ArrayList<>();
+		
+		Path<Object> entityIdPath = from.criteriaSource().get("id");
+		selections.add(entityIdPath);
+
+		HibernateSessionFetchJoin orderByListIndex = null;
+		
+		for (HibernateSessionFetchJoin join: joins) {
+			if (join.orderByListIndex)
+				orderByListIndex = join;
+			
+			selections.add(join.criteriaSource());
+		}
+		
+		// define a parameter variable for the collection
+		ParameterExpression<Set> idsParam = criteriaBuilder.parameter(Set.class, "ids");
+		
+		criteriaQuery.where(entityIdPath.in(idsParam));
+		
+		criteriaQuery.multiselect(selections);
+		
+		if (orderByListIndex != null) {
+			criteriaQuery.orderBy( //
+					criteriaBuilder.asc(entityIdPath), //
+					criteriaBuilder.asc(orderByListIndex.listJoin.index()) //
+			);
+		}
+		
+		return criteriaQuery;
 	}
 	
 	private String buildHql() {
@@ -111,6 +164,7 @@ public class HibernateSessionFetchQuery implements FetchQuery {
 				continue;
 			
 			GenericEntity entity = (GenericEntity)row[join.pos];
+			entity.setPartition(defaultPartition);
 			
 			if (entity != null)
 				row[join.pos] = FetchingTools.cloneDetachment(entity);

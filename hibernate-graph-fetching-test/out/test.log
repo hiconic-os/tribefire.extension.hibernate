@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 T ToOneRecursiveFetching: consumed 97 ms for querying 2 entities in 1 batches with: select s0.id, s1, s2, s3, s4 from com.braintribe.gm.graphfetching.test.model.Company s0 left join s0.address s1 left join s0.lawyer s2 left join s1.city s3 left join s2.address s4 where s0.id in :ids
 T FetchProcessing: consumed 103 ms for graph TO_ONE fetching of 2 entities of node: Company
 T ToManyFetching: consumed 11 ms for querying 2 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.owners s1 where s0.id in :ids
@@ -55,3 +56,51 @@ W EntityMetamodel: HHH000084: Entity [com.braintribe.gm.graphfetching.test.model
 W EntityMetamodel: HHH000084: Entity [com.braintribe.gm.graphfetching.test.model.Person] is abstract-class/interface explicitly mapped as non-abstract; be sure to supply entity-names
 W EntityMetamodel: HHH000084: Entity [com.braintribe.gm.graphfetching.test.model.Company] is abstract-class/interface explicitly mapped as non-abstract; be sure to supply entity-names
 I JtaPlatformInitiator: HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+=======
+T ToOneRecursiveFetching: consumed 234 ms for querying 2 entities in 1 batches with: select s0.id, s1, s2, s3, s4 from com.braintribe.gm.graphfetching.test.model.Company s0 left join s0.address s1 left join s0.lawyer s2 left join s1.city s3 left join s2.address s4 where s0.id in :ids
+T FetchProcessing: consumed 295 ms for graph TO_ONE fetching of 2 entities of node: Company
+T ToManyFetching: consumed 19 ms for querying 2 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.owners s1 where s0.id in :ids
+T FetchProcessing: consumed 29 ms for graph TO_MANY fetching of 2 entities of node: Company
+T ToOneRecursiveFetching: consumed 14 ms for querying 2 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Person s0 left join s0.bestFriend s1 where s0.id in :ids
+T FetchProcessing: consumed 15 ms for graph TO_ONE fetching of 2 entities of node: Person
+T FetchProcessing: consumed 342 ms for graph fetching of 2 entities of node Company
+T ToOneRecursiveFetching: consumed 107 ms for querying 40 entities in 1 batches with: select s0.id, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 from com.braintribe.gm.graphfetching.test.model.Company s0 left join s0.address s1 left join s0.lawyer s2 left join s1.city s3 left join s2.address s4 left join s2.bestFriend s5 left join s4.city s6 left join s5.address s7 left join s5.bestFriend s8 left join s7.city s9 left join s8.address s10 left join s8.bestFriend s11 left join s10.city s12 left join s11.address s13 left join s11.bestFriend s14 left join s13.city s15 where s0.id in :ids
+T FetchProcessing: consumed 107 ms for graph TO_ONE fetching of 40 entities of node: Company
+T ToManyFetching: consumed 23 ms for querying 40 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.ceos s1 where s0.id in :ids
+T ToManyFetching: consumed 25 ms for querying 40 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.contracts s1 where s0.id in :ids
+T ToManyFetching: consumed 19 ms for querying 40 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.owners s1 where s0.id in :ids
+T FetchProcessing: consumed 68 ms for graph TO_MANY fetching of 40 entities of node: Company
+T ToOneRecursiveFetching: consumed 24 ms for querying 14 entities in 1 batches with: select s0.id, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12 from com.braintribe.gm.graphfetching.test.model.Person s0 left join s0.address s1 left join s0.bestFriend s2 left join s1.city s3 left join s2.address s4 left join s2.bestFriend s5 left join s4.city s6 left join s5.address s7 left join s5.bestFriend s8 left join s7.city s9 left join s8.address s10 left join s8.bestFriend s11 left join s10.city s12 where s0.id in :ids
+T FetchProcessing: consumed 25 ms for graph TO_ONE fetching of 14 entities of node: Person
+T ToManyFetching: consumed 22 ms for querying 72 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Document s0 join s0.tags s1 where s0.id in :ids
+T FetchProcessing: consumed 23 ms for graph TO_MANY fetching of 72 entities of node: Document
+T ToManyFetching: consumed 17 ms for querying 25 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.SignableDocument s0 join s0.signatures s1 where s0.id in :ids
+T FetchProcessing: consumed 17 ms for graph TO_MANY fetching of 25 entities of node: SignableDocument
+T ToOneRecursiveFetching: consumed 13 ms for querying 16 entities in 1 batches with: select s0.id, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12 from com.braintribe.gm.graphfetching.test.model.Person s0 left join s0.address s1 left join s0.bestFriend s2 left join s1.city s3 left join s2.address s4 left join s2.bestFriend s5 left join s4.city s6 left join s5.address s7 left join s5.bestFriend s8 left join s7.city s9 left join s8.address s10 left join s8.bestFriend s11 left join s10.city s12 where s0.id in :ids
+T FetchProcessing: consumed 14 ms for graph TO_ONE fetching of 16 entities of node: Person
+T FetchProcessing: consumed 257 ms for graph fetching of 40 entities of node Company
+I AbstractGraphFetchingTest: ==== ACTUAL RUN ===
+T ToOneRecursiveFetching: consumed 13 ms for querying 40 entities in 1 batches with: select s0.id, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 from com.braintribe.gm.graphfetching.test.model.Company s0 left join s0.address s1 left join s0.lawyer s2 left join s1.city s3 left join s2.address s4 left join s2.bestFriend s5 left join s4.city s6 left join s5.address s7 left join s5.bestFriend s8 left join s7.city s9 left join s8.address s10 left join s8.bestFriend s11 left join s10.city s12 left join s11.address s13 left join s11.bestFriend s14 left join s13.city s15 where s0.id in :ids
+T FetchProcessing: consumed 13 ms for graph TO_ONE fetching of 40 entities of node: Company
+T ToManyFetching: consumed 5 ms for querying 40 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.ceos s1 where s0.id in :ids
+T ToManyFetching: consumed 6 ms for querying 40 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.contracts s1 where s0.id in :ids
+T ToManyFetching: consumed 7 ms for querying 40 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.owners s1 where s0.id in :ids
+T FetchProcessing: consumed 20 ms for graph TO_MANY fetching of 40 entities of node: Company
+T ToOneRecursiveFetching: consumed 6 ms for querying 14 entities in 1 batches with: select s0.id, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12 from com.braintribe.gm.graphfetching.test.model.Person s0 left join s0.address s1 left join s0.bestFriend s2 left join s1.city s3 left join s2.address s4 left join s2.bestFriend s5 left join s4.city s6 left join s5.address s7 left join s5.bestFriend s8 left join s7.city s9 left join s8.address s10 left join s8.bestFriend s11 left join s10.city s12 where s0.id in :ids
+T FetchProcessing: consumed 7 ms for graph TO_ONE fetching of 14 entities of node: Person
+T ToManyFetching: consumed 5 ms for querying 72 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Document s0 join s0.tags s1 where s0.id in :ids
+T FetchProcessing: consumed 6 ms for graph TO_MANY fetching of 72 entities of node: Document
+T ToManyFetching: consumed 5 ms for querying 25 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.SignableDocument s0 join s0.signatures s1 where s0.id in :ids
+T FetchProcessing: consumed 5 ms for graph TO_MANY fetching of 25 entities of node: SignableDocument
+T ToOneRecursiveFetching: consumed 7 ms for querying 16 entities in 1 batches with: select s0.id, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12 from com.braintribe.gm.graphfetching.test.model.Person s0 left join s0.address s1 left join s0.bestFriend s2 left join s1.city s3 left join s2.address s4 left join s2.bestFriend s5 left join s4.city s6 left join s5.address s7 left join s5.bestFriend s8 left join s7.city s9 left join s8.address s10 left join s8.bestFriend s11 left join s10.city s12 where s0.id in :ids
+T FetchProcessing: consumed 8 ms for graph TO_ONE fetching of 16 entities of node: Person
+T FetchProcessing: consumed 62 ms for graph fetching of 40 entities of node Company
+T ToOneRecursiveFetching: consumed 10 ms for querying 40 entities in 1 batches with: select s0.id, s1, s2 from com.braintribe.gm.graphfetching.test.model.Company s0 left join s0.address s1 left join s1.city s2 where s0.id in :ids
+T FetchProcessing: consumed 10 ms for graph TO_ONE fetching of 40 entities of node: Company
+T ToManyFetching: consumed 5 ms for querying 40 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.contracts s1 where s0.id in :ids
+T ToManyFetching: consumed 5 ms for querying 40 entities in 1 batches with: select s0.id, s1 from com.braintribe.gm.graphfetching.test.model.Company s0 join s0.owners s1 where s0.id in :ids
+T FetchProcessing: consumed 11 ms for graph TO_MANY fetching of 40 entities of node: Company
+T ToOneRecursiveFetching: consumed 10 ms for querying 56 entities in 1 batches with: select s0.id, s1, s2 from com.braintribe.gm.graphfetching.test.model.Person s0 left join s0.address s1 left join s1.city s2 where s0.id in :ids
+T FetchProcessing: consumed 10 ms for graph TO_ONE fetching of 56 entities of node: Person
+T FetchProcessing: consumed 32 ms for graph fetching of 40 entities of node Company
+>>>>>>> af7b044 (wip treat() support)
