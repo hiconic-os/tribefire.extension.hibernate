@@ -24,7 +24,7 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 	
 	@Override
 	protected IncrementalAccess buildAccess() {
-		return HibernateHelper.hibernateAccess("test", () -> model, sessionFactory);
+		return HibernateHelper.hibernateAccess(ACCESS_ID_TEST, () -> model, sessionFactory);
 	}
 	
 	@Override

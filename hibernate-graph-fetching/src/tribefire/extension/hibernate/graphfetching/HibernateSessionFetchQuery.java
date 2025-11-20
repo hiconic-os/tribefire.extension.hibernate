@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.ParameterExpression;
@@ -13,9 +12,6 @@ import javax.persistence.criteria.Selection;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.spi.MetamodelImplementor;
-import org.hibernate.persister.collection.CollectionPersister;
 
 import com.braintribe.gm.graphfetching.api.query.FetchQuery;
 import com.braintribe.gm.graphfetching.api.query.FetchResults;
@@ -46,7 +42,15 @@ public class HibernateSessionFetchQuery implements FetchQuery {
 		this.defaultPartition = defaultPartition;
 		this.criteriaBuilder = sessionFactory.getCriteriaBuilder();
 		this.criteriaQuery  = criteriaBuilder.createQuery(Object[].class);
-		this.from = new HibernateSessionFetchFrom(this, criteriaQuery, entityType);
+		this.from = new HibernateSessionFetchFrom(this, entityType);
+	}
+	
+	public CriteriaBuilder criteriaBuilder() {
+		return criteriaBuilder;
+	}
+	
+	public CriteriaQuery<Object[]> criteriaQuery() {
+		return criteriaQuery;
 	}
 
 	@Override
@@ -135,7 +139,7 @@ public class HibernateSessionFetchQuery implements FetchQuery {
 			if (join.left)
 				b.append(" left");
 			b.append(" join ");
-			b.append(join.source.name);
+			b.append(join.source.joinAccessExpression());
 			b.append('.');
 			b.append(join.property.getName());
 			b.append(' ');
@@ -164,10 +168,9 @@ public class HibernateSessionFetchQuery implements FetchQuery {
 				continue;
 			
 			GenericEntity entity = (GenericEntity)row[join.pos];
-			entity.setPartition(defaultPartition);
 			
 			if (entity != null)
-				row[join.pos] = FetchingTools.cloneDetachment(entity);
+				entity.setPartition(defaultPartition);
 		}
 	}
 }

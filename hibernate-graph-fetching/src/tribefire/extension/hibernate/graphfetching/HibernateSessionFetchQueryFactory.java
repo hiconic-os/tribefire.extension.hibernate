@@ -20,4 +20,8 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 		return new HibernateSessionFetchQuery(sessionFactory, entityType, defaultPartition);
 	}
 
+	@Override
+	public boolean supportsSubTypeJoin() {
+		return true;
+	}
 }

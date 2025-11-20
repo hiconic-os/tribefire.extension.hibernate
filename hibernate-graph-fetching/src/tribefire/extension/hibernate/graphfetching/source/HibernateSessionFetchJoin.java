@@ -1,11 +1,14 @@
 package tribefire.extension.hibernate.graphfetching.source;
 
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.From;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.ListJoin;
 
 import com.braintribe.gm.graphfetching.api.query.FetchJoin;
 import com.braintribe.model.generic.reflection.CollectionType;
+import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.GenericModelType;
 import com.braintribe.model.generic.reflection.Property;
 import com.braintribe.model.generic.reflection.TypeCode;
@@ -14,16 +17,17 @@ import tribefire.extension.hibernate.graphfetching.HibernateSessionFetchQuery;
 
 public class HibernateSessionFetchJoin extends HibernateSessionFetchSource implements FetchJoin {
 	public final Property property;
-	public final HibernateSessionFetchSource source;
+	public final AbstractHibernateSessionFetchSource source;
 	public final ListJoin<Object, Object> listJoin;
 	public boolean left;
 	public boolean orderByListIndex;
 	public final boolean isCollection;
 	public final boolean isList;
 	public final boolean isEntity;
+	private Join<Object, Object> criteriaSource;
 
-	public HibernateSessionFetchJoin(HibernateSessionFetchQuery query, CriteriaQuery<Object[]> criteriaQuery, HibernateSessionFetchSource source, Property property, boolean left) {
-		super(query, criteriaQuery);
+	public HibernateSessionFetchJoin(HibernateSessionFetchQuery query, CriteriaQuery<Object[]> criteriaQuery, AbstractHibernateSessionFetchSource source, Property property, boolean left) {
+		super(query);
 		query.addJoin(this);
 		this.source = source;
 		this.property = property;
@@ -51,6 +55,11 @@ public class HibernateSessionFetchJoin extends HibernateSessionFetchSource imple
 	}
 	
 	@Override
+	public String joinAccessExpression() {
+		return name;
+	}
+	
+	@Override
 	public GenericModelType type() {
 		return property.getType();
 	}
@@ -63,6 +72,17 @@ public class HibernateSessionFetchJoin extends HibernateSessionFetchSource imple
 	@Override
 	public String selectExpression() {
 		return name;
+	}
+	
+	@Override
+	public Join<Object, Object> criteriaSource() {
+		return criteriaSource;
+	}
+	
+	@Override
+	public Join<Object, Object> criteriaSourceAs(EntityType<?> entityType) {
+		Join<Object, Object> treat = query.criteriaBuilder().treat(criteriaSource, (Class<Object>)entityType.getJavaType());
+		return treat;
 	}
 }
 
