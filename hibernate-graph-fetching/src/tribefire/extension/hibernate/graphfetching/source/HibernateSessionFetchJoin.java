@@ -1,7 +1,6 @@
 package tribefire.extension.hibernate.graphfetching.source;
 
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.From;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.ListJoin;
@@ -26,39 +25,40 @@ public class HibernateSessionFetchJoin extends HibernateSessionFetchSource imple
 	public final boolean isEntity;
 	private Join<Object, Object> criteriaSource;
 
-	public HibernateSessionFetchJoin(HibernateSessionFetchQuery query, CriteriaQuery<Object[]> criteriaQuery, AbstractHibernateSessionFetchSource source, Property property, boolean left) {
+	public HibernateSessionFetchJoin(HibernateSessionFetchQuery query, CriteriaQuery<Object[]> criteriaQuery,
+			AbstractHibernateSessionFetchSource source, Property property, boolean left) {
 		super(query);
 		query.addJoin(this);
 		this.source = source;
 		this.property = property;
 		this.left = left;
-		
+
 		GenericModelType type = property.getType();
-		
+
 		isCollection = type.isCollection();
 		isList = type.getTypeCode() == TypeCode.listType;
-		
+
 		if (isCollection) {
-			type = ((CollectionType)type).getCollectionElementType();
+			type = ((CollectionType) type).getCollectionElementType();
 		}
-		
+
 		isEntity = type.isEntity();
-		
+
 		if (isList) {
-			listJoin = source.criteriaSource().joinList(property.getName(), left? JoinType.LEFT: JoinType.INNER);
+			listJoin = source.criteriaSource().joinList(property.getName(), left ? JoinType.LEFT : JoinType.INNER);
 			criteriaSource = listJoin;
-		}
-		else {
-			criteriaSource = source.criteriaSource().join(property.getName(), left? JoinType.LEFT: JoinType.INNER);
+		} else {
+			criteriaSource = source.criteriaSource().join(property.getName(), left ? JoinType.LEFT : JoinType.INNER);
 			listJoin = null;
 		}
+		criteriaSource.alias(name);
 	}
-	
+
 	@Override
 	public String joinAccessExpression() {
 		return name;
 	}
-	
+
 	@Override
 	public GenericModelType type() {
 		return property.getType();
@@ -73,16 +73,16 @@ public class HibernateSessionFetchJoin extends HibernateSessionFetchSource imple
 	public String selectExpression() {
 		return name;
 	}
-	
+
 	@Override
 	public Join<Object, Object> criteriaSource() {
 		return criteriaSource;
 	}
-	
+
 	@Override
 	public Join<Object, Object> criteriaSourceAs(EntityType<?> entityType) {
-		Join<Object, Object> treat = query.criteriaBuilder().treat(criteriaSource, (Class<Object>)entityType.getJavaType());
+		Join<Object, Object> treat = query.criteriaBuilder().treat(criteriaSource, (Class<Object>) entityType.getJavaType());
+		treat.alias(name);
 		return treat;
 	}
 }
-

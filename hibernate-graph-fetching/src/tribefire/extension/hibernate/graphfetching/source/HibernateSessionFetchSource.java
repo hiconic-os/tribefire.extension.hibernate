@@ -8,20 +8,24 @@ import tribefire.extension.hibernate.graphfetching.HibernateSessionFetchQuery;
 public abstract class HibernateSessionFetchSource extends AbstractHibernateSessionFetchSource implements FetchSource {
 	public int pos;
 	public String name;
-	
+
 	protected HibernateSessionFetchSource(HibernateSessionFetchQuery query) {
 		super(query);
 		this.pos = query.nextPos();
 		this.name = "s" + pos;
 	}
-	
+
 	public abstract GenericModelType type();
-	
+
 	@Override
 	public int pos() {
 		return pos;
 	}
-	
+
+	@Override
+	public String name() {
+		return this.name;
+	}
+
 	public abstract String selectExpression();
 }
-

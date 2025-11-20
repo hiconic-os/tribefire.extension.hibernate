@@ -12,12 +12,15 @@ public class HibernateSessionCovariantFetchSource extends AbstractHibernateSessi
 	private final AbstractHibernateSessionFetchSource baseSource;
 	private final From<Object, Object> criteriaSource;
 	private final String joinAccessExpression;
+	private String name;
 
-	public HibernateSessionCovariantFetchSource(HibernateSessionFetchQuery query, EntityType<?> entityType, AbstractHibernateSessionFetchSource baseSource) {
+	public HibernateSessionCovariantFetchSource(HibernateSessionFetchQuery query, EntityType<?> entityType,
+			AbstractHibernateSessionFetchSource baseSource) {
 		super(query);
 		this.baseSource = baseSource;
 		this.criteriaSource = baseSource.criteriaSourceAs(entityType);
 		joinAccessExpression = "treat(" + baseSource.joinAccessExpression() + " as " + entityType.getTypeSignature() + ")";
+		this.name = baseSource.name() + "_" + baseSource.sequence++;
 	}
 
 	@Override
@@ -30,10 +33,13 @@ public class HibernateSessionCovariantFetchSource extends AbstractHibernateSessi
 		return criteriaSource;
 	}
 
-
 	@Override
 	public String joinAccessExpression() {
 		return joinAccessExpression;
 	}
-}
 
+	@Override
+	public String name() {
+		return name;
+	}
+}
