@@ -38,4 +38,9 @@ public class HibernateSessionFetchResults implements FetchResults {
 		
 		return (V) row[col];
 	}
+
+	@Override
+	public void close() {
+		// nothing to do here
+	}
 }

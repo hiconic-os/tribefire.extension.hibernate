@@ -6,15 +6,19 @@ import javax.persistence.criteria.Root;
 
 import com.braintribe.gm.graphfetching.api.query.FetchJoin;
 import com.braintribe.gm.graphfetching.api.query.FetchSource;
+import com.braintribe.model.generic.reflection.CollectionType;
 import com.braintribe.model.generic.reflection.EntityType;
+import com.braintribe.model.generic.reflection.GenericModelType;
 import com.braintribe.model.generic.reflection.Property;
+import com.braintribe.utils.lcd.Lazy;
 
 import tribefire.extension.hibernate.graphfetching.HibernateSessionFetchQuery;
 
 public abstract class AbstractHibernateSessionFetchSource implements FetchSource {
 	protected final HibernateSessionFetchQuery query;
-	public int sequence = 0;
-
+	private Lazy<Integer> lazyScalarCount = new Lazy<>(this::determineScalarCount);
+	
+	
 	protected AbstractHibernateSessionFetchSource(HibernateSessionFetchQuery query) {
 		this.query = query;
 	}
@@ -36,7 +40,7 @@ public abstract class AbstractHibernateSessionFetchSource implements FetchSource
 
 	public abstract From<Object, Object> criteriaSource();
 	public abstract String joinAccessExpression();
-	public abstract String name();
+	public abstract GenericModelType type();
 
 	public From<Object, Object> criteriaSourceAs(EntityType<?> entityType) {
 		From<Object, Object> criteriaSource = criteriaSource();
@@ -54,5 +58,40 @@ public abstract class AbstractHibernateSessionFetchSource implements FetchSource
 
 		throw new IllegalStateException("unexpected From type [" + criteriaSource.getClass().getName() + "]. Must be either Join or Root");
 	}
+	
+	@Override
+	public int scalarCount() {
+		return lazyScalarCount.get();
+	}
+	
+	private int determineScalarCount() {
+		GenericModelType type = type();
+		EntityType<?> entityType = null;
+		
+		if (type.isCollection()) {
+			CollectionType collectionType = (CollectionType)type;
+			GenericModelType elementType = collectionType.getCollectionElementType();
+			if (elementType.isEntity())
+				entityType = (EntityType<?>) elementType;
+		}
+		else {
+			if (type.isEntity())
+				entityType = (EntityType<?>)type;
+		}
+		
+		if (entityType == null)
+			return 1;
+		
+		int count = 0;
+		
+		for (Property property: entityType.getProperties()) {
+			if (property.isIdentifier() || property.getType().isScalar())
+				count++;
+		}
+		
+		return count;
+	}
+
+
 
 }
