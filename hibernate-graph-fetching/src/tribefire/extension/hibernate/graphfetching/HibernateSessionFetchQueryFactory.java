@@ -40,10 +40,6 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 	private boolean sqlDirect = false;
 	
 	public HibernateSessionFetchQueryFactory(SessionFactory sessionFactory) {
-		this(sessionFactory, false);
-	}
-	
-	public HibernateSessionFetchQueryFactory(SessionFactory sessionFactory, boolean sqlDirect) {
 		super();
 		this.sqlDirect = sqlDirect;
 		this.sessionFactory = sessionFactory;
@@ -141,10 +137,7 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 
 	@Override
 	public FetchQuery createQuery(EntityType<?> entityType, String defaultPartition) {
-		if (sqlDirect)
-			return new HibernateSqlFetchQuery(this, entityType, defaultPartition);
-		else 
-			return new HibernateSessionFetchQuery(sessionFactory, entityType, defaultPartition);
+		return new HibernateSqlFetchQuery(this, entityType, defaultPartition);
 	}
 	
 	@Override

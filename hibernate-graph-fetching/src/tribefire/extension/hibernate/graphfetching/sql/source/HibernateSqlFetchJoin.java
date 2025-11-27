@@ -1,5 +1,7 @@
 package tribefire.extension.hibernate.graphfetching.sql.source;
 
+import static java.util.Collections.list;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -8,6 +10,7 @@ import com.braintribe.gm.graphfetching.api.query.FetchJoin;
 import com.braintribe.model.generic.reflection.CollectionType;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.GenericModelType;
+import com.braintribe.model.generic.reflection.ListType;
 import com.braintribe.model.generic.reflection.MapType;
 import com.braintribe.model.generic.reflection.Property;
 import com.braintribe.model.generic.reflection.TypeCode;
@@ -25,14 +28,25 @@ public class HibernateSqlFetchJoin extends HibernateSqlFetchSource implements Fe
 	public boolean orderByListIndex;
 	private String column;
 	private HibernatePropertyOracle refererProperty;
+	private final String separateAssociationName;
+	private final String separateLinkName;
+	private HibernateSqlFetchJoin associatorJoin;
 
 	public HibernateSqlFetchJoin(HibernateSessionFetchQueryFactory factory, HibernateSqlFetchQuery query, AbstractHibernateSqlFetchSource source, Property property, boolean left) {
+		this(factory, query, source, property, left, false);
+	}
+	
+	public HibernateSqlFetchJoin(HibernateSessionFetchQueryFactory factory, HibernateSqlFetchQuery query, AbstractHibernateSqlFetchSource source, Property property, boolean left, boolean associator) {
 		super(factory, query);
 		this.source = source;
 		this.property = property;
 		this.left = left;
 		
-		query.addJoin(this);
+		separateAssociationName = name + 'a';
+		separateLinkName = name + 'j';
+		
+		if (!associator)
+			query.addJoin(this);
 		
 		HibernateEntityOracle sourceEntityOracle = source.isEntity();
 		
@@ -50,57 +64,32 @@ public class HibernateSqlFetchJoin extends HibernateSqlFetchSource implements Fe
 				
 		if (propertyType.isCollection()) {
 			propertyCollectionType = (CollectionType)propertyType;
-			joinedType = propertyCollectionType.getCollectionElementType();
 			
 			if (propertyType.getTypeCode() == TypeCode.mapType) {
 				MapType mapType = (MapType)propertyType;
-				joinedKeyType = mapType.getKeyType();
+				if (associator)
+					joinedType = mapType.getKeyType();
+				else {
+					joinedType = mapType.getValueType();
+					joinedKeyType = mapType.getKeyType();
+					if (joinedKeyType.isEntity()) {
+						// add another join for an entity associator 
+						associatorJoin = new HibernateSqlFetchJoin(factory, query, source, property, true, true);
+					}
+					else {
+						// add another segment just for the scalar associator
+						int scalarPos = query.nextPos();
+						HibernateCollectionOracle collects = refererProperty.collects();
+						RsProperty scalarRsProperty = new RsProperty(scalarPos, collects.keyColumn(), null, ResultValueExtractor.get(joinedKeyType));
+						query.addSelectSegment(new ScalarSegment(associateAlias(), scalarRsProperty));
+					}
+				}
 			}
+			else 
+				joinedType = propertyCollectionType.getCollectionElementType();
 		}
 		else {
 			joinedType = propertyType;
-		}
-		
-		if (joinedKeyType != null) {
-			if (joinedKeyType.isScalar()) {
-				int scalarPos = query.nextPos();
-				HibernateCollectionOracle collects = refererProperty.collects();
-				RsProperty scalarRsProperty = new RsProperty(scalarPos, collects.keyColumn(), null, ResultValueExtractor.get(joinedKeyType));
-				boolean hasJoinTable = collects.hasJoinTable();
-				if (hasJoinTable)
-					query.addSelectSegment(new ScalarSegment(linkAlias(), scalarRsProperty));
-				else
-					query.addSelectSegment(new ScalarSegment(name, scalarRsProperty));
-			}
-			else if (joinedKeyType.isEntity()) {
-				EntityType<?> joinedKeyEntityType = (EntityType<?>)joinedKeyType;
-				entityOracle = factory.getOracle(joinedKeyEntityType);
-				Collection<HibernatePropertyOracle> scalarProperties = entityOracle.scalarProperties();
-				
-				List<RsProperty> rsProperties = new ArrayList<>(scalarProperties.size() + 1);
-				
-				HibernatePropertyOracle idProperty = entityOracle.idProperty();
-				int idPos = query.nextPos();
-				RsProperty idRsProperty = new RsProperty(idPos, idProperty);
-				rsProperties.add(idRsProperty);
-				
-				RsProperty typeRsProperty = null; 
-				
-				int standardPropertyOffset = 1;
-				
-				if (entityOracle.isPolymorphic()) {
-					int typePos = query.nextPos();
-					typeRsProperty = new RsProperty(typePos, entityOracle.getDiscriminatorColumn(), null, ResultValueExtractor.STRING);
-					rsProperties.add(typeRsProperty);
-					standardPropertyOffset++;
-				}
-				
-				for (HibernatePropertyOracle scalarProperty: scalarProperties) {
-					int scalarPos = query.nextPos();
-					rsProperties.add(new RsProperty(scalarPos, scalarProperty));
-				}
-				
-				query.addSelectSegment(new EntitySegment(name, query.defaultPartition(), joinedEntityType, rsProperties, standardPropertyOffset, idRsProperty, typeRsProperty));
 		}
 		
 		if (joinedType.isScalar()) {
@@ -149,6 +138,65 @@ public class HibernateSqlFetchJoin extends HibernateSqlFetchSource implements Fe
 			
 			query.addSelectSegment(new EntitySegment(name, query.defaultPartition(), joinedEntityType, rsProperties, standardPropertyOffset, idRsProperty, typeRsProperty));
 		}
+	}
+		
+	public HibernateSqlFetchJoin hasAssociatorJoin() {
+		return associatorJoin;
+	}
+		
+	public String linkAlias() {
+		HibernateCollectionOracle collects = refererProperty.collects();
+		
+		if (collects == null)
+			return source.name;
+		
+		if (collects.hasIntermediateJoinTable())
+			return separateLinkName;
+		else
+			return name;
+	}
+	
+	public String associateAlias() {
+		HibernateCollectionOracle collects = refererProperty.collects();
+		
+		GenericModelType propertyType = refererProperty.property().getType();
+		TypeCode propertyTypeCode = propertyType.getTypeCode();
+		
+		final boolean scalarAssociate;
+		final boolean scalarValue;
+
+		switch (propertyTypeCode) {
+		case listType:
+			scalarAssociate = true;
+			scalarValue = ((ListType)propertyType).getCollectionElementType().isScalar();
+			break;
+		case mapType:
+			MapType mapType = (MapType)propertyType;
+			scalarAssociate = mapType.getKeyType().isScalar();
+			scalarValue = mapType.getValueType().isScalar();
+			break;
+		default:
+			return null;
+		}
+		
+		/*
+		 * SCALAR:SCALAR -> separateLinkName
+		 * SCALAR:ENTITY
+		 * 		with join table -> separateLinkName
+		 * 		without join table -> name;
+		 * ENTITY:SCALAR -> separateLinkName
+		 * ENTITY:ENTITY -> separateAssociationName
+		 * 
+		 */
+		
+		if (scalarAssociate && scalarValue)
+			return name;
+		else if (scalarAssociate && !scalarValue)
+			return collects.hasIntermediateJoinTable()? separateLinkName: name;
+		else if (!scalarAssociate && scalarValue)
+			return separateLinkName;
+		else
+			return separateAssociationName;
 	}
 	
 	@Override

@@ -14,6 +14,7 @@ import com.braintribe.gm.graphfetching.api.query.FetchResults;
 import com.braintribe.gm.graphfetching.api.query.FetchSource;
 import com.braintribe.logging.Logger;
 import com.braintribe.model.generic.reflection.EntityType;
+import com.braintribe.model.generic.reflection.TypeCode;
 import com.braintribe.utils.lcd.Lazy;
 
 import tribefire.extension.hibernate.graphfetching.HibernateSessionFetchQueryFactory;
@@ -168,16 +169,27 @@ public class HibernateSqlFetchQuery implements FetchQuery {
 			final String elementsAlias;
 			
 			if (collectionOracle != null) {
-				if (collectionOracle.hasJoinTable()) {
+				if (collectionOracle.hasIntermediateJoinTable()) {
 					String joinAlias = join.linkAlias();
 					elementsAlias = joinAlias;
 					
+					HibernateSqlFetchJoin aJoin = join.hasAssociatorJoin();
+					
 					join(b, join.left, join.source.name, join.source.pkColumn(), collectionOracle.joinTableName(), joinAlias, collectionOracle.ownerColumn());
+					
+					if (aJoin != null)
+						join(b, true, joinAlias, collectionOracle.keyColumn(), aJoin.tableName(), aJoin.name, aJoin.pkColumn());
+
 					join(b, true, joinAlias, collectionOracle.elementColumn(), join.tableName(), join.name, join.pkColumn());
 				}
 				else {
+					HibernateSqlFetchJoin aJoin = join.hasAssociatorJoin();
+					
 					elementsAlias = join.name;
 					join(b, join.left, join.source.name, join.source.pkColumn(), collectionOracle.joinTableName(), join.name, collectionOracle.ownerColumn());
+
+					if (aJoin != null)
+						join(b, true, join.name, collectionOracle.keyColumn(), aJoin.tableName(), aJoin.name, aJoin.pkColumn());
 				}
 				
 				if (join.orderByListIndex) {

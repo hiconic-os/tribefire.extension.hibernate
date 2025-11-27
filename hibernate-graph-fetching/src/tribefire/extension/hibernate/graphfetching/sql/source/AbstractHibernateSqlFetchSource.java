@@ -21,10 +21,6 @@ public abstract class AbstractHibernateSqlFetchSource implements FetchSource {
 		this.query = query;
 	}
 	
-	public String linkAlias() {
-		return name + "j"; 
-	}
-	
 	public HibernateEntityOracle isEntity() {
 		return entityOracle;
 	}

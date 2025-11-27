@@ -59,18 +59,18 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 	
 	@Override
 	protected FetchBuilder configure(FetchBuilder fetchBuilder) {
-		fetchBuilder.queryFactory(new HibernateSessionFetchQueryFactory(sessionFactory, true));
+		fetchBuilder.queryFactory(new HibernateSessionFetchQueryFactory(sessionFactory));
 		return fetchBuilder;
 	}
 	
 	@Test
 	public void sqlTest() throws Exception {
 		BasicModelOracle oracle = new BasicModelOracle(model);
-		EntityGraphNode graphNode = Fetching.reachable(DataManagement.T).covariance(oracle).build();
+		EntityGraphNode graphNode = Fetching.reachable(DataManagement.T).polymorphy(oracle).build();
 		
 		System.out.println(graphNode.stringify());
 		PersistenceGmSession session = newSession();
-		HibernateSessionFetchQueryFactory factory = new HibernateSessionFetchQueryFactory(sessionFactory, true);
+		HibernateSessionFetchQueryFactory factory = new HibernateSessionFetchQueryFactory(sessionFactory);
 		
 		List<DataManagement> dataManagements = session.queryDetached().entities(EntityQuery.create(DataManagement.T)).list();
 		

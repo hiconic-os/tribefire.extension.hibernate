@@ -17,7 +17,7 @@ public class HibernateCollectionOracle {
 	private String indexColumn;
 	private String keyColumn;
 	private String elementColumn;
-	private boolean hasJoinTable;
+	private boolean hasIntermediateJoinTable;
 	
 	public HibernateCollectionOracle(HibernateSessionFetchQueryFactory factory, org.hibernate.type.CollectionType hibernateType,
 			Property property) {
@@ -27,7 +27,7 @@ public class HibernateCollectionOracle {
 		this.type = (CollectionType) property.getType();
 		this.persister = (QueryableCollection)factory.getMetamodel().collectionPersister(hibernateType.getRole());
 		
-		hasJoinTable = persister.isManyToMany();
+		hasIntermediateJoinTable = persister.isManyToMany();
 		
 		joinTableName = persister.getTableName();
 		
@@ -81,7 +81,7 @@ public class HibernateCollectionOracle {
 		return hibernateType;
 	}
 	
-	public boolean hasJoinTable() {
-		return hasJoinTable;
+	public boolean hasIntermediateJoinTable() {
+		return hasIntermediateJoinTable;
 	}
 }
