@@ -1,5 +1,9 @@
 package tribefire.extension.hibernate.graphfetching.sql.source;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.UncheckedIOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -40,10 +44,28 @@ public interface ResultValueExtractor {
 		case enumType:
 			EnumType<?> enumType = (EnumType<?>)type;
 			return (rs, i) -> {
-				String strValue = rs.getString(i);
-				if (strValue == null)
+				Object v = rs.getObject(i);
+				if (v == null)
 					return null;
-				return enumType.getEnumValue(strValue);
+				
+				Class<? extends Object> vClass = v.getClass();
+				
+				if (vClass == String.class) {
+					final String strValue = (String)v;
+					return enumType.getEnumValue(strValue);
+				}
+				else if (vClass == byte[].class) {
+					byte[] serialized = (byte[])v;
+					try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized); ObjectInputStream ois = new ObjectInputStream(bais)) {
+					        return ois.readObject();
+					} catch (IOException e) {
+						throw new UncheckedIOException(e);
+					} catch (ClassNotFoundException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				else
+					throw new IllegalStateException("unsupported result set value type for enum: " + vClass);
 			};
 			
 		default:

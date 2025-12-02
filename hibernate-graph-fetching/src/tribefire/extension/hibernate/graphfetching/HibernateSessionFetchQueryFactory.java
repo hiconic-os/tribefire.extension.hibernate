@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
@@ -24,25 +25,22 @@ import com.braintribe.model.generic.reflection.Property;
 
 import tribefire.extension.hibernate.graphfetching.sql.HibernateEntityHierarchyOracle;
 import tribefire.extension.hibernate.graphfetching.sql.HibernateEntityOracle;
+import tribefire.extension.hibernate.graphfetching.sql.HibernatePolymorphicEntityOracle;
 import tribefire.extension.hibernate.graphfetching.sql.HibernatePropertyOracle;
 import tribefire.extension.hibernate.graphfetching.sql.HibernateSqlFetchQuery;
 import tribefire.extension.hibernate.graphfetching.sql.PropertyIdentTuple;
 
 public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 
-	private SessionFactory sessionFactory;
 	private SessionFactoryImplementor sfi;
 	private ConnectionProvider cp;
 	private MetamodelImplementor metamodel;
 	private Map<EntityType<?>, HibernateEntityOracle> entityOracles = new ConcurrentHashMap<>();
 	private Map<String, HibernateEntityHierarchyOracle> entityHierarchyOracles = new ConcurrentHashMap<>();
 	private final Map<String, List<AbstractEntityPersister>> entityHierarchyPersisters = new ConcurrentHashMap<>();
-	private boolean sqlDirect = false;
 	
 	public HibernateSessionFetchQueryFactory(SessionFactory sessionFactory) {
 		super();
-		this.sqlDirect = sqlDirect;
-		this.sessionFactory = sessionFactory;
 		this.sfi = (SessionFactoryImplementor) sessionFactory;
 		this.cp = sfi.getServiceRegistry().getService(ConnectionProvider.class);
 		this.metamodel = sfi.getMetamodel();
@@ -83,10 +81,16 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 		String discriminatorColumn = null;
 		String tableName;
 		
-		for (AbstractEntityPersister persister: entityHierarchyPersisters.get(rootName)) {
+		List<AbstractEntityPersister> persisters = entityHierarchyPersisters.get(rootName);
+		Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles = new HashMap<>();
+		
+		for (AbstractEntityPersister persister: persisters) {
 			tableName = persister.getTableName();
 			discriminatorColumn = persister.getDiscriminatorColumnName();
 			EntityType<?> entityType = EntityTypes.get(persister.getEntityName());
+			
+			HibernatePolymorphicEntityOracle polymorphicEntityOracle = new HibernatePolymorphicEntityOracle(entityType);
+			polymorphicOracles.put((String)persister.getDiscriminatorValue(), polymorphicEntityOracle);
 
 			String[] propertyNames = persister.getPropertyNames();
 			for (int i = 0; i < propertyNames.length; i++) {
@@ -99,8 +103,8 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 				
 				String columnName = persister.getPropertyColumnNames(i)[0];
 				String propertyName = propertyNames[i];
-				PropertyIdentTuple key = new PropertyIdentTuple(propertyName, tableName, columnName, type);
 				Property property = entityType.getProperty(propertyName);
+				PropertyIdentTuple key = new PropertyIdentTuple(property, tableName, columnName, type);
 				
 				propertyMap.compute(key, (k,v) -> {
 					if (v == null || v == property)
@@ -123,7 +127,21 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 		
 		propertyOracles.sort((o1, o2) -> o1.property().getName().compareTo(o2.property().getName()));
 		
-		return new HibernateEntityHierarchyOracle(discriminatorColumn, propertyOracles);
+		for (HibernatePolymorphicEntityOracle polymorphicOracle: polymorphicOracles.values()) {
+			EntityType<?> entityType = polymorphicOracle.entityType();
+			int i = 0;
+			List<Integer> positions = new ArrayList<>(propertyOracles.size());
+			for (HibernatePropertyOracle propertyOracle: propertyOracles) {
+				if (propertyOracle.property().getDeclaringType().isAssignableFrom(entityType))
+					positions.add(i);
+				i++;
+			}
+			
+			int[] positionArray = positions.stream().mapToInt(Integer::intValue).toArray();
+			polymorphicOracle.setPositions(positionArray);
+		}
+		
+		return new HibernateEntityHierarchyOracle(discriminatorColumn, propertyOracles, polymorphicOracles);
 	}
 	
 	public HibernateEntityOracle getOracle(EntityType<?> entityType) {

@@ -5,6 +5,7 @@ import static java.util.Collections.list;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.braintribe.gm.graphfetching.api.query.FetchJoin;
 import com.braintribe.model.generic.reflection.CollectionType;
@@ -18,6 +19,7 @@ import com.braintribe.model.generic.reflection.TypeCode;
 import tribefire.extension.hibernate.graphfetching.HibernateSessionFetchQueryFactory;
 import tribefire.extension.hibernate.graphfetching.sql.HibernateCollectionOracle;
 import tribefire.extension.hibernate.graphfetching.sql.HibernateEntityOracle;
+import tribefire.extension.hibernate.graphfetching.sql.HibernatePolymorphicEntityOracle;
 import tribefire.extension.hibernate.graphfetching.sql.HibernatePropertyOracle;
 import tribefire.extension.hibernate.graphfetching.sql.HibernateSqlFetchQuery;
 
@@ -124,11 +126,15 @@ public class HibernateSqlFetchJoin extends HibernateSqlFetchSource implements Fe
 			
 			int standardPropertyOffset = 1;
 			
+			Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles = null;
+			
 			if (entityOracle.isPolymorphic()) {
 				int typePos = query.nextPos();
 				typeRsProperty = new RsProperty(typePos, entityOracle.getDiscriminatorColumn(), null, ResultValueExtractor.STRING);
 				rsProperties.add(typeRsProperty);
 				standardPropertyOffset++;
+				
+				polymorphicOracles = entityOracle.hasHierarchyOracle().polymorphicOracles();
 			}
 			
 			for (HibernatePropertyOracle scalarProperty: scalarProperties) {
@@ -136,7 +142,7 @@ public class HibernateSqlFetchJoin extends HibernateSqlFetchSource implements Fe
 				rsProperties.add(new RsProperty(scalarPos, scalarProperty));
 			}
 			
-			query.addSelectSegment(new EntitySegment(name, query.defaultPartition(), joinedEntityType, rsProperties, standardPropertyOffset, idRsProperty, typeRsProperty));
+			query.addSelectSegment(new EntitySegment(name, query.defaultPartition(), joinedEntityType, rsProperties, standardPropertyOffset, idRsProperty, typeRsProperty, polymorphicOracles));
 		}
 	}
 		
