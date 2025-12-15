@@ -135,20 +135,20 @@ public class NamingStrategyProvider {
 		}
 	}
 
-	private void provideNamesForProperty(PropertyDescriptor propertyDescriptor) {
-		if (propertyDescriptor.columnName == null) {
-			String tableName = propertyDescriptor.entityDescriptor.tableName;
-			propertyDescriptor.setColumnName(generateColumnName(tableName, propertyDescriptor.name));
-			registerColumnName(tableName, propertyDescriptor.columnName);
+	private void provideNamesForProperty(PropertyDescriptor pd) {
+		if (pd.columnName == null) {
+			String tableName = pd.entityDescriptor.tableName;
+			pd.setColumnName(generateColumnName(tableName, pd.name));
+			registerColumnName(tableName, pd.columnName);
 		}
 
-		if (propertyDescriptor.hasIndexMd && propertyDescriptor.index == null) {
-			String tableName = propertyDescriptor.entityDescriptor.tableName;
-			String columnName = propertyDescriptor.columnName;
-			propertyDescriptor.index = generateAndRegisterIndexName(tableName, columnName);
+		if (context.versionSupportsIndices() && !pd.isCollection() && pd.hasIndexMd && pd.index == null) {
+			String tableName = pd.entityDescriptor.tableName;
+			String columnName = pd.columnName;
+			pd.index = generateAndRegisterIndexName(tableName, columnName);
 		}
 
-		if (propertyDescriptor instanceof CollectionPropertyDescriptor cpd) {
+		if (pd instanceof CollectionPropertyDescriptor cpd) {
 			provideNamesForCollectionProperty(cpd);
 			createIndicesForCollectionProperty(cpd);
 		}
@@ -187,6 +187,9 @@ public class NamingStrategyProvider {
 	}
 
 	private void createIndicesForCollectionProperty(CollectionPropertyDescriptor cpd) {
+		if (!context.versionSupportsIndices())
+			return;
+
 		String tableName = cpd.many2ManyTable;
 
 		createCollectionRelatedIndex(cpd, tableName, cpd.keyColumn, IndexPurpose.COLLECTION_FOREIGN_KEY);

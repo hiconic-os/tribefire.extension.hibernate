@@ -80,6 +80,7 @@ import com.braintribe.wire.api.annotation.Managed;
 import com.braintribe.wire.api.space.WireSpace;
 
 import tribefire.extension.hibernate.util.HibernateLoggings;
+import tribefire.extension.hibernate.wire.contract.HibernatePropertiesContract;
 import tribefire.module.wire.contract.TribefireWebPlatformContract;
 
 @Managed
@@ -89,6 +90,9 @@ public class HibernateDeployablesSpace implements WireSpace {
 
 	@Import
 	private TribefireWebPlatformContract tfPlatform;
+
+	@Import
+	private HibernatePropertiesContract hibernateProperties;
 
 	private static final String ENV_TF_HIBERNATE_SCHEMA_UPDATE = "TF_HIBERNATE_SCHEMA_UPDATE";
 	private static final String ENV_VALUE_TF_HIBERNATE_SCHEMA_UPDATE_FORCE = "FORCE";
@@ -368,6 +372,7 @@ public class HibernateDeployablesSpace implements WireSpace {
 
 		HibernateMappingsDirectorySupplier factory = new HibernateMappingsDirectorySupplier();
 		factory.setMetaModel(resolveModel(deployable));
+		factory.setMappingVersion(hibernateProperties.TRIBEFIRE_HBM_MAPPING_VERSION());
 		factory.setDefaultSchema(deployable.getDefaultSchema());
 		factory.setDefaultCatalog(deployable.getDefaultCatalog());
 		factory.setObjectNamePrefix(deployable.getObjectNamePrefix());

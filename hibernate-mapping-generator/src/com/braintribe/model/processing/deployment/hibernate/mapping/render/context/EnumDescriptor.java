@@ -49,7 +49,7 @@ public class EnumDescriptor extends PropertyDescriptor {
 	}
 
 	@Override
-	public boolean getIsEnumType() {
+	public boolean isEnum() {
 		return true;
 	}
 }

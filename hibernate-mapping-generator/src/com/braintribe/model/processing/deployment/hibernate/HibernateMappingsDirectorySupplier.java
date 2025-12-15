@@ -34,6 +34,7 @@ import com.braintribe.utils.FileTools;
 public class HibernateMappingsDirectorySupplier implements Supplier<File>, DestructionAware {
 
 	private GmMetaModel metaModel;
+	private Integer mappingVersion;
 	private String defaultSchema;
 	private String defaultCatalog;
 	private String objectNamePrefix;
@@ -53,6 +54,11 @@ public class HibernateMappingsDirectorySupplier implements Supplier<File>, Destr
 	@Required
 	public void setMetaModel(GmMetaModel metaModel) {
 		this.metaModel = metaModel;
+	}
+
+	/** @see HbmXmlGeneratingService#mappingVersion(Integer) */
+	public void setMappingVersion(Integer mappingVersion) {
+		this.mappingVersion = mappingVersion;
 	}
 
 	public void setDefaultSchema(String defaultSchema) {
@@ -128,6 +134,7 @@ public class HibernateMappingsDirectorySupplier implements Supplier<File>, Destr
 		tempDir = FileTools.createNewTempDir("hiconic", "hibernate", "hbm", modelNamePart(metaModel.getName()) + "_" + System.nanoTime());
 
 		HbmXmlGeneratingService hbmXmlGenerator = new HbmXmlGeneratingService(metaModel, tempDir) //
+			.mappingVersion(mappingVersion) //
 			.defaultSchema(defaultSchema) //
 			.defaultCatalog(defaultCatalog) //
 			.tablePrefix(getTableNamePrefix()) //

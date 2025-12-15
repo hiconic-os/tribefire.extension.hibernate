@@ -76,7 +76,7 @@ public class ComponentDescriptor extends PropertyDescriptor {
 	}
 
 	@Override
-	public boolean getIsEmbedded() {
+	public boolean isEmbedded() {
 		return true;
 	}
 

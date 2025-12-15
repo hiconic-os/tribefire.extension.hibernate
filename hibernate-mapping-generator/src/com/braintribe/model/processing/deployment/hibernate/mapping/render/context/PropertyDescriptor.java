@@ -440,7 +440,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		return isIdProperty && getCompositeId() != null;
 	}
 
-	public boolean getIsEmbedded() {
+	public boolean isEmbedded() {
 		return false; // overridden in sub-type
 	}
 
@@ -520,11 +520,11 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		return foreignKey;
 	}
 
-	public boolean getIsCollectionType() {
+	public boolean isCollection() {
 		return false;
 	}
 
-	public boolean getIsEnumType() {
+	public boolean isEnum() {
 		return false;
 	}
 

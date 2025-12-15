@@ -99,16 +99,16 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 	private void render(PropertyDescriptor pd) {
 		if (pd.xml != null)
 			println(pd.xml.trim());
-		else if (pd.getIsCollectionType())
+		else if (pd.isCollection())
 			renderCollectionProperty((CollectionPropertyDescriptor) pd);
 
-		else if (pd.getIsEnumType())
+		else if (pd.isEnum())
 			renderEnumProperty((EnumDescriptor) pd);
 
 		else if (pd.getIsCompositeIdProperty())
 			renderCompositeId(pd);
 
-		else if (pd.getIsEmbedded())
+		else if (pd.isEmbedded())
 			renderEmbedded((ComponentDescriptor) pd);
 
 		else if (pd.fkClass != null)

@@ -52,8 +52,11 @@ public class HbmXmlGenerationContext {
 	private MappingMetaDataResolver metaDataResolver;
 	private EntityHintProvider entityHintProvider;
 
-	public Consumer<SourceDescriptor> entityMappingConsumer;
+	/** @see HbmXmlGeneratingService#mappingVersion(Integer) */
+	public int mappingVersion;
 	public File outputFolder;
+	public Consumer<SourceDescriptor> entityMappingConsumer;
+
 	public String tablePrefix;
 	public String foreignKeyNamePrefix;
 	public String uniqueKeyNamePrefix;
@@ -117,7 +120,7 @@ public class HbmXmlGenerationContext {
 	public EntityMdResolver entityMd(GmEntityType gmEntityType) {
 		return getMetaData().entityType(gmEntityType);
 	}
-	
+
 	public ModelMdResolver getMetaData() {
 		ModelMdResolver result = getCmdResolver().getMetaData().useCase(JPA_USE_CASE);
 		if (dialect != null)
@@ -142,6 +145,10 @@ public class HbmXmlGenerationContext {
 			entityHintProvider = new EntityHintProvider(typeHints, typeHintsFile);
 
 		return entityHintProvider;
+	}
+
+	public boolean versionSupportsIndices() {
+		return mappingVersion >= 2;
 	}
 
 }

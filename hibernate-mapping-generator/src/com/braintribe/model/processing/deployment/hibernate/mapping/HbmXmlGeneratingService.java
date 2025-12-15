@@ -22,6 +22,7 @@ import java.util.function.Function;
 
 import com.braintribe.model.accessdeployment.hibernate.HibernateDialect;
 import com.braintribe.model.accessdeployment.hibernate.meta.ModelMapping;
+import com.braintribe.model.generic.annotation.meta.Indexed;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.meta.data.MetaData;
 import com.braintribe.model.processing.deployment.hibernate.mapping.exception.HbmXmlGeneratingServiceException;
@@ -100,6 +101,25 @@ public class HbmXmlGeneratingService {
 
 	public void setTablePrefix(String prefix) {
 		context.tablePrefix = prefix;
+	}
+
+	/**
+	 * Version:
+	 * 
+	 * <pre>
+	 * 1 - default, as it's been for years
+	 * 2 - Introduced support for indices:
+	 * 	- For entity properties {@link Indexed} MD indexes the foreign-key column in the owner entity table
+	 * 	- For collection properties {@link Indexed} MD indexes the value column in the many-to-many table
+	 * 	- For collection properties the foreign key in the many-to-many table is automatically indexed
+	 * 3 - Changes some default mappings
+	 * 	- For collections of enums the values are stored as strings, not binary
+	 * 	- For collections of dates a date with time is used, not just day/month/year (was really a bug)
+	 * </pre>
+	 */
+	public HbmXmlGeneratingService mappingVersion(Integer mappingVersion) {
+		context.mappingVersion = mappingVersion == null ? 1 : mappingVersion;
+		return this;
 	}
 
 	public HbmXmlGeneratingService tablePrefix(String prefix) {

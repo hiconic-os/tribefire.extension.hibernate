@@ -253,7 +253,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	}
 
 	@Override
-	public boolean getIsCollectionType() {
+	public boolean isCollection() {
 		return true;
 	}
 
