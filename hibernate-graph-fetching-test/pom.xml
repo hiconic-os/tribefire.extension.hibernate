@@ -53,6 +53,11 @@
             <version>${V.com.h2database}</version>
         </dependency>
         <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${V.com.h2database}</version>
+        </dependency>
+        <dependency>
             <groupId>tribefire.extension.hibernate</groupId>
             <artifactId>hibernate-graph-fetching</artifactId>
             <version>${V.tribefire.extension.hibernate}</version>
@@ -67,6 +72,11 @@
             <groupId>com.braintribe.gm</groupId>
             <artifactId>gm-test-tools</artifactId>
             <version>${V.com.braintribe.gm}</version>
+        </dependency>
+        <dependency>
+			<groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.5</version>        
         </dependency>
         <dependency>
             <groupId>com.braintribe.gm</groupId>

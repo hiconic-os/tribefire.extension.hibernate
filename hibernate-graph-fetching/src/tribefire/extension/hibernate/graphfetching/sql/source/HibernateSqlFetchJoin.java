@@ -113,36 +113,8 @@ public class HibernateSqlFetchJoin extends HibernateSqlFetchSource implements Fe
 			EntityType<?> joinedEntityType = (EntityType<?>)joinedType;
 			// entity join
 			entityOracle = factory.getOracle(joinedEntityType);
-			Collection<HibernatePropertyOracle> scalarProperties = entityOracle.scalarProperties();
 			
-			List<RsProperty> rsProperties = new ArrayList<>(scalarProperties.size() + 1);
-			
-			HibernatePropertyOracle idProperty = entityOracle.idProperty();
-			int idPos = query.nextPos();
-			RsProperty idRsProperty = new RsProperty(idPos, idProperty);
-			rsProperties.add(idRsProperty);
-			
-			RsProperty typeRsProperty = null; 
-			
-			int standardPropertyOffset = 1;
-			
-			Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles = null;
-			
-			if (entityOracle.isPolymorphic()) {
-				int typePos = query.nextPos();
-				typeRsProperty = new RsProperty(typePos, entityOracle.getDiscriminatorColumn(), null, ResultValueExtractor.STRING);
-				rsProperties.add(typeRsProperty);
-				standardPropertyOffset++;
-				
-				polymorphicOracles = entityOracle.hasHierarchyOracle().polymorphicOracles();
-			}
-			
-			for (HibernatePropertyOracle scalarProperty: scalarProperties) {
-				int scalarPos = query.nextPos();
-				rsProperties.add(new RsProperty(scalarPos, scalarProperty));
-			}
-			
-			query.addSelectSegment(new EntitySegment(name, query.defaultPartition(), joinedEntityType, rsProperties, standardPropertyOffset, idRsProperty, typeRsProperty, polymorphicOracles));
+			query.addSelectSegment(EntitySegment.build(name, entityOracle, query));
 		}
 	}
 		

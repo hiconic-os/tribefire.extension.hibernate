@@ -6,7 +6,11 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
@@ -21,21 +25,34 @@ import com.braintribe.gm.graphfetching.AbstractGraphFetchingTest;
 import com.braintribe.gm.graphfetching.api.FetchBuilder;
 import com.braintribe.gm.graphfetching.api.Fetching;
 import com.braintribe.gm.graphfetching.api.node.EntityGraphNode;
+import com.braintribe.gm.graphfetching.api.query.FetchQuery;
+import com.braintribe.gm.graphfetching.api.query.FetchResults;
+import com.braintribe.gm.graphfetching.api.query.FetchSource;
 import com.braintribe.gm.graphfetching.test.model.data.ChunkedSource;
 import com.braintribe.gm.graphfetching.test.model.data.DataManagement;
 import com.braintribe.gm.graphfetching.test.model.data.DataResource;
 import com.braintribe.gm.graphfetching.test.model.data.DataSource;
 import com.braintribe.gm.graphfetching.test.model.data.FileSource;
+import com.braintribe.gm.graphfetching.test.model.data.InmemorySource;
+import com.braintribe.gm.graphfetching.test.model.tech.Entitya;
 import com.braintribe.model.access.IncrementalAccess;
+import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
 import com.braintribe.model.generic.GMF;
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.GenericModelType;
 import com.braintribe.model.generic.reflection.Property;
 import com.braintribe.model.meta.GmMetaModel;
+import com.braintribe.model.processing.core.commons.comparison.AssemblyComparison;
+import com.braintribe.model.processing.core.commons.comparison.AssemblyComparisonResult;
+import com.braintribe.model.processing.meta.configuration.ConfigurationModels;
+import com.braintribe.model.processing.meta.editor.BasicModelMetaDataEditor;
 import com.braintribe.model.processing.meta.oracle.BasicModelOracle;
+import com.braintribe.model.processing.query.building.SelectQueries;
 import com.braintribe.model.processing.session.api.persistence.PersistenceGmSession;
 import com.braintribe.model.query.EntityQuery;
+import com.braintribe.model.query.From;
+import com.braintribe.model.query.SelectQuery;
 import com.braintribe.testing.junit.assertions.assertj.core.api.Assertions;
 
 import tribefire.extension.hibernate.HibernateHelper;
@@ -49,7 +66,20 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 	@BeforeClass
 	public static void initPersistence() {
 		GmMetaModel model = GMF.getTypeReflection().getModel(_GraphFetchingTestModel_.name).getMetaModel();
-		sessionFactory = HibernateHelper.hibernateSessionFactory(() -> model, HibernateHelper.dataSource_H2("graph-fetching-test"));
+		
+		GmMetaModel configuredModel = ConfigurationModels.extend(model).get();
+		
+		BasicModelMetaDataEditor editor = new BasicModelMetaDataEditor(configuredModel);
+		
+		PropertyMapping idMapping = PropertyMapping.T.create();
+		idMapping.setIdGeneration("assigned");
+		
+		editor.onEntityType(GenericEntity.T).addPropertyMetaData(GenericEntity.id, idMapping);
+		
+		//javax.sql.DataSource dataSource = HibernateHelper.dataSource_H2("graph-fetching-test");
+		javax.sql.DataSource dataSource = HibernateHelper.dataSource_PG("graph-fetching-test");
+		
+		sessionFactory = HibernateHelper.hibernateSessionFactory(() -> configuredModel, dataSource);
 	}
 	
 	@Override
@@ -61,6 +91,56 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 	protected FetchBuilder configure(FetchBuilder fetchBuilder) {
 		fetchBuilder.queryFactory(new HibernateSessionFetchQueryFactory(sessionFactory));
 		return fetchBuilder;
+	}
+	
+	@Test
+	public void entityWithToOnes() throws Exception {
+		HibernateSessionFetchQueryFactory factory = new HibernateSessionFetchQueryFactory(sessionFactory);
+		FetchQuery query = factory.createQuery(DataSource.T, ACCESS_ID_TEST);
+		PersistenceGmSession session = newSession();
+		
+		From from = SelectQueries.source(DataSource.T);
+		SelectQuery selectQuery = SelectQueries.from(from).select(SelectQueries.property(from, GenericEntity.id));
+		Set<Object> ids = new HashSet<>(session.queryDetached().select(selectQuery).list());
+		
+		FetchSource fromHydrated = query.fromHydrated();
+		fromHydrated.as(FileSource.T).selectEntityId(FileSource.reference);
+		fromHydrated.as(InmemorySource.T).selectEntityId(InmemorySource.binaryData);
+		FetchResults fr = query.fetchFor(ids);
+		
+		while (fr.next()) {
+			GenericEntity entity = fr.get(0);
+			Object referenceId = fr.get(1);
+			Object binaryId = fr.get(2);
+			System.out.println("====");
+			System.out.println(entity);
+			System.out.println(referenceId);
+			System.out.println(binaryId);
+		}
+	}
+	
+	@Test
+	public void pgTest() throws Exception {
+		BasicModelOracle oracle = new BasicModelOracle(model);
+		EntityGraphNode graphNode = Fetching.reachable(Entitya.T).polymorphy(oracle).build();
+		
+		System.out.println(graphNode.stringify());
+		PersistenceGmSession session = newSession();
+		HibernateSessionFetchQueryFactory factory = new HibernateSessionFetchQueryFactory(sessionFactory);
+		
+		GenericEntity expectedEntity = techDataGenerator.getPool().get(Entitya.T).get(0);
+		
+		Entitya actualEntity = session.queryDetached().entity(Entitya.T, expectedEntity.getId()).find();
+		
+		Fetching.build(session, graphNode).queryFactory(factory)
+			.joinProbabilityThreshold(0.5)
+			.executor(Executors.newVirtualThreadPerTaskExecutor())
+			.fetch(Collections.singletonList(actualEntity));
+		
+		AssemblyComparisonResult result = AssemblyComparison.build().enableTracking().useGlobalId().compare(expectedEntity, actualEntity);
+		
+		if (!result.equal())
+			Assertions.fail(result.mismatchDescription() + " -> " + stringify(result.firstMismatchPath()));
 	}
 	
 	@Test

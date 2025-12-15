@@ -21,6 +21,8 @@ import com.braintribe.model.processing.idgenerator.basic.DateIdGenerator;
 import com.braintribe.model.processing.idgenerator.basic.UuidGenerator;
 import com.braintribe.persistence.hibernate.GmAwareHibernateSessionFactoryBean;
 import com.braintribe.persistence.hibernate.HibernateSessionFactoryBean;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 public class HibernateHelper {
 	/** If true, HQL queries performed by hibernate are printed in the console */
@@ -95,6 +97,30 @@ public class HibernateHelper {
 
 		return bean;
 	}
+	
+	public static DataSource dataSource_PG(String dbName) {
+		String url = "jdbc:postgresql://localhost:5432/"+dbName;
+        String user = "cortex";
+        String pw   = "cortex";
+		
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(user);
+        config.setPassword(pw);
+        // Optional: Pool-Größe etc.
+        config.setMaximumPoolSize(10);
+        config.setMinimumIdle(2);
+        config.setConnectionTimeout(30_000);
+        config.setIdleTimeout(600_000);
+        config.setMaxLifetime(1_800_000);
+        // Optional: Properties für PreparedStatement-Caching etc.
+        // config.addDataSourceProperty("cachePrepStmts", "true");
+        // config.addDataSourceProperty("prepStmtCacheSize", "250");
+        // config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+
+        return new HikariDataSource(config);
+    }
+
 
 
 }

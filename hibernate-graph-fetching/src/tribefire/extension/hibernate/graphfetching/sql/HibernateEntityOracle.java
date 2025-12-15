@@ -38,6 +38,10 @@ public class HibernateEntityOracle {
 		init();
 	}
 	
+	public EntityType<?> entityType() {
+		return entityType;
+	}
+	
 	private void init() {
 		if (!isMapped())
 			return;

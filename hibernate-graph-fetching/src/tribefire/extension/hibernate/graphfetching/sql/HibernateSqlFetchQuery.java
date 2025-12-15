@@ -28,19 +28,20 @@ public class HibernateSqlFetchQuery implements FetchQuery {
 	private int posSeq = 0;
 	private int segmentPosSeq = 0;
 	private int aliasSeq = 0;
-	private final HibernateSqlFetchFrom from;
+	private HibernateSqlFetchFrom from;
 	private Lazy<Pair<CharSequence, CharSequence>> sqlLazy = new Lazy<>(this::buildSql);
 	private List<HibernateSqlFetchJoin> joins = new ArrayList<>();
 	private final String defaultPartition;
 	
 	private List<SelectSegment> selectSegments = new ArrayList<SelectSegment>();
 	private HibernateSessionFetchQueryFactory factory;
+	private EntityType<?> entityType;
 
 	public HibernateSqlFetchQuery(HibernateSessionFetchQueryFactory factory, EntityType<?> entityType, String defaultPartition) {
 		super();
 		this.factory = factory;
+		this.entityType = entityType;
 		this.defaultPartition = defaultPartition;
-		this.from = new HibernateSqlFetchFrom(factory, this, entityType);
 	}
 	
 	public String defaultPartition() {
@@ -53,6 +54,17 @@ public class HibernateSqlFetchQuery implements FetchQuery {
 	
 	@Override
 	public FetchSource from() {
+		if (from == null) {
+			from = new HibernateSqlFetchFrom(factory, this, entityType, false);
+		}
+		return from;
+	}
+	
+	@Override
+	public FetchSource fromHydrated() {
+		if (from == null) {
+			from = new HibernateSqlFetchFrom(factory, this, entityType, true);
+		}
 		return from;
 	}
 
