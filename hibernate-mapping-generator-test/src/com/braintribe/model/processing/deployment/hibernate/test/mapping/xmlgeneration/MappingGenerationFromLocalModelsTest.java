@@ -978,11 +978,11 @@ public class MappingGenerationFromLocalModelsTest {
 	private void assertMapping(String testName, String fileName) throws Exception {
 		String sourceFile = testName + "/" + fileName;
 		String targetPath = tempFolder.getRoot().getCanonicalPath() + File.separator + fileName;
-		assertContentEqual("classpath:test/expected/" + sourceFile, targetPath);
+		assertContentEqual("res/expected/" + sourceFile, targetPath);
 	}
 
 	private void assertContentEqual(String expectedUrl, String actualUrl) {
-		List<String> expectedLines = loadResourceToStrings(expectedUrl);
+		List<String> expectedLines =  loadResourceToStrings(expectedUrl);
 		List<String> actualLines = loadResourceToStrings(actualUrl);
 
 		// printContent(expectedUrl);

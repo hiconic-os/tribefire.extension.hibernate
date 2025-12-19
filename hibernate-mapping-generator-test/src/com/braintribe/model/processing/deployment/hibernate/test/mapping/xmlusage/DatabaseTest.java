@@ -39,7 +39,7 @@ public abstract class DatabaseTest {
 	private static final String derbyDriver = "org.apache.derby.jdbc.ClientDriver";
 	private static final String derbyUser = "cortex";
 	private static final String derbyPassword = "cortex";
-	private static final String derbyUrl = "jdbc:derby://localhost:1527/res/db/hibernateAccessTest;create=true";
+	private static final String derbyUrl = "jdbc:derby://localhost:1527/tmp/db/hibernateAccessTest;create=true";
 	private static final Class<? extends Dialect> derbyDialect = DerbyTenFiveDialect.class;
 	
 

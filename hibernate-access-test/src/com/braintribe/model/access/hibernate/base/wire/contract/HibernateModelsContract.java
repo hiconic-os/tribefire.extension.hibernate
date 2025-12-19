@@ -16,6 +16,7 @@
 package com.braintribe.model.access.hibernate.base.wire.contract;
 
 import com.braintribe.model.access.hibernate.base.model.index.IndexedEntity;
+import com.braintribe.model.access.hibernate.base.model.optimistic.VersionedEntity;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicEntity;
 import com.braintribe.model.acl.HasAcl;
 import com.braintribe.model.meta.GmMetaModel;
@@ -48,5 +49,8 @@ public interface HibernateModelsContract extends WireSpace {
 
 	/** Model for testing indices, see {@link IndexedEntity} */
 	GmMetaModel indexed();
+
+	/** Model for testing optimistic locking, see {@link VersionedEntity} */
+	GmMetaModel versioned();
 
 }

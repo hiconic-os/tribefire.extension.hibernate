@@ -32,7 +32,6 @@ public interface EnrichedEntity extends StandardIdentifiable {
 
 	EntityType<EnrichedEntity> T = EntityTypes.T(EnrichedEntity.class);
 
-	// @formatter:off
 	/** string with no MaxLength nor PropertyTypeHint applied */
 	String getRegularString();
 	void setRegularString(String regularString);
@@ -182,6 +181,5 @@ public interface EnrichedEntity extends StandardIdentifiable {
 
 	String getSharedUniqueIndexB();
 	void setSharedUniqueIndexB(String sharedUniqueIndexB);
-	// @formatter:on
 
 }

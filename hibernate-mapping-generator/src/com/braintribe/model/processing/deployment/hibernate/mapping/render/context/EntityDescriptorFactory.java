@@ -113,37 +113,38 @@ public class EntityDescriptorFactory {
 	 * <p>
 	 * After invocation, the created {@link PropertyDescriptor} instances are accessible through {@link EntityDescriptor#getProperties()}
 	 */
-	private void buildProperties(EntityDescriptor entityDescriptor) {
-		List<PropertyDescriptor> commonProperties = newList();
+	private void buildProperties(EntityDescriptor ed) {
+		List<PropertyDescriptor> commonProps = newList();
 
-		Collection<GmProperty> hibernateProperties = getHbmProperties(entityDescriptor);
-		for (GmProperty gmProperty : hibernateProperties) {
-			String propertyName = gmProperty.getName();
+		Collection<GmProperty> hibernateProperties = getHbmProperties(ed);
+		for (GmProperty gmProp : hibernateProperties) {
+			String propName = gmProp.getName();
 
-			if (!GenericEntity.id.equals(propertyName)) {
-				commonProperties.add(createPropertyDescriptor(entityDescriptor, gmProperty));
-				log.trace(() -> propertyName + " property was added as a regular property into " + entityDescriptor.getFullName() + " descriptor");
+			PropertyDescriptor pd = createPropertyDescriptor(ed, gmProp);
+			if (!GenericEntity.id.equals(propName)) {
+				commonProps.add(pd);
+				log.trace(() -> propName + " property was added as a regular property into " + ed.getFullName() + " descriptor");
 
 			} else {
-				if (!entityDescriptor.getIsTopLevel()) {
-					log.debug(() -> gmProperty.nameWithOrigin() + " was ignored as it is an id property in a subclass");
+				if (!ed.getIsTopLevel()) {
+					log.debug(() -> gmProp.nameWithOrigin() + " was ignored as it is an id property in a subclass");
 					continue;
 				}
 
 				// id properties shall always be the first added to the entity descriptor
-				PropertyDescriptor idPropertyDescriptor = createPropertyDescriptor(entityDescriptor, gmProperty);
-				entityDescriptor.setIdProperty(idPropertyDescriptor);
-				entityDescriptor.getProperties().add(idPropertyDescriptor);
+				PropertyDescriptor idPd = pd;
+				ed.setIdProperty(idPd);
+				ed.getProperties().add(idPd);
 
-				log.trace(() -> propertyName + " property was added as id into top level " + entityDescriptor.getFullName() + " descriptor");
+				log.trace(() -> propName + " property was added as id into top level " + ed.getFullName() + " descriptor");
 			}
 		}
 
-		if (entityDescriptor.getIsTopLevel() && entityDescriptor.getIdProperty() == null)
-			throw new UnmappableModelException("Unmappable model: Id property not found for top-level entity: " + entityDescriptor.getFullName());
+		if (ed.getIsTopLevel() && ed.getIdProperty() == null)
+			throw new UnmappableModelException("Unmappable model: Id property not found for top-level entity: " + ed.getFullName());
 
 		// non-id properties shall always be added after a possible id property
-		entityDescriptor.getProperties().addAll(commonProperties);
+		ed.getProperties().addAll(commonProps);
 
 	}
 

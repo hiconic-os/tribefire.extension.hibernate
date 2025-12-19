@@ -28,6 +28,7 @@ import com.braintribe.model.access.hibernate.base.model.index.IndexedEntity;
 import com.braintribe.model.access.hibernate.base.model.index.ReferencedEntity;
 import com.braintribe.model.access.hibernate.base.model.n8ive.AmbiguousEntity;
 import com.braintribe.model.access.hibernate.base.model.n8ive.Player;
+import com.braintribe.model.access.hibernate.base.model.optimistic.VersionedEntity;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicCollectionEntity;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicEntity;
 import com.braintribe.model.access.hibernate.base.model.simple.BasicScalarEntity;
@@ -55,6 +56,7 @@ import com.braintribe.model.meta.GmType;
 import com.braintribe.model.meta.data.MetaData;
 import com.braintribe.model.meta.data.constraint.TypeSpecification;
 import com.braintribe.model.meta.data.query.Index;
+import com.braintribe.model.meta.data.query.Version;
 import com.braintribe.model.processing.meta.editor.BasicModelMetaDataEditor;
 import com.braintribe.model.processing.meta.editor.ModelMetaDataEditor;
 import com.braintribe.model.processing.meta.oracle.BasicModelOracle;
@@ -107,6 +109,10 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	private static final List<EntityType<?>> indexedTypes = asList( //
 			IndexedEntity.T, //
 			ReferencedEntity.T //
+	);
+
+	private static final List<EntityType<?>> versionedTypes = asList( //
+			VersionedEntity.T //
 	);
 	// @formatter:on
 
@@ -234,6 +240,20 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 		return result;
 	}
 
+	@Override
+	public GmMetaModel versioned() {
+		GmMetaModel result = verisionedRaw();
+
+		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
+		unmapGlobalIdAndPartition(md);
+
+		md.onEntityType(VersionedEntity.T) //
+				.addPropertyMetaData(VersionedEntity.version, Version.T.create()) //
+//				.addPropertyMetaData(VersionedEntity.version, UNMAPPED_P) //
+		;
+		return result;
+	}
+
 	// ###################################################
 	// ## . . . . . . . Mapping helpers . . . . . . . . ##
 	// ###################################################
@@ -275,6 +295,13 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 	private GmMetaModel indexedRaw() {
 		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:index-model", indexedTypes);
+		addMd(result, null);
+
+		return result;
+	}
+
+	private GmMetaModel verisionedRaw() {
+		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:versioned-model", versionedTypes);
 		addMd(result, null);
 
 		return result;

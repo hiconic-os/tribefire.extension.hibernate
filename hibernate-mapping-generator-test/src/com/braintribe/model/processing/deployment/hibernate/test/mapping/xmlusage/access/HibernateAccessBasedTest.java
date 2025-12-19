@@ -15,12 +15,13 @@
 // ============================================================================
 package com.braintribe.model.processing.deployment.hibernate.test.mapping.xmlusage.access;
 
+import static com.braintribe.utils.lcd.CollectionTools2.newMap;
+import static com.braintribe.utils.lcd.CollectionTools2.newSet;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -49,16 +50,14 @@ import com.braintribe.model.processing.session.impl.persistence.BasicPersistence
 import com.braintribe.model.query.EntityQuery;
 
 /**
- * <p>
  * Tests based on {@link com.braintribe.model.access.hibernate.HibernateAccess}.
- * 
  */
 public abstract class HibernateAccessBasedTest extends DatabaseTest {
 
 	protected Random randon = new Random();
 	protected AtomicInteger entityId = new AtomicInteger(1);
 
-	private static final String mappingsDir = "src/test/expected/testSkeletonMetaModel";
+	private static final String mappingsDir = "res/expected/testSkeletonMetaModel";
 
 	private static HibernateAccess hibernateAccess;
 
@@ -115,21 +114,19 @@ public abstract class HibernateAccessBasedTest extends DatabaseTest {
 	}
 
 	protected void testPersistAndQuery() throws Exception {
-
 		loadTypes();
 
 		PersistenceGmSession gmSession = createPersistenceGmSession();
 
 		cleanUp(gmSession);
 
-		Map<EntityType<GenericEntity>, GenericEntity> created = persist(gmSession);
+		Map<EntityType<?>, GenericEntity> created = persist(gmSession);
 
 		gmSession.commit();
 
 		query(gmSession, created);
 
 		System.out.println("Test completed successfully.");
-
 	}
 
 	protected void loadTypes() throws Exception {
@@ -140,29 +137,28 @@ public abstract class HibernateAccessBasedTest extends DatabaseTest {
 		// No impl so far
 	}
 
-	@SuppressWarnings("unchecked")
-	private Map<EntityType<GenericEntity>, GenericEntity> persist(PersistenceGmSession gmSession) throws Exception {
-		Map<EntityType<GenericEntity>, GenericEntity> created = new HashMap<EntityType<GenericEntity>, GenericEntity>();
+	private Map<EntityType<?>, GenericEntity> persist(PersistenceGmSession gmSession) throws Exception {
+		Map<EntityType<?>, GenericEntity> created = newMap();
 		for (EntityType<? extends GenericEntity> type : types) {
 			if (!type.isAbstract()) {
-				created.put((EntityType<GenericEntity>) type, createEntity(gmSession, type));
+				created.put(type, createEntity(gmSession, type));
 			}
 		}
 		return created;
 	}
 
-	private void query(PersistenceGmSession gmSession, Map<EntityType<GenericEntity>, GenericEntity> created) throws Exception {
+	private void query(PersistenceGmSession gmSession, Map<EntityType<?>, GenericEntity> created) throws Exception {
 		List<EntityQuery> queries = createEntityQueries(created);
 		executeQueries(gmSession, queries);
 	}
 
-	private static List<EntityQuery> createEntityQueries(Map<EntityType<GenericEntity>, GenericEntity> created) {
+	private static List<EntityQuery> createEntityQueries(Map<EntityType<?>, GenericEntity> created) {
 
 		List<EntityQuery> queries = new ArrayList<EntityQuery>();
 
-		for (Map.Entry<EntityType<GenericEntity>, GenericEntity> entry : created.entrySet()) {
+		for (Map.Entry<EntityType<?>, GenericEntity> entry : created.entrySet()) {
 
-			EntityType<GenericEntity> type = entry.getKey();
+			EntityType<?> type = entry.getKey();
 			GenericEntity entity = entry.getValue();
 
 			queries.add(EntityQueryBuilder.from(type).done());
@@ -195,7 +191,6 @@ public abstract class HibernateAccessBasedTest extends DatabaseTest {
 				} else {
 					queries.add(EntityQueryBuilder.from(type).where().property(propertyName).eq(propertyValue).done());
 				}
-
 			}
 		}
 
@@ -215,16 +210,12 @@ public abstract class HibernateAccessBasedTest extends DatabaseTest {
 		return entity;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <T extends GenericEntity> T createEntity(PersistenceGmSession gmSession, EntityType<T> entityType, Map<EntityType<T>, T> created) {
+	private <T extends GenericEntity> T createEntity(PersistenceGmSession gmSession, EntityType<T> entityType, Map<EntityType<?>, GenericEntity> created) {
+		if (created != null && created.containsKey(entityType))
+			return (T) created.get(entityType);
 
-		if (created != null && created.containsKey(entityType)) {
-			return created.get(entityType);
-		}
-
-		if (created == null) {
-			created = new HashMap<EntityType<T>, T>();
-		}
+		if (created == null)
+			created = newMap();
 
 		T entity = gmSession.create(entityType);
 		String tempIdent = entityType.getShortName() + "-" + entityId.getAndIncrement();
@@ -232,10 +223,8 @@ public abstract class HibernateAccessBasedTest extends DatabaseTest {
 		List<Property> properties = entityType.getProperties();
 
 		for (Property property : properties) {
-
-			if (property.isIdentifying() || property.isGlobalId()) {
+			if (property.isIdentifying() || property.isGlobalId())
 				continue;
-			}
 
 			GenericModelType propertyType = property.getType();
 
@@ -244,7 +233,7 @@ public abstract class HibernateAccessBasedTest extends DatabaseTest {
 					property.set(entity, property.getName() + " property for " + tempIdent);
 				} else if (propertyType.isNumber()) {
 					Number randomNumber = null;
-					String typeName = ((SimpleType) propertyType).getTypeName();
+					String typeName = propertyType.getTypeName();
 					if (typeName.equals("integer")) {
 						randomNumber = randon.nextInt();
 					} else if (typeName.equals("long")) {
@@ -255,12 +244,11 @@ public abstract class HibernateAccessBasedTest extends DatabaseTest {
 					property.set(entity, randomNumber);
 				}
 			} else if (propertyType.isEntity()) {
-				EntityType propertyEntityType = (EntityType) propertyType;
+				EntityType<?> propertyEntityType = (EntityType<?>) propertyType;
 				if (!propertyEntityType.isAbstract()) {
 					property.set(entity, createEntity(gmSession, propertyEntityType, created));
 				}
 			}
-
 		}
 
 		created.put(entityType, entity);
@@ -268,9 +256,8 @@ public abstract class HibernateAccessBasedTest extends DatabaseTest {
 		return entity;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Set<EntityType<? extends GenericEntity>> getTestTypes(Class<?>[] typeArray) {
-		Set<EntityType<? extends GenericEntity>> res = new HashSet<EntityType<? extends GenericEntity>>();
+		Set<EntityType<? extends GenericEntity>> res = newSet();
 		for (Class<?> type : typeArray) {
 			res.add(GMF.getTypeReflection().getEntityType((Class<? extends GenericEntity>) type));
 		}

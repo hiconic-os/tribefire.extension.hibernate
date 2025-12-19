@@ -15,8 +15,14 @@
 // ============================================================================
 package com.braintribe.model.processing.deployment.hibernate.mapping.render;
 
+import static com.braintribe.utils.lcd.CollectionTools2.first;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.braintribe.model.accessdeployment.jpa.meta.JpaColumn;
 import com.braintribe.model.generic.tools.AbstractStringifier;
+import com.braintribe.model.meta.GmType;
 import com.braintribe.model.processing.deployment.hibernate.mapping.SourceDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.CollectionPropertyDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.ComponentDescriptor;
@@ -99,6 +105,10 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 	private void render(PropertyDescriptor pd) {
 		if (pd.xml != null)
 			println(pd.xml.trim());
+
+		else if (pd.hasVersionMd)
+			return;
+
 		else if (pd.isCollection())
 			renderCollectionProperty((CollectionPropertyDescriptor) pd);
 
@@ -138,6 +148,49 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 			renderDiscriminatorMaybe(pd);
 		}
 
+		if (pd.isIdProperty)
+			renderVersionOpt();
+	}
+
+	private void renderVersionOpt() {
+		List<PropertyDescriptor> versions = ed.properties.stream().filter(pd -> pd.hasVersionMd).toList();
+		if (versions.isEmpty())
+			return;
+
+		if (versions.size() > 1)
+			throw new IllegalArgumentException("Entity " + ed.fullName + " has multiple version properties: "
+					+ versions.stream().map(pd -> pd.name).collect(Collectors.joining(", ")));
+
+		PropertyDescriptor pd = first(versions);
+		// E.g.: <version name="propName" type="long">
+		openTag("version");
+		attr("name", pd.name);
+		optAttr("type", pd.explicitType);
+
+		levelUp();
+		{
+			endOpenTag();
+			// <column name="VERSION" default="0" not-null="true" />
+			openTag("column");
+			attr("name", pd.getQuotedColumnName());
+			attr("default", defaultValueForType(pd));
+			attr("not-null", "true");
+			closeTag();
+		}
+		levelDown();
+
+		closeTag("version");
+	}
+
+	private String defaultValueForType(PropertyDescriptor pd) {
+		GmType type = pd.getGmType();
+		switch (type.typeKind()) {
+			case LONG:
+				return "0";
+			default:
+				throw new UnsupportedOperationException(
+						"Property " + pd.fullName() + " is marked as version, but only Long type is supported, not" + type.getTypeSignature());
+		}
 	}
 
 	private void renderCollectionProperty(CollectionPropertyDescriptor pd) {

@@ -35,6 +35,7 @@ import com.braintribe.model.meta.data.constraint.MaxLength;
 import com.braintribe.model.meta.data.constraint.TypeSpecification;
 import com.braintribe.model.meta.data.display.NameConversion;
 import com.braintribe.model.meta.data.query.Index;
+import com.braintribe.model.meta.data.query.Version;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
 import com.braintribe.model.processing.deployment.hibernate.mapping.hints.PropertyHint;
 import com.braintribe.model.processing.deployment.hibernate.mapping.utils.ResourceUtils;
@@ -57,6 +58,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	public String uniqueKey;
 	public String index;
 	public boolean hasIndexMd;
+	public boolean hasVersionMd;
 	public String lazy;
 	public String cascade;
 	public String fetch;
@@ -82,6 +84,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		public NameConversion nameConversion;
 		public MaxLength maxLength;
 		public Index index;
+		public Version version;
 	}
 
 	public static PropertyDescriptor create(HbmXmlGenerationContext context, EntityDescriptor descriptor, GmProperty gmProperty) {
@@ -93,6 +96,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		metaData.nameConversion = propertyMdResolver.meta(NameConversion.T).exclusive();
 		metaData.maxLength = propertyMdResolver.meta(MaxLength.T).exclusive();
 		metaData.index = propertyMdResolver.meta(Index.T).exclusive();
+		metaData.version = propertyMdResolver.meta(Version.T).exclusive();
 
 		return create(context, gmProperty, descriptor, metaData);
 	}
@@ -218,6 +222,9 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 
 		if (metaData.index != null)
 			hasIndexMd = true;
+
+		if (metaData.version != null)
+			hasVersionMd = true;
 	}
 
 	protected void applyPropertyMappingMetaData(PropertyMapping propertyMapping) {
@@ -604,4 +611,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		return foreignKeyNamePrefix != null ? foreignKeyNamePrefix + hintedForeignKeyName : hintedForeignKeyName;
 	}
 
+	public String fullName() {
+		return entityDescriptor.fullName + "." + name;
+	}
 }

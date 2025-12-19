@@ -205,13 +205,14 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 	}
 
 	/**
-	 * Specifies the maximum number of times the {@link #applyManipulation(ManipulationRequest)} is attempted in case it
-	 * fails due to a deadlock.
+	 * Specifies the maximum number of times the {@link #applyManipulation(ManipulationRequest)} is attempted in case the transaction commit fails due
+	 * to a deadlock or if optimistic locking detects dirty writes.
 	 * <p>
-	 * As there is now dedicated deadlock exception, we consider any transaction that ends up with a
-	 * {@link LockAcquisitionException}, {@link LockingStrategyException}, {@link PessimisticLockException} or, just to be
-	 * safe, {@link OptimisticLockException} and {@link javax.persistence.PessimisticLockException}.
+	 * As there is now dedicated deadlock exception, we consider any transaction that ends up with a {@link LockAcquisitionException},
+	 * {@link LockingStrategyException}, alongside {@link PessimisticLockException}, {@link OptimisticLockException} and
+	 * {@link javax.persistence.PessimisticLockException}.
 	 */
+	// TODO this retry is not just for deadlock, but also for optimistic locking
 	public void setDeadlockRetryLimit(Integer deadlockRetryLimit) {
 		if (deadlockRetryLimit != null)
 			this.deadlockRetryLimit = Math.max(deadlockRetryLimit, 1);
@@ -374,8 +375,8 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 	/**
 	 * Applies given manipulations against the database in a single hibernate transaction.
 	 * <p>
-	 * In case a deadlock is detected, it automatically tries again, up to {@link #setDeadlockRetryLimit(Integer)} number of
-	 * times.
+	 * In case a deadlock is detected or optimistic locking detects dirty writes, it automatically tries again, up to
+	 * {@link #setDeadlockRetryLimit(Integer)} number of times.
 	 * 
 	 * @throw {@link NotFoundException} in case the manipulations reference an entity that cannot be found in the database.
 	 */
@@ -386,7 +387,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 			try {
 				return _applyManipulation(manipulationRequest);
 
-			} catch (PossibleDeadlockException e) {
+			} catch (RetryWorthyException e) {
 				if (++attempt == deadlockRetryLimit) {
 					log.debug(() -> "Error while applying manipulations: " + manipulationRequest.getManipulation().stringify());
 					log.error("[" + getAccessId() + "] Error while applying manipulations.", e);
@@ -440,10 +441,10 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 
 			} catch (LockAcquisitionException | LockingStrategyException | PessimisticLockException | OptimisticLockException
 					| javax.persistence.PessimisticLockException e) {
-				/* I don't actually know if all of these can even be thrown, or if they indicate deadlock. I've seen
-				 * LockAcquisitionException and OptimisticLockException (not JPA but hibernate one). Either way, to be safe we consider
-				 * all these as possible deadlock. Worst case we'll get the same error over and over again. */
-				throw new PossibleDeadlockException(e);
+				/* This can either indicate a deadlock or dirty writes in case of OptimisticLockException. I've seen LockAcquisitionException and
+				 * OptimisticLockException (not JPA but hibernate one). Either way, to be safe we consider all these as something worth re-try. Worst
+				 * case we'll get the same error over and over again. */
+				throw new RetryWorthyException(e);
 
 			} catch (NotFoundException e) {
 				/* "Expected" exceptions are not logged, they do not indicate a problem in HA. Client should handle it himself. */
@@ -593,11 +594,11 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 
 	}
 
-	static class PossibleDeadlockException extends RuntimeException {
+	static class RetryWorthyException extends RuntimeException {
 		private static final long serialVersionUID = -7149109582173609029L;
 		public final RuntimeException originalException;
 
-		public PossibleDeadlockException(RuntimeException e) {
+		public RetryWorthyException(RuntimeException e) {
 			this.originalException = e;
 		}
 	}
@@ -828,7 +829,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 					| javax.persistence.PessimisticLockException e) {
 
 				rollbackTransaction(actionType, transaction, e);
-				throw new PossibleDeadlockException(e);
+				throw new RetryWorthyException(e);
 
 			} catch (RuntimeException e) {
 				rollbackTransaction(actionType, transaction, e);

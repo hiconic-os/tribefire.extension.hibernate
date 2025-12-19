@@ -13,21 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ============================================================================
-package test.models.basic;
+package com.braintribe.model.access.hibernate.base.model.optimistic;
 
-import com.braintribe.model.generic.base.EnumBase;
-import com.braintribe.model.generic.reflection.EnumType;
-import com.braintribe.model.generic.reflection.EnumTypes;
+import com.braintribe.model.access.hibernate.base.model.HibernateAccessEntity;
+import com.braintribe.model.generic.reflection.EntityType;
+import com.braintribe.model.generic.reflection.EntityTypes;
 
-public enum SimpleEnum implements EnumBase<SimpleEnum> {
-	first,
-	second,
-	third;
+/**
+ * @author peter.gazdik
+ */
+public interface VersionedEntity extends HibernateAccessEntity {
 
-	public static final EnumType<SimpleEnum> T = EnumTypes.T(SimpleEnum.class);
+	EntityType<VersionedEntity> T = EntityTypes.T(VersionedEntity.class);
 
-	@Override
-	public EnumType<SimpleEnum> type() {
-		return T;
-	}
+	String version = "version";
+
+	int getCount();
+	void setCount(int count);
+
+
+	Long getVersion();
+	void setVersion(Long version);
+
 }

@@ -15,7 +15,6 @@
 // ============================================================================
 package com.braintribe.model.processing.deployment.hibernate.test.mapping.xmlgeneration;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -48,10 +47,11 @@ import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenera
 import com.braintribe.model.processing.deployment.hibernate.mapping.exception.HbmXmlGeneratingServiceException;
 import com.braintribe.model.processing.deployment.hibernate.test.metamodel.MetaModelProvider;
 import com.braintribe.testing.category.Slow;
+import com.braintribe.utils.FileTools;
 import com.braintribe.utils.IOTools;
 
 /**
- * Tests hibernate mapping generation for {@code HibernateMappingGeneratorTestModel} entities.
+ * Tests {@link HbmXmlGeneratingService} hibernate mapping generation for {@code HibernateMappingGeneratorTestModel} entities.
  * 
  */
 public class MappingGenerationTest {
@@ -72,8 +72,9 @@ public class MappingGenerationTest {
 	private static final XmlComparisonMode xmlComparisonMode = XmlComparisonMode.custom;
 	private static final boolean isXmlComparisonEnabled = true;
 	private static final boolean abortOnXmlComparisonFailure = false;
+	private static final boolean fullPrintOnFailure = true;
 
-	private static final String expectedPath = "/test/expected";
+	private static final String expectedPath = "res/expected";
 
 	private static final String tablePrefix = "TEST_";
 	private static final boolean allUppercase = true;
@@ -83,9 +84,8 @@ public class MappingGenerationTest {
 	private static GmMetaModel skeletonMetaModel;
 	private static GmMetaModel enrichedMetaModel;
 
-	private static final boolean updateMode = false;
-	private static final String updateBase = System.getenv("BT__ARTIFACTS_HOME")
-			+ "/com/braintribe/model/processing/deployment/HibernateMappingGeneratorTest/1.3/src";
+	private static final boolean updateExisting = false;
+	private static final boolean updateNotExistent = false;
 
 	public static void main(String[] args) throws Exception {
 		runTestSuite();
@@ -119,7 +119,7 @@ public class MappingGenerationTest {
 		generatorService.setAllUppercase(allUppercase);
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModel", 42);
+		compareMappings("testSkeletonMetaModel", 43);
 	}
 
 	// @Category(Slow.class) //set to slow in case XmlComparisonMode.xmlDiff is used
@@ -137,7 +137,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsOutputFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModel", 42);
+		compareMappings("testSkeletonMetaModel", 43);
 		cleanCommonOutput();
 
 		// 2. generate using the hints output file as hints input
@@ -149,7 +149,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModel", 42);
+		compareMappings("testSkeletonMetaModel", 43);
 		cleanCommonOutput();
 
 		// 3. generate using the hints output file as hints input after altering properties order
@@ -161,7 +161,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModel", 42);
+		compareMappings("testSkeletonMetaModel", 43);
 	}
 
 	// @Category(Slow.class) //set to slow in case XmlComparisonMode.xmlDiff is used
@@ -176,7 +176,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(getPathFromClasspath(typeHintsJsonFile).toFile());
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModelWithHints", 42);
+		compareMappings("testSkeletonMetaModelWithHints", 43);
 	}
 
 	@Test(expected = HbmXmlGeneratingServiceException.class)
@@ -235,7 +235,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(getPathFromClasspath(metaDataHintsJsonFile).toFile());
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModelWithMetaDataHints", 42);
+		compareMappings("testSkeletonMetaModelWithMetaDataHints", 43);
 	}
 
 	@Category(Slow.class)
@@ -254,7 +254,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsOutputFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModelWithHints", 42);
+		compareMappings("testSkeletonMetaModelWithHints", 43);
 		cleanCommonOutput();
 
 		// 2. generate using the hints output file as hints input
@@ -266,7 +266,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModelWithHints", 42);
+		compareMappings("testSkeletonMetaModelWithHints", 43);
 		cleanCommonOutput();
 
 		// 3. generate using the hints output file as hints input after altering properties order
@@ -278,7 +278,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testSkeletonMetaModelWithHints", 42);
+		compareMappings("testSkeletonMetaModelWithHints", 43);
 	}
 
 	// @Category(Slow.class) //set to slow in case XmlComparisonMode.xmlDiff is used
@@ -292,7 +292,7 @@ public class MappingGenerationTest {
 		generatorService.setAllUppercase(allUppercase);
 		generatorService.renderMappings();
 
-		compareMappings("testEnrichedMetaModel", 40);
+		compareMappings("testEnrichedMetaModel", 41);
 	}
 
 	// @Category(Slow.class) //set to slow in case XmlComparisonMode.xmlDiff is used
@@ -309,7 +309,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsOutputFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testEnrichedMetaModel", 40);
+		compareMappings("testEnrichedMetaModel", 41);
 		cleanCommonOutput();
 
 		// 2. generate using the hints output file as hints input
@@ -321,7 +321,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testEnrichedMetaModel", 40);
+		compareMappings("testEnrichedMetaModel", 41);
 		cleanCommonOutput();
 
 		// 3. generate using the hints output file as hints input after altering properties order
@@ -333,7 +333,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testEnrichedMetaModel", 40);
+		compareMappings("testEnrichedMetaModel", 41);
 	}
 
 	// @Category(Slow.class) //set to slow in case XmlComparisonMode.xmlDiff is used
@@ -348,7 +348,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(getPathFromClasspath(typeHintsJsonFile).toFile());
 		generatorService.renderMappings();
 
-		compareMappings("testEnrichedMetaModelWithHints", 40);
+		compareMappings("testEnrichedMetaModelWithHints", 41);
 	}
 
 	@Category(Slow.class)
@@ -366,7 +366,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsOutputFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testEnrichedMetaModelWithHints", 40);
+		compareMappings("testEnrichedMetaModelWithHints", 41);
 		cleanCommonOutput();
 
 		// 2. generate using the hints output file as hints input
@@ -378,7 +378,7 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testEnrichedMetaModelWithHints", 40);
+		compareMappings("testEnrichedMetaModelWithHints", 41);
 		cleanCommonOutput();
 
 		// 3. generate using the hints output file as hints input after altering properties order
@@ -390,10 +390,10 @@ public class MappingGenerationTest {
 		generatorService.setTypeHintsFile(hints);
 		generatorService.renderMappings();
 
-		compareMappings("testEnrichedMetaModelWithHints", 40);
+		compareMappings("testEnrichedMetaModelWithHints", 41);
 	}
 
-	protected void compareMappings(final Path outputPath, final String expectedPathFolder, int expectedItemCount) throws Exception {
+	protected void compareMappings(Path outputPath, String expectedPathFolder, int expectedItemCount) throws Exception {
 		if (!isXmlComparisonEnabled)
 			return;
 
@@ -421,9 +421,17 @@ public class MappingGenerationTest {
 
 				
 				String pathToRealExpected = expectedPathFolder + "/" + fileName;
+				File expectedXmlFile = new File(pathToRealExpected);
 
-				String generatedXml = new String(Files.readAllBytes(pathToGenerated));
-				String realExpectedXml = getContents(pathToRealExpected);
+				String generatedXml = FileTools.readStringFromFile(pathToGenerated.toFile());
+
+				if (!expectedXmlFile.exists()) {
+					if (updateNotExistent)
+						FileTools.writeStringToFile(expectedXmlFile, generatedXml);
+					return FileVisitResult.CONTINUE;
+				}
+
+				String realExpectedXml = FileTools.readStringFromFile(expectedXmlFile);
 
 				// System.out.println("Expected:\n" + realExpectedXml);
 				// System.out.println("Generated:\n" + generatedXml);
@@ -456,20 +464,14 @@ public class MappingGenerationTest {
 						}
 
 					}
+				} else if (updateExisting) {
+					FileTools.writeStringToFile(expectedXmlFile, generatedXml);
+					
 				} else {
-
-					if (updateMode) {
-						Path path = Paths.get(updateBase + pathToRealExpected);
-						try (BufferedWriter w = Files.newBufferedWriter(path, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)) {
-							w.write(generatedXml);
-							w.flush();
-							System.out.println("Wrote to " + path);
-						}
-						realExpectedXml = generatedXml;
-					}
+					if (fullPrintOnFailure && !cleanUpXml(realExpectedXml).equals(cleanUpXml(generatedXml)))
+						System.out.println("Expected ():\n" + realExpectedXml + "\n\nActual:" + generatedXml);
 
 					Assert.assertEquals(fileName + ": INCOMPATIBLE", cleanUpXml(realExpectedXml), cleanUpXml(generatedXml));
-
 				}
 
 				return FileVisitResult.CONTINUE;
@@ -494,9 +496,6 @@ public class MappingGenerationTest {
 	}
 
 	protected void compareMappings(String expectedFolderSuffix, int totalExpected) throws Exception {
-		if (!isXmlComparisonEnabled)
-			return;
-
 		compareMappings(outputFolder.getRoot().toPath(), MappingGenerationTest.expectedPath + File.separator + expectedFolderSuffix, totalExpected);
 	}
 
@@ -537,15 +536,6 @@ public class MappingGenerationTest {
 				throw new RuntimeException("Failed to pump to " + targetFolder + ": " + e1.getMessage(), e1);
 			}
 
-		}
-	}
-
-	protected String getContents(String relativePath) {
-		try {
-			relativePath = relativePath.replace("\\", "/");
-			return IOTools.slurp(getClass().getResourceAsStream(relativePath), null);
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to read from " + relativePath + ": " + e.getMessage(), e);
 		}
 	}
 

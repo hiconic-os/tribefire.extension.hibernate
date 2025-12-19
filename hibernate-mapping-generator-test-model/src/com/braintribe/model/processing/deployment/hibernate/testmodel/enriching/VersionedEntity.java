@@ -13,21 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ============================================================================
-package test.models.basic;
+package com.braintribe.model.processing.deployment.hibernate.testmodel.enriching;
 
-import com.braintribe.model.generic.base.EnumBase;
-import com.braintribe.model.generic.reflection.EnumType;
-import com.braintribe.model.generic.reflection.EnumTypes;
+import com.braintribe.model.generic.StandardIdentifiable;
+import com.braintribe.model.generic.annotation.meta.Version;
+import com.braintribe.model.generic.reflection.EntityType;
+import com.braintribe.model.generic.reflection.EntityTypes;
 
-public enum SimpleEnum implements EnumBase<SimpleEnum> {
-	first,
-	second,
-	third;
+/**
+ * We test that we write these props in this order:
+ * <ol>
+ * <li> id
+ * <li> version
+ * <li> name
+ * </ol>
+ */
+public interface VersionedEntity extends StandardIdentifiable {
 
-	public static final EnumType<SimpleEnum> T = EnumTypes.T(SimpleEnum.class);
+	EntityType<VersionedEntity> T = EntityTypes.T(VersionedEntity.class);
 
-	@Override
-	public EnumType<SimpleEnum> type() {
-		return T;
-	}
+	@Version
+	Long getVersion();
+	void setVersion(Long version);
+
+	String getName();
+	void setName(String name);
 }

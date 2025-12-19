@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<hibernate-mapping auto-import="true">
+	<class name="com.braintribe.model.processing.deployment.hibernate.testmodel.enriching.VersionedEntity" entity-name="com.braintribe.model.processing.deployment.hibernate.testmodel.enriching.VersionedEntity" table="TEST_VERSIONEDENTITY" abstract="false">
+		<id name="id" column="ID" type="long">
+			<generator class="native" />
+		</id>
+		<version name="version" type="long">
+			<column name="VERSION" default="0" not-null="true" />
+		</version>
+		<property name="globalId" column="GLOBALID" type="string" />
+		<property name="name" column="NAME_" type="string" />
+		<property name="partition" column="PARTITION_" type="string" />
+	</class>
+</hibernate-mapping>
