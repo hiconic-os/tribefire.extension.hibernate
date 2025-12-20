@@ -9,8 +9,11 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
 
+import com.braintribe.model.generic.pr.AbsentEntity;
+import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EnumType;
 import com.braintribe.model.generic.reflection.GenericModelType;
+import com.braintribe.model.generic.reflection.VdHolder;
 
 public interface ResultValueExtractor {
 	static ResultValueExtractor STRING = ResultSet::getString; 
@@ -41,52 +44,78 @@ public interface ResultValueExtractor {
 		case stringType: return STRING; 
 		case objectType: return OBJECT;
 		
-		case enumType:
-			EnumType<?> enumType = (EnumType<?>)type;
-			return (rs, i) -> {
-				Object v = rs.getObject(i);
-				if (v == null)
-					return null;
-				
-				Class<? extends Object> vClass = v.getClass();
-				
-				if (vClass == String.class) {
-					final String strValue = (String)v;
-					return enumType.getEnumValue(strValue);
-				}
-				else if (vClass == byte[].class) {
-					byte[] serialized = (byte[])v;
-					try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized); ObjectInputStream ois = new ObjectInputStream(bais)) {
-					        return ois.readObject();
-					} catch (IOException e) {
-						throw new UncheckedIOException(e);
-					} catch (ClassNotFoundException e) {
-						throw new RuntimeException(e);
-					}
-				}
-				else
-					throw new IllegalStateException("unsupported result set value type for enum: " + vClass);
-			};
+		case enumType: return new EnumResultValueExtractor((EnumType<?>)type);
+		case entityType: return new EntityResultValueExtractor((EntityType<?>)type);
 			
 		default:
 			// can never happen
 			throw new IllegalStateException("Type confusion");
 		}
 	}
-	
-	class PrimitiveResultValueExtractor implements ResultValueExtractor {
-		private final ResultValueExtractor primitiveDelegate;
-		
-		public PrimitiveResultValueExtractor(ResultValueExtractor primitiveDelegate) {
-			super();
-			this.primitiveDelegate = primitiveDelegate;
-		}
+}
 
-		@Override
-		public Object getValue(ResultSet rs, int i) throws SQLException {
-			Object v = primitiveDelegate.getValue(rs, i);
-			return rs.wasNull()? null: v;
-		}
+class PrimitiveResultValueExtractor implements ResultValueExtractor {
+	private final ResultValueExtractor primitiveDelegate;
+	
+	public PrimitiveResultValueExtractor(ResultValueExtractor primitiveDelegate) {
+		super();
+		this.primitiveDelegate = primitiveDelegate;
 	}
 
+	@Override
+	public Object getValue(ResultSet rs, int i) throws SQLException {
+		Object v = primitiveDelegate.getValue(rs, i);
+		return rs.wasNull()? null: v;
+	}
+}
+
+class EnumResultValueExtractor implements ResultValueExtractor {
+	private EnumType<?> enumType;
+
+	public EnumResultValueExtractor(EnumType<?> enumType) {
+		super();
+		this.enumType = enumType;
+	}
+	
+	@Override
+	public Object getValue(ResultSet rs, int i) throws SQLException {
+		Object v = rs.getObject(i);
+		if (v == null)
+			return null;
+		
+		Class<? extends Object> vClass = v.getClass();
+		
+		if (vClass == String.class) {
+			final String strValue = (String)v;
+			return enumType.getEnumValue(strValue);
+		}
+		else if (vClass == byte[].class) {
+			byte[] serialized = (byte[])v;
+			try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized); ObjectInputStream ois = new ObjectInputStream(bais)) {
+			        return ois.readObject();
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		else
+			throw new IllegalStateException("unsupported result set value type for enum: " + vClass);
+	}
+}
+
+class EntityResultValueExtractor implements ResultValueExtractor {
+	
+	private EntityType<?> entityType;
+	
+	public EntityResultValueExtractor(EntityType<?> entityType) {
+		super();
+		this.entityType = entityType;
+	}
+
+	@Override
+	public Object getValue(ResultSet rs, int i) throws SQLException {
+		Object id = rs.getObject(i);
+		return id != null? VdHolder.newInstance(AbsentEntity.create(entityType, id)): null;
+	}
 }

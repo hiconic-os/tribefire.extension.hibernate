@@ -4,7 +4,8 @@ import com.braintribe.model.generic.reflection.EntityType;
 
 public class HibernatePolymorphicEntityOracle {
 	public final EntityType<?> entityType;
-	public int[] positions;
+	public int[] scalarPositions;
+	public int[] entityPositions;
 	
 	public HibernatePolymorphicEntityOracle(EntityType<?> entityType) {
 		this.entityType = entityType;
@@ -14,7 +15,11 @@ public class HibernatePolymorphicEntityOracle {
 		return entityType;
 	}
 
-	public void setPositions(int[] positions) {
-		this.positions = positions;
+	public void setScalarPositions(int[] positions) {
+		this.scalarPositions = positions;
+	}
+	
+	public void setEntityPositions(int[] entityPositions) {
+		this.entityPositions = entityPositions;
 	}
 }

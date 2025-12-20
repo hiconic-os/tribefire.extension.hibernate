@@ -10,11 +10,11 @@ import java.util.Set;
 import com.braintribe.common.lcd.Pair;
 import com.braintribe.exception.Exceptions;
 import com.braintribe.gm.graphfetching.api.query.FetchQuery;
+import com.braintribe.gm.graphfetching.api.query.FetchQueryOptions;
 import com.braintribe.gm.graphfetching.api.query.FetchResults;
 import com.braintribe.gm.graphfetching.api.query.FetchSource;
 import com.braintribe.logging.Logger;
 import com.braintribe.model.generic.reflection.EntityType;
-import com.braintribe.model.generic.reflection.TypeCode;
 import com.braintribe.utils.lcd.Lazy;
 
 import tribefire.extension.hibernate.graphfetching.HibernateSessionFetchQueryFactory;
@@ -36,12 +36,20 @@ public class HibernateSqlFetchQuery implements FetchQuery {
 	private List<SelectSegment> selectSegments = new ArrayList<SelectSegment>();
 	private HibernateSessionFetchQueryFactory factory;
 	private EntityType<?> entityType;
+	private FetchQueryOptions options;
 
-	public HibernateSqlFetchQuery(HibernateSessionFetchQueryFactory factory, EntityType<?> entityType, String defaultPartition) {
+	public HibernateSqlFetchQuery(HibernateSessionFetchQueryFactory factory, EntityType<?> entityType, String defaultPartition, FetchQueryOptions options) {
 		super();
 		this.factory = factory;
 		this.entityType = entityType;
 		this.defaultPartition = defaultPartition;
+		this.options = options;
+		
+		from = new HibernateSqlFetchFrom(factory, this, entityType, options.getHydrateFrom());
+	}
+	
+	public FetchQueryOptions getOptions() {
+		return options;
 	}
 	
 	public String defaultPartition() {
@@ -60,14 +68,6 @@ public class HibernateSqlFetchQuery implements FetchQuery {
 		return from;
 	}
 	
-	@Override
-	public FetchSource fromHydrated() {
-		if (from == null) {
-			from = new HibernateSqlFetchFrom(factory, this, entityType, true);
-		}
-		return from;
-	}
-
 	@Override
 	public FetchResults fetchFor(Set<Object> entityIds) {
 		Pair<CharSequence, CharSequence> sqlFragments = sqlLazy.get();

@@ -20,6 +20,6 @@ public record RsProperty(int pos, String columnName, Property property, ResultVa
 	public void transfer(ResultSet rs, GenericEntity entity) throws SQLException {
 		Object v = getValue(rs);
 		if (v != null)
-			property.set(entity, v);
+			property.setDirectUnsafe(entity, v);
 	}
 }

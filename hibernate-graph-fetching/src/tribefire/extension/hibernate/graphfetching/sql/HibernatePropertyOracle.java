@@ -35,10 +35,8 @@ public class HibernatePropertyOracle {
 		this.isEntity = propertyType.isEntity();
 		this.isCollection = propertyType.isCollection();
 		
-		if (isScalar)
+		if (isScalar || isEntity)
 			extractor = ResultValueExtractor.get(propertyType);
-		else if (isEntity)
-			extractor = ResultValueExtractor.get(EssentialTypes.TYPE_OBJECT);
 		else 
 			extractor = null;
 	}

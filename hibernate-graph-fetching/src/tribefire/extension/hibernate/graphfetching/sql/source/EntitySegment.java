@@ -23,13 +23,24 @@ public class EntitySegment implements SelectSegment {
 	private final String alias;
 	private final RsProperty idProperty;
 	private final RsProperty typeProperty;
-	private int standardPropertyOffset;
+	private int scalarPropertyOffset;
+	private int entityPropertyOffset;
 	private final Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles;
 	
 	public static EntitySegment build(String name, HibernateEntityOracle entityOracle, HibernateSqlFetchQuery query) {
 		Collection<HibernatePropertyOracle> scalarProperties = entityOracle.scalarProperties();
 		
-		List<RsProperty> rsProperties = new ArrayList<>(scalarProperties.size() + 1);
+		int rsPropertiesSize = scalarProperties.size() + 1;
+		
+		boolean polymorphic = entityOracle.isPolymorphic();
+		boolean hydrateAbsentEntities = query.getOptions().getHydrateAbsentEntitiesIfPossible();
+		if (polymorphic) {
+			rsPropertiesSize++;
+			if (hydrateAbsentEntities)
+				rsPropertiesSize += entityOracle.entityProperties().size();
+		}
+		
+		List<RsProperty> rsProperties = new ArrayList<>(rsPropertiesSize);
 		
 		HibernatePropertyOracle idProperty = entityOracle.idProperty();
 		int idPos = query.nextPos();
@@ -38,36 +49,50 @@ public class EntitySegment implements SelectSegment {
 		
 		RsProperty typeRsProperty = null; 
 		
-		int standardPropertyOffset = 1;
 		
 		Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles = null;
 		
-		if (entityOracle.isPolymorphic()) {
+		if (polymorphic) {
 			int typePos = query.nextPos();
 			typeRsProperty = new RsProperty(typePos, entityOracle.getDiscriminatorColumn(), null, ResultValueExtractor.STRING);
 			rsProperties.add(typeRsProperty);
-			standardPropertyOffset++;
 			
 			polymorphicOracles = entityOracle.hasHierarchyOracle().polymorphicOracles();
 		}
+		
+		int standardPropertyOffset = rsProperties.size();
 		
 		for (HibernatePropertyOracle scalarProperty: scalarProperties) {
 			int scalarPos = query.nextPos();
 			rsProperties.add(new RsProperty(scalarPos, scalarProperty));
 		}
 		
-		return new EntitySegment(name, query.defaultPartition(), entityOracle.entityType(), rsProperties, standardPropertyOffset, idRsProperty, typeRsProperty, polymorphicOracles);
+		final int entityPropertyOffset; 
+		
+		if (hydrateAbsentEntities) {
+			entityPropertyOffset = rsProperties.size();
+			for (HibernatePropertyOracle entityProperty: entityOracle.entityProperties()) {
+				int scalarPos = query.nextPos();
+				rsProperties.add(new RsProperty(scalarPos, entityProperty));
+			}
+		}
+		else {
+			entityPropertyOffset = -1;
+		}
+		
+		return new EntitySegment(name, query.defaultPartition(), entityOracle.entityType(), rsProperties, standardPropertyOffset, entityPropertyOffset, idRsProperty, typeRsProperty, polymorphicOracles);
 	}
 	
-	public EntitySegment(String alias, String defaultPartition, EntityType<?> entityType, List<RsProperty> selectProperties, int standardPropertyOffset, RsProperty idProperty, RsProperty typeProperty, Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles) {
+	public EntitySegment(String alias, String defaultPartition, EntityType<?> entityType, List<RsProperty> selectProperties, int scalarPropertyOffset, int entityPropertyOffset, RsProperty idProperty, RsProperty typeProperty, Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles) {
 		this.alias = alias;
 		this.defaultPartition = defaultPartition;
 		this.entityType = entityType;
 		this.selectProperties = selectProperties;
-		this.standardPropertyOffset = standardPropertyOffset;
+		this.scalarPropertyOffset = scalarPropertyOffset;
 		this.idProperty = idProperty;
 		this.typeProperty = typeProperty;
 		this.polymorphicOracles = polymorphicOracles;
+		this.entityPropertyOffset = entityPropertyOffset;
 	}
 
 	@Override
@@ -80,11 +105,11 @@ public class EntitySegment implements SelectSegment {
 		final GenericEntity entity;
 		
 		if (typeProperty == null) {
-			entity = entityType.createRaw();
+			entity = create(entityType);
 
 			int propertyCount = selectProperties.size();
 			
-			for (int i = standardPropertyOffset; i < propertyCount; i++) {
+			for (int i = scalarPropertyOffset; i < propertyCount; i++) {
 				selectProperties.get(i).transfer(rs, entity);
 			}
 		}
@@ -93,17 +118,29 @@ public class EntitySegment implements SelectSegment {
 			
 			HibernatePolymorphicEntityOracle oracle = polymorphicOracles.get(discriminator);
 
-			entity = oracle.entityType.createRaw();
-			for (int i: oracle.positions) {
-				selectProperties.get(i + standardPropertyOffset).transfer(rs, entity);
+			entity = create(oracle.entityType);
+			
+			for (int i: oracle.scalarPositions) {
+				selectProperties.get(i + scalarPropertyOffset).transfer(rs, entity);
+			}
+			
+			if (entityPropertyOffset != -1) {
+				for (int i: oracle.entityPositions) {
+					selectProperties.get(i + entityPropertyOffset).transfer(rs, entity);
+				}
 			}
 		}
 		
-		FetchingTools.absentifyNonScalarProperties(entity);
 		entity.setId(id);
 		if (entity.getPartition() == null)
 			entity.setPartition(defaultPartition);
 		
+		return entity;
+	}
+	
+	private GenericEntity create(EntityType<?> entityType) {
+		GenericEntity entity = entityType.createRaw();
+		FetchingTools.absentifyNonScalarProperties(entity);
 		return entity;
 	}
 

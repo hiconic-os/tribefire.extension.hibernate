@@ -6,5 +6,6 @@ import java.util.Map;
 public record HibernateEntityHierarchyOracle(
 		String discriminatorColumn, 
 		List<HibernatePropertyOracle> scalarProperties, 
+		List<HibernatePropertyOracle> entityProperties, 
 		Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles) {
 }

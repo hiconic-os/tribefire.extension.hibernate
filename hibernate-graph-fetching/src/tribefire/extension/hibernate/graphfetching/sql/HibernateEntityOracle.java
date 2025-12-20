@@ -60,6 +60,12 @@ public class HibernateEntityOracle {
 				scalarProperties.add(propertyOracle);
 				properties.put(propertyOracle.property(), propertyOracle);
 			}
+			
+			for (HibernatePropertyOracle propertyOracle: hierarchyOracle.entityProperties()) {
+				entityProperties.add(propertyOracle);
+				properties.put(propertyOracle.property(), propertyOracle);
+			}
+			
 			discriminatorColumn = persister.getDiscriminatorColumnName();
 		}
 
@@ -80,8 +86,10 @@ public class HibernateEntityOracle {
 				}
 			}
 			else if (propertyOracle.isEntity()) {
-				entityProperties.add(propertyOracle);
-				properties.put(property, propertyOracle);
+				if (!polymorphic) {
+					entityProperties.add(propertyOracle);
+					properties.put(property, propertyOracle);
+				}
 			}
 			else if (propertyOracle.isCollection()) {
 				collectionProperties.add(propertyOracle);

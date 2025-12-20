@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
@@ -26,8 +28,8 @@ import com.braintribe.gm.graphfetching.api.FetchBuilder;
 import com.braintribe.gm.graphfetching.api.Fetching;
 import com.braintribe.gm.graphfetching.api.node.EntityGraphNode;
 import com.braintribe.gm.graphfetching.api.query.FetchQuery;
+import com.braintribe.gm.graphfetching.api.query.FetchQueryOptions;
 import com.braintribe.gm.graphfetching.api.query.FetchResults;
-import com.braintribe.gm.graphfetching.api.query.FetchSource;
 import com.braintribe.gm.graphfetching.test.model.data.ChunkedSource;
 import com.braintribe.gm.graphfetching.test.model.data.DataManagement;
 import com.braintribe.gm.graphfetching.test.model.data.DataResource;
@@ -39,9 +41,11 @@ import com.braintribe.model.access.IncrementalAccess;
 import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
 import com.braintribe.model.generic.GMF;
 import com.braintribe.model.generic.GenericEntity;
+import com.braintribe.model.generic.pr.AbsentEntity;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.GenericModelType;
 import com.braintribe.model.generic.reflection.Property;
+import com.braintribe.model.generic.value.ValueDescriptor;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.processing.core.commons.comparison.AssemblyComparison;
 import com.braintribe.model.processing.core.commons.comparison.AssemblyComparisonResult;
@@ -96,26 +100,50 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 	@Test
 	public void entityWithToOnes() throws Exception {
 		HibernateSessionFetchQueryFactory factory = new HibernateSessionFetchQueryFactory(sessionFactory);
-		FetchQuery query = factory.createQuery(DataSource.T, ACCESS_ID_TEST);
+		FetchQueryOptions options = new FetchQueryOptions();
+		options.setHydrateFrom(true);
+		options.setHydrateAbsentEntitiesIfPossible(true);
+		FetchQuery query = factory.createQuery(DataSource.T, ACCESS_ID_TEST, options);
 		PersistenceGmSession session = newSession();
 		
 		From from = SelectQueries.source(DataSource.T);
 		SelectQuery selectQuery = SelectQueries.from(from).select(SelectQueries.property(from, GenericEntity.id));
 		Set<Object> ids = new HashSet<>(session.queryDetached().select(selectQuery).list());
 		
-		FetchSource fromHydrated = query.fromHydrated();
-		fromHydrated.as(FileSource.T).selectEntityId(FileSource.reference);
-		fromHydrated.as(InmemorySource.T).selectEntityId(InmemorySource.binaryData);
 		FetchResults fr = query.fetchFor(ids);
+		
+		Property referenceProperty = FileSource.T.getProperty(FileSource.reference);
+		Property binaryDataProperty = InmemorySource.T.getProperty(InmemorySource.binaryData);
 		
 		while (fr.next()) {
 			GenericEntity entity = fr.get(0);
-			Object referenceId = fr.get(1);
-			Object binaryId = fr.get(2);
+
 			System.out.println("====");
-			System.out.println(entity);
-			System.out.println(referenceId);
-			System.out.println(binaryId);
+			System.out.println(entity.entityType().getShortName());
+
+			if (entity instanceof FileSource) {
+				ValueDescriptor vd = referenceProperty.getVd(entity);
+				if (vd instanceof AbsentEntity) {
+					AbsentEntity absentEntity = (AbsentEntity)vd;
+					Object refId = absentEntity.getRefId();
+					System.out.println("FileSource.reference: " + refId);
+				}
+				else {
+					Assertions.fail("missing expected AbsentEntity on FileSource.reference property");
+				}
+			}
+			else if (entity instanceof InmemorySource) {
+				ValueDescriptor vd = binaryDataProperty.getVd(entity);
+
+				if (vd instanceof AbsentEntity) {
+					AbsentEntity absentEntity = (AbsentEntity)vd;
+					Object refId = absentEntity.getRefId();
+					System.out.println("InmemorySource.binaryData: " + refId);
+				}
+				else {
+					Assertions.fail("missing expected AbsentEntity on InmemorySource.binaryData property");
+				}
+			}
 		}
 	}
 	
@@ -128,7 +156,7 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 		PersistenceGmSession session = newSession();
 		HibernateSessionFetchQueryFactory factory = new HibernateSessionFetchQueryFactory(sessionFactory);
 		
-		GenericEntity expectedEntity = techDataGenerator.getPool().get(Entitya.T).get(0);
+		GenericEntity expectedEntity = lazyTechDataGenerator.get().getPool().get(Entitya.T).get(0);
 		
 		Entitya actualEntity = session.queryDetached().entity(Entitya.T, expectedEntity.getId()).find();
 		
@@ -150,13 +178,15 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 		
 		System.out.println(graphNode.stringify());
 		PersistenceGmSession session = newSession();
-		HibernateSessionFetchQueryFactory factory = new HibernateSessionFetchQueryFactory(sessionFactory);
+	
+		DataManagement expected = lazyDataGenerator.get().getDataManagement();
 		
-		List<DataManagement> dataManagements = session.queryDetached().entities(EntityQuery.create(DataManagement.T)).list();
-		
-		Fetching.build(session, graphNode).queryFactory(factory).fetch(dataManagements);
-		
-		System.out.println(dataManagements);
+		for (int i = 0; i < 1; i++) {
+			buildTest() //
+				.add(fetchBuilder(session, graphNode), false) //
+				.add(fetchBuilder(session, graphNode).toOneJoinThreshold(0), false)
+				.test(expected, () -> session.queryDetached().entities(EntityQuery.create(DataManagement.T)).first());
+		}
 	}
 	
 	@Test

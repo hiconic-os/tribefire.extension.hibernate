@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.IntStream;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
@@ -19,6 +18,7 @@ import org.hibernate.type.Type;
 
 import com.braintribe.gm.graphfetching.api.query.FetchQuery;
 import com.braintribe.gm.graphfetching.api.query.FetchQueryFactory;
+import com.braintribe.gm.graphfetching.api.query.FetchQueryOptions;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EntityTypes;
 import com.braintribe.model.generic.reflection.Property;
@@ -76,7 +76,8 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 	}
 	
 	private HibernateEntityHierarchyOracle buildHierarchyOracle(String rootName) {
-		Map<PropertyIdentTuple, Property> propertyMap = new HashMap<>(); 
+		Map<PropertyIdentTuple, Property> scalarPropertyMap = new HashMap<>(); 
+		Map<PropertyIdentTuple, Property> entityPropertyMap = new HashMap<>(); 
 		
 		String discriminatorColumn = null;
 		String tableName;
@@ -98,13 +99,15 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 					continue;
 				
 				Type type = persister.getPropertyTypes()[i];
-				if (type.isCollectionType() || type.isEntityType())
+				if (type.isCollectionType())
 					continue;
-				
+
 				String columnName = persister.getPropertyColumnNames(i)[0];
 				String propertyName = propertyNames[i];
 				Property property = entityType.getProperty(propertyName);
 				PropertyIdentTuple key = new PropertyIdentTuple(property, tableName, columnName, type);
+
+				Map<PropertyIdentTuple, Property> propertyMap = type.isEntityType()? entityPropertyMap: scalarPropertyMap;
 				
 				propertyMap.compute(key, (k,v) -> {
 					if (v == null || v == property)
@@ -116,6 +119,13 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 			}
 		}
 		
+		List<HibernatePropertyOracle> scalarPropertyOracles = buildPropertyOracles(polymorphicOracles, scalarPropertyMap, false);
+		List<HibernatePropertyOracle> entityPropertyOracles = buildPropertyOracles(polymorphicOracles, entityPropertyMap, true);
+		
+		return new HibernateEntityHierarchyOracle(discriminatorColumn, scalarPropertyOracles, entityPropertyOracles, polymorphicOracles);
+	}
+	
+	private List<HibernatePropertyOracle> buildPropertyOracles(Map<String, HibernatePolymorphicEntityOracle> polymorphicOracles, Map<PropertyIdentTuple, Property> propertyMap, boolean entity) {
 		List<HibernatePropertyOracle> propertyOracles = new ArrayList<>(propertyMap.size());
 		
 		for (Map.Entry<PropertyIdentTuple, Property> entry: propertyMap.entrySet()) {
@@ -138,10 +148,14 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 			}
 			
 			int[] positionArray = positions.stream().mapToInt(Integer::intValue).toArray();
-			polymorphicOracle.setPositions(positionArray);
+			
+			if (entity)
+				polymorphicOracle.setEntityPositions(positionArray);
+			else
+				polymorphicOracle.setScalarPositions(positionArray);
 		}
 		
-		return new HibernateEntityHierarchyOracle(discriminatorColumn, propertyOracles, polymorphicOracles);
+		return propertyOracles;
 	}
 	
 	public HibernateEntityOracle getOracle(EntityType<?> entityType) {
@@ -154,8 +168,8 @@ public class HibernateSessionFetchQueryFactory implements FetchQueryFactory {
 	}
 
 	@Override
-	public FetchQuery createQuery(EntityType<?> entityType, String defaultPartition) {
-		return new HibernateSqlFetchQuery(this, entityType, defaultPartition);
+	public FetchQuery createQuery(EntityType<?> entityType, String defaultPartition, FetchQueryOptions options) {
+		return new HibernateSqlFetchQuery(this, entityType, defaultPartition, options);
 	}
 	
 	@Override
