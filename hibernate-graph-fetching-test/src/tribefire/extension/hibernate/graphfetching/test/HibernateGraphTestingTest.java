@@ -5,14 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
@@ -22,6 +17,7 @@ import org.hibernate.type.Type;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.braintribe.codec.marshaller.json.JsonStreamMarshaller;
 import com.braintribe.gm._GraphFetchingTestModel_;
 import com.braintribe.gm.graphfetching.AbstractGraphFetchingTest;
 import com.braintribe.gm.graphfetching.api.FetchBuilder;
@@ -37,11 +33,14 @@ import com.braintribe.gm.graphfetching.test.model.data.DataSource;
 import com.braintribe.gm.graphfetching.test.model.data.FileSource;
 import com.braintribe.gm.graphfetching.test.model.data.InmemorySource;
 import com.braintribe.gm.graphfetching.test.model.tech.Entitya;
+import com.braintribe.gm.graphfetching.test.model.tech.Entityb;
 import com.braintribe.model.access.IncrementalAccess;
 import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
 import com.braintribe.model.generic.GMF;
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.pr.AbsentEntity;
+import com.braintribe.model.generic.pr.criteria.TraversingCriterion;
+import com.braintribe.model.generic.processing.pr.fluent.TC;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.GenericModelType;
 import com.braintribe.model.generic.reflection.Property;
@@ -53,6 +52,7 @@ import com.braintribe.model.processing.meta.configuration.ConfigurationModels;
 import com.braintribe.model.processing.meta.editor.BasicModelMetaDataEditor;
 import com.braintribe.model.processing.meta.oracle.BasicModelOracle;
 import com.braintribe.model.processing.query.building.SelectQueries;
+import com.braintribe.model.processing.query.fluent.EntityQueryBuilder;
 import com.braintribe.model.processing.session.api.persistence.PersistenceGmSession;
 import com.braintribe.model.query.EntityQuery;
 import com.braintribe.model.query.From;
@@ -62,7 +62,6 @@ import com.braintribe.testing.junit.assertions.assertj.core.api.Assertions;
 import tribefire.extension.hibernate.HibernateHelper;
 import tribefire.extension.hibernate.graphfetching.HibernateSessionFetchQueryFactory;
 import tribefire.extension.hibernate.graphfetching.sql.HibernateEntityOracle;
-import tribefire.extension.hibernate.graphfetching.sql.HibernatePropertyOracle;
 
 public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 	private static SessionFactory sessionFactory;
@@ -80,8 +79,8 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 		
 		editor.onEntityType(GenericEntity.T).addPropertyMetaData(GenericEntity.id, idMapping);
 		
-		//javax.sql.DataSource dataSource = HibernateHelper.dataSource_H2("graph-fetching-test");
-		javax.sql.DataSource dataSource = HibernateHelper.dataSource_PG("graph-fetching-test");
+		javax.sql.DataSource dataSource = HibernateHelper.dataSource_H2("graph-fetching-test");
+		//javax.sql.DataSource dataSource = HibernateHelper.dataSource_PG("graph-fetching-test");
 		
 		sessionFactory = HibernateHelper.hibernateSessionFactory(() -> configuredModel, dataSource);
 	}
@@ -94,6 +93,8 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 	@Override
 	protected FetchBuilder configure(FetchBuilder fetchBuilder) {
 		fetchBuilder.queryFactory(new HibernateSessionFetchQueryFactory(sessionFactory));
+		fetchBuilder.polymorphicJoin(true);
+		fetchBuilder.bulkSize(200);
 		return fetchBuilder;
 	}
 	
@@ -152,23 +153,15 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 		BasicModelOracle oracle = new BasicModelOracle(model);
 		EntityGraphNode graphNode = Fetching.reachable(Entitya.T).polymorphy(oracle).build();
 		
-		System.out.println(graphNode.stringify());
 		PersistenceGmSession session = newSession();
-		HibernateSessionFetchQueryFactory factory = new HibernateSessionFetchQueryFactory(sessionFactory);
 		
 		GenericEntity expectedEntity = lazyTechDataGenerator.get().getPool().get(Entitya.T).get(0);
 		
-		Entitya actualEntity = session.queryDetached().entity(Entitya.T, expectedEntity.getId()).find();
+		boolean detached = true;
 		
-		Fetching.build(session, graphNode).queryFactory(factory)
-			.joinProbabilityThreshold(0.5)
-			.executor(Executors.newVirtualThreadPerTaskExecutor())
-			.fetch(Collections.singletonList(actualEntity));
-		
-		AssemblyComparisonResult result = AssemblyComparison.build().enableTracking().useGlobalId().compare(expectedEntity, actualEntity);
-		
-		if (!result.equal())
-			Assertions.fail(result.mismatchDescription() + " -> " + stringify(result.firstMismatchPath()));
+		fetchTestBuilder(session, graphNode, detached) //
+			.addAllTc(session, detached) //
+			.test(expectedEntity, () -> session.queryDetached().entity(Entitya.T, expectedEntity.getId()).find());
 	}
 	
 	@Test
@@ -176,17 +169,14 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 		BasicModelOracle oracle = new BasicModelOracle(model);
 		EntityGraphNode graphNode = Fetching.reachable(DataManagement.T).polymorphy(oracle).build();
 		
-		System.out.println(graphNode.stringify());
 		PersistenceGmSession session = newSession();
 	
 		DataManagement expected = lazyDataGenerator.get().getDataManagement();
 		
-		for (int i = 0; i < 1; i++) {
-			buildTest() //
-				.add(fetchBuilder(session, graphNode), false) //
-				.add(fetchBuilder(session, graphNode).toOneJoinThreshold(0), false)
-				.test(expected, () -> session.queryDetached().entities(EntityQuery.create(DataManagement.T)).first());
-		}
+		
+		fetchTestBuilder(session, graphNode, false) //
+		.addAllTc(session, false) //
+		.test(expected, () -> session.queryDetached().entity(DataManagement.T, expected.getId()).find());
 	}
 	
 	@Test
@@ -197,15 +187,9 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 		HibernateEntityOracle fileSourceOracle = factory.getOracle(FileSource.T);
 		
 		Assertions.assertThat(dataSourceOracle.hasHierarchyOracle()).isSameAs(fileSourceOracle.hasHierarchyOracle());
-		
-		Collection<HibernatePropertyOracle> scalarProperties = dataSourceOracle.scalarProperties();
-		
-		for (HibernatePropertyOracle propertyOracle: scalarProperties) {
-			System.out.println(propertyOracle.property() + " -> " + propertyOracle.columnName());
-		}
 	}
 	
-	@Test
+	// @Test
 	public void sqlDirectPolyLab() throws Exception {
 		SessionFactoryImplementor sfi = (SessionFactoryImplementor) sessionFactory;
 		AbstractEntityPersister pDataResource = (AbstractEntityPersister)sfi.getMetamodel().entityPersister(DataResource.class);
@@ -264,8 +248,8 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 		
 		
 	}
-	@Test
-	public void sqlDirectTest() throws Exception {
+	//@Test
+	public void sqlDirectLab() throws Exception {
 		SessionFactoryImplementor sfi = (SessionFactoryImplementor) sessionFactory;
 		AbstractEntityPersister persister = (AbstractEntityPersister)sfi.getMetamodel().entityPersister(DataResource.class);
 		
@@ -351,4 +335,11 @@ public class HibernateGraphTestingTest extends AbstractGraphFetchingTest {
 			System.out.println(entity);
 		}
 	}
+	
+	@Override
+	public void testPolymorphism() {
+		super.testPolymorphism();
+	}
+	
+	
 }

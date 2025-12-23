@@ -71,8 +71,8 @@ public class HibernateHelper {
 
 	public static GmAwareHibernateSessionFactoryBean hibernateSessionFactoryBean(Supplier<GmMetaModel> modelSupplier, DataSource dataSource) {
 		GmAwareHibernateSessionFactoryBean sessionFactory = new GmAwareHibernateSessionFactoryBean();
-		sessionFactory.setShowSql(true);
-//		sessionFactory.setFormatSql(true);
+		// sessionFactory.setShowSql(true);
+		// sessionFactory.setFormatSql(true);
 		sessionFactory.setMappingDirectoryLocations(mappingsFolder(modelSupplier));
 		sessionFactory.setDataSource(dataSource);
 		sessionFactory.setDefaultBatchFetchSize(30);
