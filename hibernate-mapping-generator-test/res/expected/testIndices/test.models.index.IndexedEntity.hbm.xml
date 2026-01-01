@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<hibernate-mapping auto-import="true">
+	<class name="test.models.index.IndexedEntity" entity-name="test.models.index.IndexedEntity" table="IndexedEntity" abstract="false">
+		<id name="id" column="id" type="long">
+			<generator class="native" />
+		</id>
+		<property name="globalId" column="globalId" type="string" />
+		<property name="partition" column="partition_" type="string" />
+		<property name="str" column="str" type="string" />
+		<list name="strList" table="IndexedEntityStrList">
+			<key column="IndexedEntityId" />
+			<list-index column="IndexedEntityStrListIdx" />
+			<element column="StrList" type="string" />
+		</list>
+		<set name="strSet" table="IndexedEntityStrSet">
+			<key column="IndexedEntityId" />
+			<element column="StrSet" type="string" />
+		</set>
+		<map name="strStrMap" table="IndexedEntityStrStrMap">
+			<key column="IndexedEntityId" />
+			<map-key column="StrStrMapKey" type="string" />
+			<element column="StrStrMap" type="string" />
+		</map>
+	</class>
+</hibernate-mapping>

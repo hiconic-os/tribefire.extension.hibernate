@@ -23,6 +23,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,6 +59,7 @@ import com.braintribe.model.meta.data.constraint.MaxLength;
 import com.braintribe.model.meta.data.constraint.TypeSpecification;
 import com.braintribe.model.meta.data.display.NameConversion;
 import com.braintribe.model.meta.data.display.NameConversionStyle;
+import com.braintribe.model.meta.data.query.Index;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
 import com.braintribe.model.processing.deployment.hibernate.mapping.exception.HbmXmlGeneratingServiceException;
 import com.braintribe.model.processing.meta.editor.BasicModelMetaDataEditor;
@@ -97,6 +99,7 @@ import test.models.idgen.StringIdEntity6;
 import test.models.idgen.StringIdEntity7;
 import test.models.idgen.StringIdEntity8;
 import test.models.idgen.StringIdEntity9;
+import test.models.index.IndexedEntity;
 import test.models.naming.InvalidDbNamesEntity;
 
 /**
@@ -108,7 +111,7 @@ public class MappingGenerationFromLocalModelsTest {
 	static final CharacterMarshaller characterMarshaller = new JsonStreamMarshaller();
 
 	private static boolean updateMode = false;
-	private static final String updateBase = "src/test/expected";
+	private static final String updateBase = "res/expected";
 
 	// @formatter:off
 	static final List<EntityType<?>> basicTypes = asList(
@@ -614,7 +617,7 @@ public class MappingGenerationFromLocalModelsTest {
 		assertMapping(tag, StringIdEntity1.T);
 	}
 
-	/**@see AbstractBaseReferer*/
+	/** @see AbstractBaseReferer */
 	@Test
 	public void testElectsTopLevelBasedOnPropertyInheritedFromUnmappedType() throws Exception {
 		String tag = "testElectsTopLevelBasedOnPropertyInheritedFromUnmappedType";
@@ -627,16 +630,14 @@ public class MappingGenerationFromLocalModelsTest {
 		unmapped.setMapToDb(false);
 		unmapped.setInherited(false);
 
-		
 		ModelMetaDataEditor editor = new BasicModelMetaDataEditor(metaModel);
 		editor.onEntityType(AbstractBaseReferer.T).addMetaData(unmapped);
 
 		renderMappings(metaModel);
 
-		assertMapping(tag,  BaseReferer.T, Base.T, Left.T, Right.T);
+		assertMapping(tag, BaseReferer.T, Base.T, Left.T, Right.T);
 	}
 
-	
 	@Test
 	public void testDiscriminator() throws Exception {
 		String tag = "testDiscriminator";
@@ -715,14 +716,14 @@ public class MappingGenerationFromLocalModelsTest {
 	@Test
 	public void testNameConversion() throws Exception {
 		String tag = "testNameConversion";
-		
+
 		List<EntityType<?>> types = asList(SimpleEntity.T, SimpleSubEntity.T);
 
 		GmMetaModel metaModel = provideModel(tag, types);
 
 		NameConversion nc = NameConversion.T.create();
 		nc.setStyle(NameConversionStyle.screamingSnakeCase);
-		
+
 		new BasicModelMetaDataEditor(metaModel) //
 				.onEntityType(SimpleEntity.T) //
 				.addMetaData(nc) //
@@ -790,6 +791,29 @@ public class MappingGenerationFromLocalModelsTest {
 		result.setType(type);
 
 		return result;
+	}
+
+	@Test
+	public void testIndices() throws Exception {
+		String tag = "testIndices";
+
+		List<EntityType<?>> types = asList(IndexedEntity.T);
+
+		GmMetaModel metaModel = provideModel(tag, types);
+
+		Index index = Index.T.create();
+
+		BasicModelMetaDataEditor editor = new BasicModelMetaDataEditor(metaModel);
+		editor.onEntityType(IndexedEntity.T) //
+				.addPropertyMetaData("strSet", index) //
+				.addPropertyMetaData("strList", index) //
+				.addPropertyMetaData("strStrMap", index) //
+		;
+
+		renderMappings(metaModel);
+
+		assertMapping(tag, IndexedEntity.T);
+		assertIndices(tag);
 	}
 
 	// #################################################
@@ -949,7 +973,7 @@ public class MappingGenerationFromLocalModelsTest {
 	}
 
 	private void assertMapping(String testName, List<EntityType<?>> entityTypes) throws Exception {
-		int totalMappings = tempFolder.getRoot().list((dir, fileName) ->  fileName.endsWith(".hbm.xml")).length;
+		int totalMappings = tempFolder.getRoot().list((dir, fileName) -> fileName.endsWith(".hbm.xml")).length;
 		int expectedMappings = entityTypes.size();
 
 		Assert.assertEquals(totalMappings + " mapping files were generated, but " + expectedMappings + " were expected", expectedMappings,
@@ -958,14 +982,13 @@ public class MappingGenerationFromLocalModelsTest {
 		if (updateMode) {
 			Path testFolderPath = Paths.get(updateBase + "/" + testName);
 			FileTools.ensureDirectoryExists(testFolderPath.toFile());
-			
+
 			for (EntityType<?> entityType : entityTypes) {
 				String fileName = entityType.getTypeSignature() + ".hbm.xml";
-				String targetPath = tempFolder.getRoot().getCanonicalPath() + File.separator + fileName;
-				Path updatePath = testFolderPath.resolve(fileName);
-				Files.copy(Paths.get(targetPath), updatePath, StandardCopyOption.REPLACE_EXISTING);
+				copyToTestFolderIfExists(testFolderPath, fileName);
 			}
 
+			copyToTestFolderIfExists(testFolderPath, HbmXmlGeneratingService.INDICES_JSON_FILE_NAME);
 			return;
 		}
 
@@ -975,6 +998,20 @@ public class MappingGenerationFromLocalModelsTest {
 		}
 	}
 
+	private void copyToTestFolderIfExists(Path testFolderPath, String fileName) throws IOException {
+		File targetFile = new File(tempFolder.getRoot(), fileName);
+		if (!targetFile.exists())
+			return;
+
+		Path targetPath = targetFile.toPath();
+		Path updatePath = testFolderPath.resolve(fileName);
+		Files.copy(targetPath, updatePath, StandardCopyOption.REPLACE_EXISTING);
+	}
+
+	private void assertIndices(String testName) throws Exception {
+		assertMapping(testName, HbmXmlGeneratingService.INDICES_JSON_FILE_NAME);
+	}
+
 	private void assertMapping(String testName, String fileName) throws Exception {
 		String sourceFile = testName + "/" + fileName;
 		String targetPath = tempFolder.getRoot().getCanonicalPath() + File.separator + fileName;
@@ -982,7 +1019,7 @@ public class MappingGenerationFromLocalModelsTest {
 	}
 
 	private void assertContentEqual(String expectedUrl, String actualUrl) {
-		List<String> expectedLines =  loadResourceToStrings(expectedUrl);
+		List<String> expectedLines = loadResourceToStrings(expectedUrl);
 		List<String> actualLines = loadResourceToStrings(actualUrl);
 
 		// printContent(expectedUrl);
@@ -1053,6 +1090,7 @@ public class MappingGenerationFromLocalModelsTest {
 		generatorService.setGmMetaModel(metaModel);
 		generatorService.setOutputFolder(tempFolder.getRoot());
 		generatorService.setTypeHints(hints);
+		generatorService.mappingVersion(3);
 		generatorService.renderMappings();
 
 		System.out.println("Mappings generated to: " + tempFolder.getRoot().getAbsolutePath());
