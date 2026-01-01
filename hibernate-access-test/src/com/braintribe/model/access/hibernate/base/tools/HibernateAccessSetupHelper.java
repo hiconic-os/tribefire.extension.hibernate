@@ -83,6 +83,7 @@ public class HibernateAccessSetupHelper {
 	private static File mappingsFolder(Supplier<GmMetaModel> modelSupplier) {
 		HibernateMappingsDirectorySupplier bean = new HibernateMappingsDirectorySupplier();
 		bean.setMetaModel(modelSupplier.get());
+		bean.setMappingVersion(2);
 
 		return bean.get();
 	}

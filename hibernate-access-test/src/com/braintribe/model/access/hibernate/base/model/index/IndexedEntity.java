@@ -15,6 +15,8 @@
 // ============================================================================
 package com.braintribe.model.access.hibernate.base.model.index;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.braintribe.model.access.hibernate.base.model.HibernateAccessEntity;
@@ -36,5 +38,11 @@ public interface IndexedEntity extends HibernateAccessEntity {
 
 	Set<String> getStrSet();
 	void setStrSet(Set<String> strSet);
+
+	List<String> getStrList();
+	void setStrList(List<String> strList);
+
+	Map<String, String> getStrStrMap();
+	void setStrStrMap(Map<String, String> strMap);
 
 }

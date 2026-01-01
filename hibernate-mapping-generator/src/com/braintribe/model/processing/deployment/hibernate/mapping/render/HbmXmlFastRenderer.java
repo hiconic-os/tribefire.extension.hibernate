@@ -121,7 +121,7 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 		else if (pd.isEmbedded())
 			renderEmbedded((ComponentDescriptor) pd);
 
-		else if (pd.fkClass != null)
+		else if (pd.toOneEntitySignature != null)
 			renderManyToOne(pd);
 
 		else if (!pd.isIdProperty && !pd.getHasColumnAttributes())
@@ -319,7 +319,7 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 	private void renderEmbedded(ComponentDescriptor pd) {
 		openTag("component");
 		attr("name", pd.name);
-		attr("class", pd.fkClass);
+		attr("class", pd.toOneEntitySignature);
 		endOpenTag();
 
 		levelUp();
@@ -340,7 +340,7 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 	private void renderManyToOne(PropertyDescriptor pd) {
 		openTag("many-to-one");
 		attr("name", pd.name);
-		attr("class", pd.fkClass);
+		attr("class", pd.toOneEntitySignature);
 		attr("column", pd.getQuotedColumnName());
 
 		optAttr("unique", pd.isUnique);

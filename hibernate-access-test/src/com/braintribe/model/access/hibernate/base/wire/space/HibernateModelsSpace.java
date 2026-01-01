@@ -235,6 +235,8 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 				.addPropertyMetaData("str", index) //
 				.addPropertyMetaData("entity", index) //
 				.addPropertyMetaData("strSet", index) //
+				.addPropertyMetaData("strList", index) //
+				.addPropertyMetaData("strStrMap", index) //
 		;
 
 		return result;

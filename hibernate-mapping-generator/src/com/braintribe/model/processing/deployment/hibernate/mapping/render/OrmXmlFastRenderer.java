@@ -208,7 +208,7 @@ public class OrmXmlFastRenderer extends AbstractStringifier {
 		else if (pd.isEmbedded())
 			renderEmbedded((ComponentDescriptor) pd);
 
-		else if (pd.fkClass != null)
+		else if (pd.toOneEntitySignature != null)
 			renderManyToOne(pd);
 
 		else  
@@ -341,7 +341,7 @@ public class OrmXmlFastRenderer extends AbstractStringifier {
 	private void renderEmbedded(ComponentDescriptor pd) {
 		openTag("component");
 		attr("name", pd.name);
-		attr("class", pd.fkClass);
+		attr("class", pd.toOneEntitySignature);
 		endOpenTag();
 
 		levelUp();

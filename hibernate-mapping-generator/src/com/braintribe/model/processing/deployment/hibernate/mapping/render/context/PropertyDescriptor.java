@@ -51,7 +51,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	protected final PropertyDescriptorMetaData metaData;
 
 	public String xml;
-	public final String fkClass;
+	public final String toOneEntitySignature;
 	public final boolean isIdProperty;
 	public String idGenerator;
 	public String explicitType;
@@ -138,7 +138,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		this.metaData = metaData;
 		this.propertyHint = resolvePropertyHint(gmProperty, entityDescriptor);
 		this.isIdProperty = gmProperty.isId();
-		this.fkClass = resolveFkClass(gmProperty);
+		this.toOneEntitySignature = resolveFkClass(gmProperty);
 		this.tag = isIdProperty ? "id" : "property";
 		this.foreignKeyNamePrefix = context.foreignKeyNamePrefix;
 		this.uniqueKeyNamePrefix = context.uniqueKeyNamePrefix;
@@ -472,7 +472,7 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 	}
 
 	public String getFkClass() {
-		return fkClass;
+		return toOneEntitySignature;
 	}
 
 	public EntityDescriptor getEntityDescriptor() {
