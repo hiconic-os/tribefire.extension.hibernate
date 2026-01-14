@@ -192,6 +192,11 @@ public class NamingStrategyProvider {
 
 		String tableName = cpd.many2ManyTable;
 
+		if (cpd.getIsMap()) {
+			String columnName = cpd.mapKeyColumn;
+			cpd.mapKeyIndexName = generateAndRegisterIndexName(tableName, columnName);			
+		}
+
 		createCollectionRelatedIndex(cpd, tableName, cpd.keyColumn, IndexPurpose.COLLECTION_FOREIGN_KEY);
 
 		if (cpd.hasIndexMd)

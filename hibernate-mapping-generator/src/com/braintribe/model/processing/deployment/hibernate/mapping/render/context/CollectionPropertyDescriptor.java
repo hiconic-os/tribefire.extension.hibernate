@@ -59,6 +59,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	public String mapKeyExplicitType;
 	public Long mapKeyLength;
 	public String mapKeyForeignKey;
+	public String mapKeyIndexName;
 
 	// db naming strategy names to originate table/column names.
 	public String collectionName;

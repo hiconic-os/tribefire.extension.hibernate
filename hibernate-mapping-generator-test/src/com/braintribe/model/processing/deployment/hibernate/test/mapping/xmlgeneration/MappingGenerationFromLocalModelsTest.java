@@ -135,6 +135,12 @@ public class MappingGenerationFromLocalModelsTest {
 	public TemporaryFolder tempFolder = new TemporaryFolder();
 
 	@Test
+	public void ensureUpdateModeIsFalse() throws Exception {
+		// This would fail a PR if we forgot to switch update mode off 
+		assertThat(updateMode).isFalse();
+	}
+
+	@Test
 	public void testSkeleton() throws Exception {
 		String tag = "testSkeleton";
 
@@ -1086,11 +1092,15 @@ public class MappingGenerationFromLocalModelsTest {
 	}
 
 	private void renderMappings(GmMetaModel metaModel, String hints) {
+		renderMappings(metaModel, 3, hints);
+	}
+
+	private void renderMappings(GmMetaModel metaModel, int version, String hints) {
 		HbmXmlGeneratingService generatorService = new HbmXmlGeneratingService();
 		generatorService.setGmMetaModel(metaModel);
 		generatorService.setOutputFolder(tempFolder.getRoot());
 		generatorService.setTypeHints(hints);
-		generatorService.mappingVersion(3);
+		generatorService.mappingVersion(version);
 		generatorService.renderMappings();
 
 		System.out.println("Mappings generated to: " + tempFolder.getRoot().getAbsolutePath());

@@ -221,16 +221,37 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 			} else if (pd.getIsMap()) {
 				if (pd.isSimpleMapKey) {
 					openTag("map-key");
-					attr("column", pd.getQuotedMapKeyColumn());
 					attr("type", pd.mapKeySimpleType);
-					optAttr("length", pd.mapKeyLength);
-					closeTag();
+					endOpenTag();
+
+					levelUp();
+					{
+						openTag("column");
+						attr("name", pd.getQuotedMapKeyColumn());
+						optAttr("index", pd.mapKeyIndexName);
+						optAttr("length", pd.mapKeyLength);
+						closeTag();
+					}
+					levelDown();
+
+					closeTag("map-key");
+
 				} else {
 					openTag("map-key-many-to-many");
-					attr("column", pd.getQuotedMapKeyColumn());
-					attr("class", pd.mapKeySignature);
 					optAttr("foreign-key", pd.mapKeyForeignKey);
-					closeTag();
+					attr("class", pd.mapKeySignature);
+					endOpenTag();
+
+					levelUp();
+					{
+						openTag("column");
+						attr("name", pd.getQuotedMapKeyColumn());
+						optAttr("index", pd.mapKeyIndexName);
+						closeTag();
+					}
+					levelDown();
+
+					closeTag("map-key-many-to-many");
 				}
 			}
 

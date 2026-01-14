@@ -41,6 +41,8 @@ import com.braintribe.model.processing.idgenerator.basic.UuidGenerator;
  */
 public class HibernateAccessSetupHelper {
 
+	private static final int MAPPING_VERSION = 2;
+
 	private static final List<AutoCloseable> closeables = newList();
 
 	public static HibernateAccess hibernateAccess(String accessId, Supplier<GmMetaModel> modelSupplier, DataSource dataSource) throws Exception {
@@ -83,7 +85,7 @@ public class HibernateAccessSetupHelper {
 	private static File mappingsFolder(Supplier<GmMetaModel> modelSupplier) {
 		HibernateMappingsDirectorySupplier bean = new HibernateMappingsDirectorySupplier();
 		bean.setMetaModel(modelSupplier.get());
-		bean.setMappingVersion(2);
+		bean.setMappingVersion(MAPPING_VERSION);
 
 		return bean.get();
 	}

@@ -29,9 +29,12 @@ public interface BasicCollectionEntity extends HibernateAccessEntity {
 
 	EntityType<BasicCollectionEntity> T = EntityTypes.T(BasicCollectionEntity.class);
 
+	Map<String, String> getStringToString();
+	void setStringToString(Map<String, String> stringToString);
+
 	Map<BasicCollectionEntity, String> getEntityToString();
 	void setEntityToString(Map<BasicCollectionEntity, String> entityToString);
-
+	
 	Set<BasicColor> getColorsSet();
 	void setColorsSet(Set<BasicColor> colorsSet);
 

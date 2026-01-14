@@ -15,6 +15,8 @@
 // ============================================================================
 package com.braintribe.model.processing.deployment.hibernate.test.mapping.xmlgeneration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -106,6 +108,13 @@ public class MappingGenerationTest {
 	@Before
 	public void cleanOutputFolder() throws Exception {
 		cleanCommonOutput();
+	}
+
+	@Test
+	public void ensureUpdateModeIsFalse() throws Exception {
+		// This would fail a PR if we forgot to switch update mode off 
+		assertThat(updateExisting).isFalse();
+		assertThat(updateNotExistent).isFalse();
 	}
 
 	// @Category(Slow.class) //set to slow in case XmlComparisonMode.xmlDiff is used

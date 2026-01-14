@@ -41,22 +41,20 @@ import com.braintribe.model.query.SelectQuery;
 public class Collections_HbmTest extends HibernateBaseModelTestBase {
 
 	@Test
-	public void queryOwnerByMapKey() throws Exception {
+	public void queryOwnerByMapKey_Simple() throws Exception {
 		String MAP_OWNER_NAME = "mapOwner";
 
-		BasicCollectionEntity keyEntity = newCe("entityToDelete");
-
 		BasicCollectionEntity mapOwner = newCe(MAP_OWNER_NAME);
-		mapOwner.getEntityToString().put(keyEntity, "value");
+		mapOwner.getStringToString().put("KEY", "value");
 
 		commitAndReset();
 
 		SelectQuery query = new SelectQueryBuilder() //
 				.select("e") //
 				.from(BasicCollectionEntity.T, "e") //
-				/**/.join("e", "entityToString", "map") //
+				/**/.join("e", "stringToString", "map") //
 				.where() //
-				/**/.mapKey("map").eq().entity(keyEntity) //
+				/**/.mapKey("map").eq().value("KEY") //
 				.done();
 
 		List<BasicCollectionEntity> entities = session.query().select(query).list();
@@ -67,6 +65,33 @@ public class Collections_HbmTest extends HibernateBaseModelTestBase {
 		assertThat(e.getName()).isEqualTo(MAP_OWNER_NAME);
 	}
 
+	@Test
+	public void queryOwnerByMapKey_Entity() throws Exception {
+		String MAP_OWNER_NAME = "mapOwner";
+		
+		BasicCollectionEntity keyEntity = newCe("entityToDelete");
+		
+		BasicCollectionEntity mapOwner = newCe(MAP_OWNER_NAME);
+		mapOwner.getEntityToString().put(keyEntity, "value");
+		
+		commitAndReset();
+		
+		SelectQuery query = new SelectQueryBuilder() //
+				.select("e") //
+				.from(BasicCollectionEntity.T, "e") //
+				/**/.join("e", "entityToString", "map") //
+				.where() //
+				/**/.mapKey("map").eq().entity(keyEntity) //
+				.done();
+		
+		List<BasicCollectionEntity> entities = session.query().select(query).list();
+		
+		assertThat(entities).hasSize(1);
+		
+		BasicCollectionEntity e = first(entities);
+		assertThat(e.getName()).isEqualTo(MAP_OWNER_NAME);
+	}
+	
 	/**
 	 * Tests a query with a special disjunction eligible for the {@link Intersects} condition, used by
 	 * {@link com.braintribe.model.access.hibernate.hql.DisjunctedInOptimizer}

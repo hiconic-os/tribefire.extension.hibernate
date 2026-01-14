@@ -19,7 +19,9 @@
 		</set>
 		<map name="strStrMap" table="IndexedEntityStrStrMap">
 			<key column="IndexedEntityId" />
-			<map-key column="StrStrMapKey" type="string" />
+			<map-key type="string">
+				<column name="StrStrMapKey" index="IxStrStrMapKeyIndEntStSt" />
+			</map-key>
 			<element column="StrStrMap" type="string" />
 		</map>
 	</class>

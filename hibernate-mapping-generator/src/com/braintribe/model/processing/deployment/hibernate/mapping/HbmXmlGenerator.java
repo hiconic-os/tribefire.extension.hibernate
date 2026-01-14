@@ -23,6 +23,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import com.braintribe.codec.marshaller.api.GmSerializationOptions;
+import com.braintribe.codec.marshaller.api.OutputPrettiness;
 import com.braintribe.codec.marshaller.json.JsonStreamMarshaller;
 import com.braintribe.logging.Logger;
 import com.braintribe.model.processing.deployment.hibernate.mapping.db.NamingStrategyProvider;
@@ -123,9 +125,11 @@ class HbmXmlGenerator {
 		}
 	}
 
+	private final GmSerializationOptions serializationOptions = GmSerializationOptions.deriveDefaults().outputPrettiness(OutputPrettiness.mid).build();
+
 	private String marshallAsJson(Object value) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		new JsonStreamMarshaller().marshall(baos, value);
+		new JsonStreamMarshaller().marshall(baos, value, serializationOptions);
 
 		return baos.toString();
 	}

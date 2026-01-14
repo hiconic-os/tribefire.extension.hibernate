@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE hibernate-mapping PUBLIC  
-	"-//Hibernate/Hibernate Mapping DTD//EN" 
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping auto-import="true">
 	<class name="test.models.basic.SimpleMapsEntity" entity-name="test.models.basic.SimpleMapsEntity" table="SimpleMapsEntity" abstract="false">
@@ -10,84 +7,116 @@
 		</id>
 		<map name="dateToDateMap" table="SimpleMapsEntityDateToDateMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="DateToDateMapKey" type="date" />
+			<map-key type="date">
+				<column name="DateToDateMapKey" index="IxDateToDateMapKeySmpMpEntDT" />
+			</map-key>
 			<element column="DateToDateMap" type="date" />
 		</map>
 		<map name="dateToEnumMap" table="SimpleMapsEntityDateToEnumMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="DateToEnumMapKey" type="date" />
+			<map-key type="date">
+				<column name="DateToEnumMapKey" index="IxDateToEnumMapKeySmpMpEntDT" />
+			</map-key>
 			<element column="DateToEnumMap" type="test.models.basic.SimpleEnum" />
 		</map>
 		<map name="dateToLongMap" table="SimpleMapsEntityDateToLongMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="DateToLongMapKey" type="date" />
+			<map-key type="date">
+				<column name="DateToLongMapKey" index="IxDateToLongMapKeySmpMpEntDT" />
+			</map-key>
 			<element column="DateToLongMap" type="long" />
 		</map>
 		<map name="dateToStringMap" table="SimplMapsEntityDateToStringMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="DateToStringMapKey" type="date" />
+			<map-key type="date">
+				<column name="DateToStringMapKey" index="IxDateToStringMapKeySmpMpEntDT" />
+			</map-key>
 			<element column="DateToStringMap" type="string" />
 		</map>
 		<map name="enumToDateMap" table="SimpleMapsEntityEnumToDateMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="EnumToDateMapKey" type="test.models.basic.SimpleEnum" />
+			<map-key type="test.models.basic.SimpleEnum">
+				<column name="EnumToDateMapKey" index="IxEnumToDateMapKeySmpMpEntEn" />
+			</map-key>
 			<element column="EnumToDateMap" type="date" />
 		</map>
 		<map name="enumToEnumMap" table="SimpleMapsEntityEnumToEnumMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="EnumToEnumMapKey" type="test.models.basic.SimpleEnum" />
+			<map-key type="test.models.basic.SimpleEnum">
+				<column name="EnumToEnumMapKey" index="IxEnumToEnumMapKeySmpMpEntEn" />
+			</map-key>
 			<element column="EnumToEnumMap" type="test.models.basic.SimpleEnum" />
 		</map>
 		<map name="enumToLongMap" table="SimpleMapsEntityEnumToLongMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="EnumToLongMapKey" type="test.models.basic.SimpleEnum" />
+			<map-key type="test.models.basic.SimpleEnum">
+				<column name="EnumToLongMapKey" index="IxEnumToLongMapKeySmpMpEntEn" />
+			</map-key>
 			<element column="EnumToLongMap" type="long" />
 		</map>
 		<map name="enumToStringMap" table="SimplMapsEntityEnumToStringMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="EnumToStringMapKey" type="test.models.basic.SimpleEnum" />
+			<map-key type="test.models.basic.SimpleEnum">
+				<column name="EnumToStringMapKey" index="IxEnumToStringMapKeySmpMpEntEn" />
+			</map-key>
 			<element column="EnumToStringMap" type="string" />
 		</map>
 		<property name="globalId" column="globalId" type="string" />
 		<map name="longToDateMap" table="SimpleMapsEntityLongToDateMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="LongToDateMapKey" type="long" />
+			<map-key type="long">
+				<column name="LongToDateMapKey" index="IxLongToDateMapKeySmpMpEntLn" />
+			</map-key>
 			<element column="LongToDateMap" type="date" />
 		</map>
 		<map name="longToEnumMap" table="SimpleMapsEntityLongToEnumMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="LongToEnumMapKey" type="long" />
+			<map-key type="long">
+				<column name="LongToEnumMapKey" index="IxLongToEnumMapKeySmpMpEntLn" />
+			</map-key>
 			<element column="LongToEnumMap" type="test.models.basic.SimpleEnum" />
 		</map>
 		<map name="longToLongMap" table="SimpleMapsEntityLongToLongMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="LongToLongMapKey" type="long" />
+			<map-key type="long">
+				<column name="LongToLongMapKey" index="IxLongToLongMapKeySmpMpEntLn" />
+			</map-key>
 			<element column="LongToLongMap" type="long" />
 		</map>
 		<map name="longToStringMap" table="SimplMapsEntityLongToStringMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="LongToStringMapKey" type="long" />
+			<map-key type="long">
+				<column name="LongToStringMapKey" index="IxLongToStringMapKeySmpMpEntLn" />
+			</map-key>
 			<element column="LongToStringMap" type="string" />
 		</map>
 		<property name="partition" column="`myCustom partitionCol`" type="string" />
 		<map name="stringToDateMap" table="SimplMapsEntityStringToDateMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="StringToDateMapKey" type="string" />
+			<map-key type="string">
+				<column name="StringToDateMapKey" index="IxStringToDateMapKeySmpMpEntSt" />
+			</map-key>
 			<element column="StringToDateMap" type="date" />
 		</map>
 		<map name="stringToEnumMap" table="SimplMapsEntityStringToEnumMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="StringToEnumMapKey" type="string" />
+			<map-key type="string">
+				<column name="StringToEnumMapKey" index="IxStringToEnumMapKeySmpMpEntSt" />
+			</map-key>
 			<element column="StringToEnumMap" type="test.models.basic.SimpleEnum" />
 		</map>
 		<map name="stringToLongMap" table="SimplMapsEntityStringToLongMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="StringToLongMapKey" type="string" />
+			<map-key type="string">
+				<column name="StringToLongMapKey" index="IxStringToLongMapKeySmpMpEntSt" />
+			</map-key>
 			<element column="StringToLongMap" type="long" />
 		</map>
 		<map name="stringToStringMap" table="SimplMapsEntitStrinToStringMap">
 			<key column="SimpleMapsEntityId" />
-			<map-key column="StringToStringMapKey" type="string" />
+			<map-key type="string">
+				<column name="StringToStringMapKey" index="IxStrinToStrinMapKeySmpMpEntSt" />
+			</map-key>
 			<element column="StringToStringMap" type="string" />
 		</map>
 	</class>
