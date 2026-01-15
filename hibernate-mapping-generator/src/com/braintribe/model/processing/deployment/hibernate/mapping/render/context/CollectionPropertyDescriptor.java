@@ -20,7 +20,6 @@ import static com.braintribe.utils.lcd.StringTools.isBlank;
 
 import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
 import com.braintribe.model.meta.GmCollectionType;
-import com.braintribe.model.meta.GmEntityType;
 import com.braintribe.model.meta.GmLinearCollectionType;
 import com.braintribe.model.meta.GmMapType;
 import com.braintribe.model.meta.GmProperty;
@@ -46,13 +45,15 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	public String elementColumn;
 	public String elementSimpleType;
 	public String elementForeignKey;
-	public boolean isSimpleCollection; // true if the elementType of this column is GmSimpleType
+	public boolean hasScalarElement; // elementType is GmScalarType
+	public boolean hasEnumElement; // elementType is GmEnumType
 	public boolean isOneToMany; // defines if the (entity type) element must be mapped as <one-to-many> instead of the
 									// default <many-to-many>
 	public String manyToManyFetch;
 
 	// map related properties
-	public boolean isSimpleMapKey;
+	public boolean hasScalarMapKey;
+	public boolean hasEnumMapKey;
 	public String mapKeySignature;
 	public String mapKeyColumn;
 	public String mapKeySimpleType;
@@ -98,13 +99,14 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	private void initCollectionType(EntityDescriptor descriptor, GmType colType, GmType elementType, GmType keyType) {
 		ownerSimpleName = descriptor.getSimpleName();
 
-		isSimpleCollection = !(elementType instanceof GmEntityType);
-		if (isSimpleCollection) {
-			elementSimpleType = elementType.getTypeSignature();
+		hasScalarElement = !elementType.isGmEntity();
+		hasEnumElement= elementType.isGmEnum();
+		if (hasScalarElement) {
+			elementSimpleType = resolveScalarTypeForCollection(elementType);
 		}
 
 		elementSignature = elementType.getTypeSignature();
-		String eColumn = isSimpleCollection ? getName() : simpleName(elementSignature) + "Id";
+		String eColumn = hasScalarElement ? getName() : simpleName(elementSignature) + "Id";
 		tag = keyType != null ? "map" : colType instanceof GmSetType ? "set" : "list";
 
 		// db naming strategy names to originate table/column names.
@@ -129,19 +131,30 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	}
 
 	private void initMapKey(GmType keyType) {
-
-		isSimpleMapKey = !(keyType instanceof GmEntityType);
-		if (isSimpleMapKey) {
-			mapKeySimpleType = keyType.getTypeSignature();
+		hasScalarMapKey = !keyType.isGmEntity();
+		hasEnumMapKey = keyType.isGmEnum();
+		if (hasScalarMapKey) {
+			mapKeySimpleType = resolveScalarTypeForCollection(keyType);
 		}
 
 		mapKeySignature = keyType.getTypeSignature();
-		String eColumn = isSimpleMapKey ? getName() + "Key" : simpleName(mapKeySignature) + "Id";
+		String eColumn = hasScalarMapKey ? getName() + "Key" : simpleName(mapKeySignature) + "Id";
 
 		// db naming strategy names to originate table/column names.
 		collectionMapKeyName = capitalize(eColumn);
 		if (collectionMapKeyName.equals(collectionKeyName))
 			collectionMapKeyName = "Other" + collectionMapKeyName;
+	}
+
+	private String resolveScalarTypeForCollection(GmType type) {
+		switch (type.typeKind()) {
+			case DATE:
+				return context.versionImpliesTimestamptForCollectionDates() ? "timestamp" : "date";
+			case DECIMAL:
+				return "big_decimal";
+			default:
+				return type.getTypeSignature();
+		}
 	}
 
 	private void applyCollectionMetaDatas() {
@@ -190,7 +203,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 
 		if (!isBlank(propertyMetaData.getMapKeySimpleType())) {
 			this.mapKeyExplicitType = propertyMetaData.getMapKeySimpleType();
-			if (this.isSimpleMapKey)
+			if (this.hasScalarMapKey)
 				this.mapKeySimpleType = propertyMetaData.getMapKeySimpleType();
 		}
 
@@ -217,7 +230,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 
 		if (!isBlank(propertyHint.keyType)) {
 			this.mapKeyExplicitType = propertyHint.keyType;
-			if (this.isSimpleMapKey)
+			if (this.hasScalarMapKey)
 				this.mapKeySimpleType = mapKeyExplicitType;
 		}
 
@@ -259,7 +272,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	}
 
 	public boolean getIsSimpleCollection() {
-		return isSimpleCollection;
+		return hasScalarElement;
 	}
 
 	public boolean getIsOneToMany() {
@@ -339,7 +352,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	}
 
 	public boolean getIsSimpleMapKey() {
-		return isSimpleMapKey;
+		return hasScalarMapKey;
 	}
 
 	public String getMapKeyClass() {

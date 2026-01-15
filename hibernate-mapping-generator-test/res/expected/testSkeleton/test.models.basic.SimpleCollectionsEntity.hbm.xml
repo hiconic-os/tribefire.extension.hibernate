@@ -8,20 +8,30 @@
 		<list name="dateList" table="SimpleCollEntityDateList">
 			<key column="SimpleCollectionsEntityId" />
 			<list-index column="SimpleCollEntityDateListIdx" />
-			<element column="DateList" type="date" />
+			<element column="DateList" type="timestamp" />
 		</list>
 		<set name="dateSet" table="SimpleCollectionsEntityDateSet">
 			<key column="SimpleCollectionsEntityId" />
-			<element column="DateSet" type="date" />
+			<element column="DateSet" type="timestamp" />
 		</set>
 		<list name="enumList" table="SimpleCollEntityEnumList">
 			<key column="SimpleCollectionsEntityId" />
 			<list-index column="SimpleCollEntityEnumListIdx" />
-			<element column="EnumList" type="test.models.basic.SimpleEnum" />
+			<element column="EnumList">
+			<type name="org.hibernate.type.EnumType">
+				<param name="enumClass">test.models.basic.SimpleEnum</param>
+				<param name="type">12</param>
+			</type>
+			</element>
 		</list>
 		<set name="enumSet" table="SimpleCollectionsEntityEnumSet">
 			<key column="SimpleCollectionsEntityId" />
-			<element column="EnumSet" type="test.models.basic.SimpleEnum" />
+			<element column="EnumSet">
+			<type name="org.hibernate.type.EnumType">
+				<param name="enumClass">test.models.basic.SimpleEnum</param>
+				<param name="type">12</param>
+			</type>
+			</element>
 		</set>
 		<property name="globalId" column="globalId" type="string" />
 		<list name="integerList" table="SimpleCollEntityIntegerList">

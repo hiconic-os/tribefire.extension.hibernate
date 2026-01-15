@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <hibernate-mapping auto-import="true">
-	<subclass name="test.models.basic.SimpleCollectionsEntity" entity-name="test.models.basic.SimpleCollectionsEntity" abstract="false" extends="com.braintribe.model.generic.StandardIdentifiable">
+	<class name="test.models.basic.SimpleCollectionsEntity" entity-name="test.models.basic.SimpleCollectionsEntity" table="SimpleCollectionsEntity" abstract="false">
+		<id name="id" column="id" type="long">
+			<generator class="native" />
+		</id>
 		<list name="dateList" table="SimpleCollEntityDateList">
 			<key column="SimpleCollectionsEntityId" />
 			<list-index column="SimpleCollEntityDateListIdx" />
@@ -30,6 +33,7 @@
 			</type>
 			</element>
 		</set>
+		<property name="globalId" column="globalId" type="string" />
 		<list name="integerList" table="SimpleCollEntityIntegerList">
 			<key column="SimpleCollectionsEntityId" />
 			<list-index column="SimpleCollEntityIntegerListIdx" />
@@ -48,7 +52,8 @@
 			<key column="SimpleCollectionsEntityId" />
 			<element column="LongSet" type="long" />
 		</set>
-		<list name="stringList" table="SimpleCollEntityStringList">
+		<property name="partition" column="partition_" type="string" index="myCustom partitionIdx" />
+		<list name="stringList" table="SimpleCollEntityStringList" lazy="extra" fetch="join">
 			<key column="SimpleCollectionsEntityId" />
 			<list-index column="SimpleCollEntityStringListIdx" />
 			<element column="StringList" type="string" />
@@ -57,5 +62,5 @@
 			<key column="SimpleCollectionsEntityId" />
 			<element column="StringSet" type="string" />
 		</set>
-	</subclass>
+	</class>
 </hibernate-mapping>

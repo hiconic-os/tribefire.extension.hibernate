@@ -42,6 +42,29 @@ public class HbmXmlGeneratingService {
 
 	public static final String INDICES_JSON_FILE_NAME = "indices.json";
 
+	/**
+	 * Original versions with some issues:
+	 * <ul>
+	 * <li>Collections of Enums have values stored as binary, not strings
+	 * <li>Collections of Dates have values stored as date only, rather timestamp (i.e. time is missing)
+	 * </ul>
+	 */
+	public static final int MAPPING_VERSION_1 = 1;
+
+	/**
+	 * Changes from v1:
+	 * <ul>
+	 * <li>Collections of Enums have values stored as strings
+	 * <li>Collections of Dates are proper timestamps (i.e. including time, not just Date)
+	 * </ul>
+	 */
+	public static final int MAPPING_VERSION_2 = 2;
+
+	/**
+	 * Adds indices (for now).
+	 */
+	public static final int MAPPING_VERSION_3 = 3;
+
 	private final HbmXmlGenerationContext context = new HbmXmlGenerationContext();
 
 	public HbmXmlGeneratingService() {

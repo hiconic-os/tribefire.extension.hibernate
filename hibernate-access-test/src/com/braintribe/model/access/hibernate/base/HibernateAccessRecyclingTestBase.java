@@ -43,6 +43,7 @@ import com.braintribe.model.generic.eval.Evaluator;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.persistence.ExecuteNativeQuery;
+import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
 import com.braintribe.model.processing.query.fluent.SelectQueryBuilder;
 import com.braintribe.model.processing.query.test.tools.QueryResultAssert;
 import com.braintribe.model.processing.query.tools.AccessDriver;
@@ -110,6 +111,9 @@ public abstract class HibernateAccessRecyclingTestBase {
 	 */
 	public static final boolean COMMIT_HIB_SESSION = false;
 
+	/** We do not test version 3 - which currently includes indices, as I would like to have indices in a different way... */
+	private static final int DEFAULT_MAPPING_VERSION = HbmXmlGeneratingService.MAPPING_VERSION_2;
+
 	/** Before each test we prepare the {@link HibernateAccess}, {@link PersistenceGmSession} session and an {@link AccessDriver}. */
 	@Before
 	public void prepareAccess() {
@@ -141,26 +145,30 @@ public abstract class HibernateAccessRecyclingTestBase {
 
 	protected abstract GmMetaModel model();
 
+	protected int mappingVersion() {
+		return DEFAULT_MAPPING_VERSION;
+	}
+
 	private HbmDeployedUnit deployHbm(GmMetaModel model) {
-		return deployHbm(model, "default_" + dbName(model));
+		return deployHbm(model, "default_" + dbName(model), mappingVersion());
 	}
 
 	// ################################################
 	// ## . . . . . . . . Deployment . . . . . . . . ##
 	// ################################################
 
-	protected static HbmDeployedUnit deployHbm(GmMetaModel model, String dbName) {
+	private static HbmDeployedUnit deployHbm(GmMetaModel model, String dbName, int mappingVersion) {
 		HbmDeployedUnit hbmUnit = new HbmDeployedUnit();
-		hbmUnit.sessionFactory = sessionFactory(model, dbName);
+		hbmUnit.sessionFactory = sessionFactory(model, dbName, mappingVersion);
 		hbmUnit.access = HibernateAccessSetupHelper.hibernateAccess("test.access.for." + dbName, () -> model, hbmUnit.sessionFactory);
 
 		return hbmUnit;
 	}
 
-	private static HbmTestSessionFactory sessionFactory(GmMetaModel model, String dbName) {
+	private static HbmTestSessionFactory sessionFactory(GmMetaModel model, String dbName, int mappingVersion) {
 		HibernateSessionFactoryBean hsfb = hibernateSessionFactoryBean( //
 				() -> model, //
-				dataSource(dbName));
+				dataSource(dbName), mappingVersion);
 
 		hsfb.setShowSql(SHOW_SQL);
 		hsfb.setFormatSql(FORMAT_SQL);

@@ -23,7 +23,9 @@ import static com.braintribe.utils.lcd.CollectionTools2.first;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.braintribe.model.access.hibernate.base.HibernateAccessRecyclingTestBase;
 import com.braintribe.model.access.hibernate.base.model.acl.AclHaTestEntity;
+import com.braintribe.model.access.hibernate.base.model.collection.ScalarsEntity;
 import com.braintribe.model.access.hibernate.base.model.index.IndexedEntity;
 import com.braintribe.model.access.hibernate.base.model.index.ReferencedEntity;
 import com.braintribe.model.access.hibernate.base.model.n8ive.AmbiguousEntity;
@@ -50,6 +52,7 @@ import com.braintribe.model.generic.StandardIntegerIdentifiable;
 import com.braintribe.model.generic.StandardStringIdentifiable;
 import com.braintribe.model.generic.i18n.LocalizedString;
 import com.braintribe.model.generic.reflection.EntityType;
+import com.braintribe.model.generic.reflection.GmReflectionTools;
 import com.braintribe.model.meta.GmEntityType;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.meta.GmType;
@@ -62,6 +65,7 @@ import com.braintribe.model.processing.meta.editor.ModelMetaDataEditor;
 import com.braintribe.model.processing.meta.oracle.BasicModelOracle;
 import com.braintribe.model.processing.meta.oracle.ModelOracle;
 import com.braintribe.model.util.meta.NewMetaModelGeneration;
+import com.braintribe.utils.lcd.ReflectionTools;
 import com.braintribe.wire.api.annotation.Managed;
 
 /**
@@ -109,6 +113,10 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	private static final List<EntityType<?>> indexedTypes = asList( //
 			IndexedEntity.T, //
 			ReferencedEntity.T //
+	);
+
+	private static final List<EntityType<?>> scalarCollectionTypes = asList( //
+			ScalarsEntity.T //
 	);
 
 	private static final List<EntityType<?>> versionedTypes = asList( //
@@ -178,34 +186,19 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	@Override
 	@Managed
 	public GmMetaModel n8ive() {
-		GmMetaModel result = nativeRaw();
-
-		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
-		unmapGlobalIdAndPartition(md);
-
-		return result;
+		return unmapGlobalIdAndPartition(nativeRaw());
 	}
 
 	@Override
 	@Managed
 	public GmMetaModel graph() {
-		GmMetaModel result = graphRaw();
-
-		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
-		unmapGlobalIdAndPartition(md);
-
-		return result;
+		return unmapGlobalIdAndPartition(graphRaw());
 	}
 
 	@Override
 	@Managed
 	public GmMetaModel acl() {
-		GmMetaModel result = aclRaw();
-
-		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
-		unmapGlobalIdAndPartition(md);
-
-		return result;
+		return unmapGlobalIdAndPartition(aclRaw());
 	}
 
 	@Override
@@ -243,6 +236,18 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	}
 
 	@Override
+	@Managed
+	public GmMetaModel scalarCollections() {
+		return unmapGlobalIdAndPartition(scalarCollectionRaw());
+	}
+
+	@Override
+	@Managed
+	public GmMetaModel scalarCollections_v1() {
+		return versionCopy(scalarCollections(), 1);
+	}
+
+	@Override
 	public GmMetaModel versioned() {
 		GmMetaModel result = verisionedRaw();
 
@@ -251,7 +256,7 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 		md.onEntityType(VersionedEntity.T) //
 				.addPropertyMetaData(VersionedEntity.version, Version.T.create()) //
-//				.addPropertyMetaData(VersionedEntity.version, UNMAPPED_P) //
+		// .addPropertyMetaData(VersionedEntity.version, UNMAPPED_P) //
 		;
 		return result;
 	}
@@ -259,6 +264,13 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	// ###################################################
 	// ## . . . . . . . Mapping helpers . . . . . . . . ##
 	// ###################################################
+
+	private GmMetaModel unmapGlobalIdAndPartition(GmMetaModel model) {
+		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(model);
+		unmapGlobalIdAndPartition(md);
+
+		return model;
+	}
 
 	private void unmapGlobalIdAndPartition(BasicModelMetaDataEditor md) {
 		md.onEntityType(GenericEntity.T) //
@@ -281,36 +293,17 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 		return result;
 	}
 
-	private GmMetaModel nativeRaw() {
-		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:native-model", nativeTypes);
-		addMd(result, null);
+	// @formatter:off
+	private GmMetaModel nativeRaw() { return rawModel("native", nativeTypes); }
+	private GmMetaModel graphRaw() { return rawModel("graph", graphTypes); }
+	private GmMetaModel indexedRaw() { return rawModel("indexed", indexedTypes); }
+	private GmMetaModel scalarCollectionRaw() { return rawModel("scalar-collection", scalarCollectionTypes); }
+	private GmMetaModel verisionedRaw() { return rawModel("versioned", versionedTypes); }
+	private GmMetaModel aclRaw() { return rawModel("acl", aclTypes); }
+	// @formatter:on
 
-		return result;
-	}
-
-	private GmMetaModel graphRaw() {
-		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:graph-model", graphTypes);
-		addMd(result, null);
-
-		return result;
-	}
-
-	private GmMetaModel indexedRaw() {
-		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:index-model", indexedTypes);
-		addMd(result, null);
-
-		return result;
-	}
-
-	private GmMetaModel verisionedRaw() {
-		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:versioned-model", versionedTypes);
-		addMd(result, null);
-
-		return result;
-	}
-
-	private GmMetaModel aclRaw() {
-		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:acl-model", aclTypes);
+	private GmMetaModel rawModel(String what, List<EntityType<?>> types) {
+		GmMetaModel result = new NewMetaModelGeneration().buildMetaModel("hibernate-test:" + what + "-model", types);
 		addMd(result, null);
 
 		return result;
@@ -346,6 +339,23 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	private TypeSpecification typeSpecification(GmType gmType) {
 		TypeSpecification result = TypeSpecification.T.create();
 		result.setType(gmType);
+
+		return result;
+	}
+
+	// ###################################################
+	// ## . . . . . . . . Other Helpers . . . . . . . . ##
+	// ###################################################
+
+	/**
+	 * Creates a wrapper for given model with a given name, because DB name is derived from a model name, and we need a new DB with new mapping if we
+	 * use a different mapping version.
+	 * 
+	 * @see HibernateAccessRecyclingTestBase#dataSource
+	 */
+	private GmMetaModel versionCopy(GmMetaModel baseModel, int version) {
+		GmMetaModel result = GmReflectionTools.makeShallowCopy(baseModel);
+		result.setName(result.getName().replace("-model", "-v" + version + "-model"));
 
 		return result;
 	}

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<hibernate-mapping auto-import="true">
+	<class name="test.models.basic.ComplexMapsEntity" entity-name="test.models.basic.ComplexMapsEntity" table="ComplexMapsEntity" abstract="false">
+		<id name="id" column="id" type="long">
+			<generator class="native" />
+		</id>
+		<map name="entityToEntityMap" table="ComplMapsEntitEntitToEntityMap" lazy="false">
+			<key column="ComplexMapsEntityId" property-ref="myCustom_collectionKeyPropertyRef" />
+			<map-key-many-to-many class="test.models.basic.SimpleEntity">
+				<column name="SimpleEntityId_" />
+			</map-key-many-to-many>
+			<many-to-many class="test.models.basic.SimpleEntity" column="SimpleEntityId" />
+		</map>
+		<map name="entityToStringMap" table="ComplMapsEntitEntitToStringMap">
+			<key column="ComplexMapsEntityId" />
+			<map-key-many-to-many class="test.models.basic.SimpleEntity">
+				<column name="SimpleEntityId" />
+			</map-key-many-to-many>
+			<element column="EntityToStringMap" type="string" />
+		</map>
+		<property name="globalId" column="globalId" type="string" />
+		<property name="partition" column="partition_" type="string" index="myCustom partitionIdx" />
+		<map name="stringToEntityMap" table="ComplMapsEntitStrinToEntityMap">
+			<key column="ComplexMapsEntityId" />
+			<map-key type="string">
+				<column name="StringToEntityMapKey" />
+			</map-key>
+			<many-to-many class="test.models.basic.SimpleEntity" column="SimpleEntityId" />
+		</map>
+	</class>
+</hibernate-mapping>

@@ -111,7 +111,7 @@ class HbmXmlGenerator {
 		for (EntityDescriptor ed : outputDescriptors.entityDescriptors) {
 			SourceDescriptor sd = context.generateJpaOrm ? //
 					OrmXmlFastRenderer.renderEntityType(ed) : //
-					HbmXmlFastRenderer.renderEntityType(ed);
+					HbmXmlFastRenderer.renderEntityType(ed, context);
 
 			consumer.accept(sd);
 		}

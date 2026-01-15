@@ -21,19 +21,14 @@ import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenera
 
 public class EnumDescriptor extends PropertyDescriptor {
 
-	public final String enumSqlType, enumClass;
+	public final String enumClass;
 
 	protected EnumDescriptor(HbmXmlGenerationContext context, EntityDescriptor descriptor, GmProperty gmProperty,
 			PropertyDescriptorMetaData metaData) {
 
 		super(context, descriptor, gmProperty, metaData);
 
-		this.enumSqlType = "12";
 		this.enumClass = resolveEnumClass(gmProperty);
-	}
-
-	public String getEnumSqlType() {
-		return enumSqlType;
 	}
 
 	public String getEnumClass() {

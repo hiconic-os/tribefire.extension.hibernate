@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<hibernate-mapping auto-import="true">
+	<class name="test.models.collection.ScalarsEntity" entity-name="test.models.collection.ScalarsEntity" table="ScalarsEntity" abstract="false">
+		<id name="id" column="id" type="long">
+			<generator class="native" />
+		</id>
+		<set name="booleanSet" table="ScalarsEntityBooleanSet">
+			<key column="ScalarsEntityId" />
+			<element column="BooleanSet" type="boolean" />
+		</set>
+		<property name="booleanV" column="booleanV" type="boolean" />
+		<map name="dateKeyMap" table="ScalarsEntityDateKeyMap">
+			<key column="ScalarsEntityId" />
+			<map-key type="date">
+				<column name="DateKeyMapKey" />
+			</map-key>
+			<element column="DateKeyMap" type="string" />
+		</map>
+		<set name="dateSet" table="ScalarsEntityDateSet">
+			<key column="ScalarsEntityId" />
+			<element column="DateSet" type="date" />
+		</set>
+		<property name="dateV" column="dateV" type="timestamp" />
+		<map name="dateValueMap" table="ScalarsEntityDateValueMap">
+			<key column="ScalarsEntityId" />
+			<map-key type="string">
+				<column name="DateValueMapKey" />
+			</map-key>
+			<element column="DateValueMap" type="date" />
+		</map>
+		<map name="decimalKeyMap" table="ScalarsEntityDecimalKeyMap">
+			<key column="ScalarsEntityId" />
+			<map-key type="big_decimal">
+				<column name="DecimalKeyMapKey" />
+			</map-key>
+			<element column="DecimalKeyMap" type="string" />
+		</map>
+		<set name="decimalSet" table="ScalarsEntityDecimalSet">
+			<key column="ScalarsEntityId" />
+			<element column="DecimalSet" type="big_decimal" />
+		</set>
+		<property name="decimalV" column="decimalV" type="big_decimal" />
+		<map name="decimalValueMap" table="ScalarsEntityDecimalValueMap">
+			<key column="ScalarsEntityId" />
+			<map-key type="string">
+				<column name="DecimalValueMapKey" />
+			</map-key>
+			<element column="DecimalValueMap" type="big_decimal" />
+		</map>
+		<set name="doubleSet" table="ScalarsEntityDoubleSet">
+			<key column="ScalarsEntityId" />
+			<element column="DoubleSet" type="double" />
+		</set>
+		<property name="doubleV" column="doubleV" type="double" />
+		<map name="enumKeyMap" table="ScalarsEntityEnumKeyMap">
+			<key column="ScalarsEntityId" />
+			<map-key type="test.models.collection.ScalarEnum">
+				<column name="EnumKeyMapKey" />
+			</map-key>
+			<element column="EnumKeyMap" type="string" />
+		</map>
+		<set name="enumSet" table="ScalarsEntityEnumSet">
+			<key column="ScalarsEntityId" />
+			<element column="EnumSet" type="test.models.collection.ScalarEnum" />
+		</set>
+		<property name="enumV" column="enumV">
+			<type name="org.hibernate.type.EnumType">
+				<param name="enumClass">test.models.collection.ScalarEnum</param>
+				<param name="type">12</param>
+			</type>
+		</property>
+		<map name="enumValueMap" table="ScalarsEntityEnumValueMap">
+			<key column="ScalarsEntityId" />
+			<map-key type="string">
+				<column name="EnumValueMapKey" />
+			</map-key>
+			<element column="EnumValueMap" type="test.models.collection.ScalarEnum" />
+		</map>
+		<set name="floatSet" table="ScalarsEntityFloatSet">
+			<key column="ScalarsEntityId" />
+			<element column="FloatSet" type="float" />
+		</set>
+		<property name="floatV" column="floatV" type="float" />
+		<property name="globalId" column="globalId" type="string" />
+		<set name="intSet" table="ScalarsEntityIntSet">
+			<key column="ScalarsEntityId" />
+			<element column="IntSet" type="integer" />
+		</set>
+		<property name="intV" column="intV" type="integer" />
+		<set name="longSet" table="ScalarsEntityLongSet">
+			<key column="ScalarsEntityId" />
+			<element column="LongSet" type="long" />
+		</set>
+		<property name="longV" column="longV" type="long" />
+		<property name="partition" column="partition_" type="string" />
+		<set name="stringSet" table="ScalarsEntityStringSet">
+			<key column="ScalarsEntityId" />
+			<element column="StringSet" type="string" />
+		</set>
+		<property name="stringV" column="stringV" type="string" />
+	</class>
+</hibernate-mapping>

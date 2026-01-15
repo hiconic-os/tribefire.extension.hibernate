@@ -121,7 +121,7 @@
 			</map-key>
 			<element column="LongToStringMap" type="string" />
 		</map>
-		<property name="partition" column="`myCustom partitionCol`" type="string" />
+		<property name="partition" column="partition_" type="string" index="myCustom partitionIdx" />
 		<map name="stringToDateMap" table="SimplMapsEntityStringToDateMap">
 			<key column="SimpleMapsEntityId" />
 			<map-key type="string">

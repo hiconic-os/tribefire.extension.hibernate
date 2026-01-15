@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaColumn;
 import com.braintribe.model.generic.tools.AbstractStringifier;
 import com.braintribe.model.meta.GmType;
+import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
 import com.braintribe.model.processing.deployment.hibernate.mapping.SourceDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.CollectionPropertyDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.ComponentDescriptor;
@@ -36,28 +37,29 @@ import com.braintribe.model.processing.deployment.hibernate.mapping.render.conte
  */
 public class HbmXmlFastRenderer extends AbstractStringifier {
 
-	public static SourceDescriptor renderEntityType(EntityDescriptor entityDescriptor) {
+	public static SourceDescriptor renderEntityType(EntityDescriptor entityDescriptor, HbmXmlGenerationContext context) {
 		SourceDescriptor result = new SourceDescriptor();
 		result.sourceRelativePath = entityDescriptor.getFullName() + ".hbm.xml";
-		result.sourceCode = renderXml(entityDescriptor);
+		result.sourceCode = renderXml(entityDescriptor, context);
 
 		return result;
 	}
 
-	private static String renderXml(EntityDescriptor ed) {
+	private static String renderXml(EntityDescriptor ed, HbmXmlGenerationContext context) {
 		if (ed.xml != null)
 			return ed.xml;
 		else
-			return new HbmXmlFastRenderer(ed).renderHbmXml();
+			return new HbmXmlFastRenderer(ed, context).renderHbmXml();
 	}
 
 	private static final String Q = "\"";
 
 	private final EntityDescriptor ed;
+	private final HbmXmlGenerationContext context;
 
-	private HbmXmlFastRenderer(EntityDescriptor ed) {
+	private HbmXmlFastRenderer(EntityDescriptor ed, HbmXmlGenerationContext context) {
 		this.ed = ed;
-
+		this.context = context;
 	}
 
 	private String renderHbmXml() {
@@ -219,9 +221,12 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 				closeTag();
 
 			} else if (pd.getIsMap()) {
-				if (pd.isSimpleMapKey) {
+				if (pd.hasScalarMapKey) {
+					boolean isEnumKeyAsString = pd.hasEnumMapKey && context.versionImpliesStringsForCollectionEnums();
+					
 					openTag("map-key");
-					attr("type", pd.mapKeySimpleType);
+					if (!isEnumKeyAsString)
+						attr("type", pd.mapKeySimpleType);
 					endOpenTag();
 
 					levelUp();
@@ -231,6 +236,9 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 						optAttr("index", pd.mapKeyIndexName);
 						optAttr("length", pd.mapKeyLength);
 						closeTag();
+
+						if (isEnumKeyAsString)
+							renderTypeForEnum(pd.mapKeySignature);
 					}
 					levelDown();
 
@@ -255,10 +263,13 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 				}
 			}
 
-			if (pd.isSimpleCollection) {
+			if (pd.hasScalarElement) {
+				boolean isEnumElementAsString = pd.hasEnumElement && context.versionImpliesStringsForCollectionEnums();
+
 				openTag("element");
 				attr("column", pd.getQuotedElementColumn());
-				attr("type", pd.elementSimpleType);
+				if (!isEnumElementAsString)
+					attr("type", pd.elementSimpleType);
 
 				optAttr("length", pd.length);
 				optAttr("precision", pd.precision);
@@ -267,7 +278,13 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 				optAttr("unique", pd.isUnique);
 				optAttr("not-null", pd.isNotNull);
 
-				closeTag();
+				if (!isEnumElementAsString) {
+					closeTag();
+				} else {
+					endOpenTag();
+					renderTypeForEnum(pd.elementSignature); // Test should fail
+					closeTag("element");
+				}
 
 			} else if (pd.isOneToMany) {
 				openTag("many-to-many");
@@ -302,22 +319,26 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 
 		levelUp();
 		{
-			openTag("type");
-			attr("name", "org.hibernate.type.EnumType");
-			endOpenTag();
-
-			levelUp();
-			{
-				println("<param name=\"enumClass\">" + pd.enumClass + "</param>");
-				println("<param name=\"type\">" + pd.enumSqlType + "</param>");
-			}
-			levelDown();
-
-			closeTag("type");
+			renderTypeForEnum(pd.enumClass);
 		}
 		levelDown();
 
 		closeTag("property");
+	}
+
+	private void renderTypeForEnum(String enumTypeSignature) {
+		openTag("type");
+		attr("name", "org.hibernate.type.EnumType");
+		endOpenTag();
+
+		levelUp();
+		{
+			println("<param name=\"enumClass\">" + enumTypeSignature + "</param>");
+			println("<param name=\"type\">12</param>");
+		}
+		levelDown();
+
+		closeTag("type");
 	}
 
 	private void renderCompositeId(PropertyDescriptor pd) {

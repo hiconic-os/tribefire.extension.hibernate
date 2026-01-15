@@ -147,8 +147,16 @@ public class HbmXmlGenerationContext {
 		return entityHintProvider;
 	}
 
-	public boolean versionSupportsIndices() {
+	public boolean versionImpliesTimestamptForCollectionDates() {
 		return mappingVersion >= 2;
+	}
+
+	public boolean versionImpliesStringsForCollectionEnums() {
+		return mappingVersion >= 2;
+	}
+
+	public boolean versionSupportsIndices() {
+		return mappingVersion >= 3;
 	}
 
 }

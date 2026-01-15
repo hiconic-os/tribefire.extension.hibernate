@@ -241,7 +241,7 @@ public class OrmXmlFastRenderer extends AbstractStringifier {
 				closeTag();
 
 			} else if (pd.getIsMap()) {
-				if (pd.isSimpleMapKey) {
+				if (pd.hasScalarMapKey) {
 					openTag("map-key");
 					attr("column", pd.getQuotedMapKeyColumn());
 					attr("type", pd.mapKeySimpleType);
@@ -256,7 +256,7 @@ public class OrmXmlFastRenderer extends AbstractStringifier {
 				}
 			}
 
-			if (pd.isSimpleCollection) {
+			if (pd.hasScalarElement) {
 				openTag("element");
 				attr("column", pd.getQuotedElementColumn());
 				attr("type", pd.elementSimpleType);
@@ -310,7 +310,7 @@ public class OrmXmlFastRenderer extends AbstractStringifier {
 			levelUp();
 			{
 				println("<param name=\"enumClass\">" + pd.enumClass + "</param>");
-				println("<param name=\"type\">" + pd.enumSqlType + "</param>");
+				println("<param name=\"type\"12</param>");
 			}
 			levelDown();
 

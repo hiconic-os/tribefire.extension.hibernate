@@ -15,6 +15,9 @@
 // ============================================================================
 package com.braintribe.model.processing.deployment.hibernate.test.mapping.xmlgeneration;
 
+import static com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService.MAPPING_VERSION_1;
+import static com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService.MAPPING_VERSION_2;
+import static com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService.MAPPING_VERSION_3;
 import static com.braintribe.model.processing.deployment.hibernate.mapping.utils.ResourceUtils.loadResourceToString;
 import static com.braintribe.model.processing.deployment.hibernate.mapping.utils.ResourceUtils.loadResourceToStrings;
 import static com.braintribe.utils.SysPrint.spOut;
@@ -76,6 +79,7 @@ import test.models.basic.SimpleCollectionsEntity;
 import test.models.basic.SimpleEntity;
 import test.models.basic.SimpleMapsEntity;
 import test.models.basic.SimpleSubEntity;
+import test.models.collection.ScalarsEntity;
 import test.models.hierarchy.AbstractBaseReferer;
 import test.models.hierarchy.Base;
 import test.models.hierarchy.BaseReferer;
@@ -395,18 +399,31 @@ public class MappingGenerationFromLocalModelsTest {
 	}
 
 	@Test
-	public void testConstraints() throws Exception {
-		String tag = "testConstraints";
+	public void testConstraintsV1() throws Exception {
+		String tag = "testConstraints_v1";
 
 		GmMetaModel metaModel = MetaModelTools.provideRawModel(tag, basicTypes);
 
 		enrichBasicModel(metaModel, true, false, false);
 
-		renderMappings(metaModel);
+		renderMappings(metaModel, MAPPING_VERSION_1);
 
 		assertMapping(tag, basicTypes);
 	}
 
+	@Test
+	public void testConstraintsV3() throws Exception {
+		String tag = "testConstraints_v3";
+		
+		GmMetaModel metaModel = MetaModelTools.provideRawModel(tag, basicTypes);
+		
+		enrichBasicModel(metaModel, true, false, false);
+		
+		renderMappings(metaModel, MAPPING_VERSION_3);
+		
+		assertMapping(tag, basicTypes);
+	}
+	
 	@Test
 	public void testDatabaseNames() throws Exception {
 		String tag = "testDatabaseNames";
@@ -803,9 +820,7 @@ public class MappingGenerationFromLocalModelsTest {
 	public void testIndices() throws Exception {
 		String tag = "testIndices";
 
-		List<EntityType<?>> types = asList(IndexedEntity.T);
-
-		GmMetaModel metaModel = provideModel(tag, types);
+		GmMetaModel metaModel = provideModel(tag, asList(IndexedEntity.T));
 
 		Index index = Index.T.create();
 
@@ -822,6 +837,28 @@ public class MappingGenerationFromLocalModelsTest {
 		assertIndices(tag);
 	}
 
+	@Test
+	public void testScalars_v1() throws Exception {
+		String tag = "testScalars_v1";
+
+		GmMetaModel metaModel = provideModel(tag, asList(ScalarsEntity.T));
+
+		renderMappings(metaModel, MAPPING_VERSION_1);
+
+		assertMapping(tag, ScalarsEntity.T);
+	}
+
+	@Test
+	public void testScalars_v2() throws Exception {
+		String tag = "testScalars_v2";
+		
+		GmMetaModel metaModel = provideModel(tag, asList(ScalarsEntity.T));
+		
+		renderMappings(metaModel, MAPPING_VERSION_2);
+		
+		assertMapping(tag, ScalarsEntity.T);
+	}
+	
 	// #################################################
 	// ## . . . . . . . . . Helpers . . . . . . . . . ##
 	// #################################################
@@ -1091,8 +1128,12 @@ public class MappingGenerationFromLocalModelsTest {
 		renderMappings(metaModel, null);
 	}
 
+	private void renderMappings(GmMetaModel metaModel, int version) {
+		renderMappings(metaModel, version, null);
+	}
+
 	private void renderMappings(GmMetaModel metaModel, String hints) {
-		renderMappings(metaModel, 3, hints);
+		renderMappings(metaModel, MAPPING_VERSION_3, hints);
 	}
 
 	private void renderMappings(GmMetaModel metaModel, int version, String hints) {
