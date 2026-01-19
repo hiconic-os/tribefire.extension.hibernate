@@ -34,11 +34,9 @@ import javax.sql.DataSource;
 
 import org.hibernate.Interceptor;
 import org.hibernate.SessionFactory;
-import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
-import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.boot.spi.XmlMappingBinderAccess;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;

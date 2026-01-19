@@ -27,9 +27,9 @@ import com.braintribe.model.generic.reflection.EntityTypes;
  * 
  * @see EntityMapping#getIsEmbeddable()
  */
-public interface JpaEmbedded extends JpaPropertyMapping {
+public interface JpaEmbeddedX extends JpaPropertyMapping {
 
-	EntityType<JpaEmbedded> T = EntityTypes.T(JpaEmbedded.class);
+	EntityType<JpaEmbeddedX> T = EntityTypes.T(JpaEmbeddedX.class);
 
 	/**
 	 * For now, all the properties of the embedded entity type have to be mapped here. Also, only

@@ -62,11 +62,6 @@ limitations under the License.
         </dependency>
         <!-- 3rd party -->
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${V.com.h2database}</version>
-        </dependency>
-        <dependency>
             <groupId>com.braintribe.gm</groupId>
             <artifactId>query-test-base</artifactId>
             <version>${V.com.braintribe.gm}</version>

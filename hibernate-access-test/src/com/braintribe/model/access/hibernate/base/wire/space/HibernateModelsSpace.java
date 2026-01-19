@@ -65,7 +65,6 @@ import com.braintribe.model.processing.meta.editor.ModelMetaDataEditor;
 import com.braintribe.model.processing.meta.oracle.BasicModelOracle;
 import com.braintribe.model.processing.meta.oracle.ModelOracle;
 import com.braintribe.model.util.meta.NewMetaModelGeneration;
-import com.braintribe.utils.lcd.ReflectionTools;
 import com.braintribe.wire.api.annotation.Managed;
 
 /**

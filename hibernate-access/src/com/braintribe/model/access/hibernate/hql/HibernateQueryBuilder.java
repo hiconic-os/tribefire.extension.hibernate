@@ -18,8 +18,10 @@ package com.braintribe.model.access.hibernate.hql;
 import java.util.Collection;
 
 import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.metamodel.spi.MappingMetamodelImplementor;
+import org.hibernate.query.BindableType;
 import org.hibernate.query.Query;
-import org.hibernate.type.Type;
 
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.persistence.NativeQueryParameter;
@@ -29,12 +31,13 @@ import com.braintribe.model.persistence.NativeQueryParameter;
  */
 public class HibernateQueryBuilder<T> {
 
-	private final Session session;
 	private final Query<T> result;
+	private final MappingMetamodelImplementor mappingMetamodel;
 
 	public HibernateQueryBuilder(Session session, String hql) {
-		this.session = session;
-		this.result = session.createQuery(hql);
+		this.mappingMetamodel = ((SessionFactoryImplementor) session.getSessionFactory()).getRuntimeMetamodels().getMappingMetamodel();
+
+		this.result = session.createQuery(hql, null /* return type, default is null it seems */);
 	}
 
 	public void setPagination(Integer maxResults, Integer firstResult) {
@@ -57,11 +60,11 @@ public class HibernateQueryBuilder<T> {
 			Collection<?> collection = (Collection<?>) value;
 			result.setParameterList(name, collection);
 
-		} else if (value instanceof GenericEntity) {
-			GenericEntity entity = (GenericEntity) value;
-			Class<?> entityClass = entity.entityType().getJavaType();
-			Type hibernateType = session.getSessionFactory().getTypeHelper().entity(entityClass);
-			result.setParameter(name, value, hibernateType);
+		} else if (value instanceof GenericEntity entity) {
+			Class<GenericEntity> entityClass = entity.entityType().getJavaType();
+
+			BindableType<GenericEntity> bindabletype = mappingMetamodel.resolveQueryParameterType(entityClass);
+			result.setParameter(name, entity, bindabletype);
 
 		} else {
 			result.setParameter(name, value);

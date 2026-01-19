@@ -63,7 +63,7 @@ public class HbmEntityTypeMapBuilder {
 	private Map<String, Set<String>> overlappingTypes = newMap();
 	private final Set<String> skippedEntities = newSet(); // elements are "typeSignature"
 	private final Set<String> skippedProperties = newSet(); // elements are "typeSignature:propertyName"
-	private final Set<GmEntityType> embeddableTypes = newSet(); // entities that are embedded, not mapped
+//	private final Set<GmEntityType> embeddableTypes = newSet(); // entities that are embedded, not mapped
 
 	public HbmEntityTypeMapBuilder(HbmXmlGenerationContext context) {
 		this.context = context;
@@ -81,8 +81,9 @@ public class HbmEntityTypeMapBuilder {
 			if (!MappingHelper.mapEntityToDb(gmEntityType, entityHint, context.getMappingMetaDataResolver()))
 				skippedEntities.add(gmEntityType.getTypeSignature());
 
-			if (MappingHelper.isEmbeddable(gmEntityType, context))
-				embeddableTypes.add(gmEntityType);
+			// REMOVED EMBEDDABLE
+			// if (MappingHelper.isEmbeddable(gmEntityType, context))
+			// embeddableTypes.add(gmEntityType);
 
 			for (GmProperty gmProperty : CollectionsUtils.nullSafe(gmEntityType.getProperties()))
 				if (!MappingHelper.mapPropertyToDb(gmEntityType, gmProperty, entityHint, context.getMappingMetaDataResolver()))
@@ -513,7 +514,8 @@ public class HbmEntityTypeMapBuilder {
 		for (GmEntityType gmEntityType : context.getEntityTypes()) {
 			String typeSignature = gmEntityType.getTypeSignature();
 
-			if (hbmEntityTypes.containsKey(typeSignature) || isSkipped(gmEntityType) || embeddableTypes.contains(gmEntityType))
+			// REMOVED EMBEDDABLE
+			if (hbmEntityTypes.containsKey(typeSignature) || isSkipped(gmEntityType) /*|| embeddableTypes.contains(gmEntityType)*/)
 				continue;
 
 			hbmEntityTypes.put(typeSignature, new HbmEntityType(gmEntityType));
@@ -587,8 +589,9 @@ public class HbmEntityTypeMapBuilder {
 
 				/* if gmType is an embeddable entity, we don't check if it's mapped (in face, we could maybe check it's not mapped and also check if
 				 * we use either an xml snippet or JpaEmbedded MD for property mapping) */
-				if (embeddableTypes.contains(gmType))
-					continue;
+				// REMOVED EMBEDDABLE
+				// if (embeddableTypes.contains(gmType))
+				// continue;
 
 				String gmTypeSignature = gmType.getTypeSignature();
 

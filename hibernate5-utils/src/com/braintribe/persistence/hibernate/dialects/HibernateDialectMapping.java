@@ -13,16 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ============================================================================
-package com.braintribe.gm.hibernate.access.wire.contract;
+package com.braintribe.persistence.hibernate.dialects;
 
-import java.util.function.BiFunction;
+import org.hibernate.dialect.Dialect;
 
-import com.braintribe.model.access.IncrementalAccess;
-import com.braintribe.model.meta.GmMetaModel;
-import com.braintribe.wire.api.space.WireSpace;
+/**
+ * @see HibernateDialectMappings
+ * 
+ * @author peter.gazdik
+ */
+public class HibernateDialectMapping {
 
-public interface DerbyHibernateAccessContract extends WireSpace {
+	public String productRegex;
+	public String variant;
+	public Class<? extends Dialect> dialectType;
 
-	BiFunction<String, GmMetaModel, IncrementalAccess> accessFactory();
+	public HibernateDialectMapping(String productRegex, String variant, Class<? extends Dialect> dialectType) {
+		this.productRegex = productRegex;
+		this.variant = variant;
+		this.dialectType = dialectType;
+	}
+
+	public static HibernateDialectMapping mapping(String productRegex, String variant, Class<? extends Dialect> dialectType) {
+		return new HibernateDialectMapping(productRegex, variant, dialectType);
+	}
 
 }

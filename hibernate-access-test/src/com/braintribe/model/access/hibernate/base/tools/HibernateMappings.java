@@ -21,8 +21,8 @@ import com.braintribe.model.accessdeployment.hibernate.meta.EntityMapping;
 import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaColumn;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaCompositeId;
-import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbeddable;
-import com.braintribe.model.meta.data.EntityTypeMetaData;
+//import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbeddable;
+//import com.braintribe.model.meta.data.EntityTypeMetaData;
 import com.braintribe.model.meta.data.MetaData;
 
 /**
@@ -32,10 +32,10 @@ public class HibernateMappings {
 
 	public static final PropertyMapping UNMAPPED_P = unmappedProperty();
 
-	public static EntityTypeMetaData embeddable() {
-		return JpaEmbeddable.T.create("hbm:entity:embeddable");
-	}
-
+//	public static EntityTypeMetaData embeddable() {
+//		return JpaEmbeddable.T.create("hbm:entity:embeddable");
+//	}
+//
 	public static EntityMapping unmappedEntity() {
 		EntityMapping result = EntityMapping.T.create("hbm:entity:unmapped");
 		result.setMapToDb(false);

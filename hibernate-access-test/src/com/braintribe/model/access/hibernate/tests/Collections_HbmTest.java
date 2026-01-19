@@ -16,6 +16,7 @@
 package com.braintribe.model.access.hibernate.tests;
 
 import static com.braintribe.testing.junit.assertions.assertj.core.api.Assertions.assertThat;
+import static com.braintribe.utils.SysPrint.spOut;
 import static com.braintribe.utils.lcd.CollectionTools2.first;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -100,6 +101,8 @@ public class Collections_HbmTest extends HibernateBaseModelTestBase {
 	public void queryEntityViaIntersectsClaus() throws Exception {
 		BasicCollectionEntity entityWithEnums = newCe("e1");
 
+		spOut(BasicColor.red.getClass().getClassLoader());
+		
 		entityWithEnums.getColorsSet().addAll(List.of(BasicColor.red));
 
 		commitAndReset();

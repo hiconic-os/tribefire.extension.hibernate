@@ -22,7 +22,6 @@ import static com.braintribe.utils.lcd.StringTools.isEmpty;
 
 import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaCompositeId;
-import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbedded;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaPropertyMapping;
 import com.braintribe.model.generic.reflection.GenericModelType;
 import com.braintribe.model.generic.reflection.GenericModelTypeReflection;
@@ -112,22 +111,23 @@ public class PropertyDescriptor extends AbstractDescriptor implements Comparable
 		if (propertyType.isGmEnum())
 			return new EnumDescriptor(context, descriptor, gmProperty, metaData);
 
-		if (propertyType.isGmEntity() && MappingHelper.isEmbeddable((GmEntityType) propertyType, context)) {
-			if (metaData.jpaPropertyMapping instanceof JpaEmbedded)
-				return new ComponentDescriptor(context, descriptor, gmProperty, metaData);
-
-			else if (!MappingHelper.isXmlSnippet(metaData.jpaPropertyMapping))
-				throwMisconfiguredEmbeddableType(descriptor, gmProperty, metaData);
-		}
-
+		// REMOVED EMBEDDABLE
+		// if (propertyType.isGmEntity() && MappingHelper.isEmbeddable((GmEntityType) propertyType, context)) {
+		// if (metaData.jpaPropertyMapping instanceof JpaEmbedded)
+		// return new ComponentDescriptor(context, descriptor, gmProperty, metaData);
+		//
+		// else if (!MappingHelper.isXmlSnippet(metaData.jpaPropertyMapping))
+		// throwMisconfiguredEmbeddableType(descriptor, gmProperty, metaData);
+		// }
+		//
 		return new PropertyDescriptor(context, descriptor, gmProperty, metaData);
 	}
 
-	private static void throwMisconfiguredEmbeddableType(EntityDescriptor descriptor, GmProperty gmProperty, PropertyDescriptorMetaData metaData) {
-		throw new IllegalStateException("Misconfigured hibernate mappings. Property " + descriptor.getGmEntityType().getTypeSignature() + "#"
-				+ gmProperty.getName() + " has an embeddable type '" + gmProperty.getType().getTypeSignature()
-				+ "', but it's property mapping is not a JpaEmbedded nor an XML snippet, but:" + metaData.jpaPropertyMapping);
-	}
+//	private static void throwMisconfiguredEmbeddableType(EntityDescriptor descriptor, GmProperty gmProperty, PropertyDescriptorMetaData metaData) {
+//		throw new IllegalStateException("Misconfigured hibernate mappings. Property " + descriptor.getGmEntityType().getTypeSignature() + "#"
+//				+ gmProperty.getName() + " has an embeddable type '" + gmProperty.getType().getTypeSignature()
+//				+ "', but it's property mapping is not a JpaEmbedded nor an XML snippet, but:" + metaData.jpaPropertyMapping);
+//	}
 
 	protected PropertyDescriptor(HbmXmlGenerationContext context, EntityDescriptor entityDescriptor, GmProperty gmProperty,
 			PropertyDescriptorMetaData metaData) {

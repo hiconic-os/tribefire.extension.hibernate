@@ -89,7 +89,7 @@ public class OptimisticLockingExample_Main {
 			VersionedEntity ve = VersionedEntity.T.create();
 			ve.setName("The Versioned");
 			ve.setCount(1);
-			session.save(ve);
+			session.persist(ve);
 
 			id = ve.getId();
 			spOut("Saved with ID: " + ve.getId());

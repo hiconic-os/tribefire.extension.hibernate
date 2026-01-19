@@ -26,7 +26,6 @@ import com.braintribe.model.meta.GmType;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
 import com.braintribe.model.processing.deployment.hibernate.mapping.SourceDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.CollectionPropertyDescriptor;
-import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.ComponentDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityMappingContextTools;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EnumDescriptor;
@@ -120,8 +119,9 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 		else if (pd.getIsCompositeIdProperty())
 			renderCompositeId(pd);
 
-		else if (pd.isEmbedded())
-			renderEmbedded((ComponentDescriptor) pd);
+		// REMOVED EMBEDDABLE
+		// else if (pd.isEmbedded())
+		// renderEmbedded((ComponentDescriptor) pd);
 
 		else if (pd.toOneEntitySignature != null)
 			renderManyToOne(pd);
@@ -358,26 +358,27 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 		closeTag("composite-id");
 	}
 
-	private void renderEmbedded(ComponentDescriptor pd) {
-		openTag("component");
-		attr("name", pd.name);
-		attr("class", pd.toOneEntitySignature);
-		endOpenTag();
-
-		levelUp();
-		{
-			println("<tuplizer entity-mode=\"pojo\" class=\"com.braintribe.model.access.hibernate.gm.GmPojoComponentTuplizer\"/>");
-			println("<property name=\"id\" formula=\"(select concat('" + pd.getIdPrefix() + "', " + pd.getOwnerIdQuotedColumnName()
-					+ "))\" type=\"string\" />");
-
-			for (PropertyDescriptor embeddedPd : pd.getEmbeddedProperties())
-				render(embeddedPd);
-
-		}
-		levelDown();
-
-		closeTag("component");
-	}
+	// REMOVED EMBEDDABLE
+	// private void renderEmbedded(ComponentDescriptor pd) {
+	// 	openTag("component");
+	// 	attr("name", pd.name);
+	// 	attr("class", pd.toOneEntitySignature);
+	// 	endOpenTag();
+	//
+	// 	levelUp();
+	// 	{
+	// 		println("<tuplizer entity-mode=\"pojo\" class=\"com.braintribe.model.access.hibernate.gm.GmPojoComponentTuplizer\"/>");
+	// 		println("<property name=\"id\" formula=\"(select concat('" + pd.getIdPrefix() + "', " + pd.getOwnerIdQuotedColumnName()
+	// 				+ "))\" type=\"string\" />");
+	//
+	// 		for (PropertyDescriptor embeddedPd : pd.getEmbeddedProperties())
+	// 			render(embeddedPd);
+	//
+	// 	}
+	// 	levelDown();
+	//
+	// 	closeTag("component");
+	// }
 
 	private void renderManyToOne(PropertyDescriptor pd) {
 		openTag("many-to-one");

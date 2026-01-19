@@ -13,20 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ============================================================================
-package com.braintribe.model.accessdeployment.jpa.meta;
+package org.hibernate.dialect.sane;
 
-import com.braintribe.model.generic.reflection.EntityType;
-import com.braintribe.model.generic.reflection.EntityTypes;
-import com.braintribe.model.meta.data.EntityTypeMetaData;
-import com.braintribe.model.meta.data.ExplicitPredicate;
+import java.sql.Types;
+
+import org.hibernate.dialect.SQLServer2012Dialect;
+
+import com.braintribe.persistence.hibernate.dialects.HibernateDialectMappings;
 
 /**
- * Specifies that a given entity type is embeddable, i.e. this type cannot be mapped to a table and all the properties
- * of that type are embedded within the owner entity's table. The mapping for these embedded properties must either be
- * provided by {@link JpaEmbedded} meta-data, or an xml snippet.
+ * @see SaneSQLServer2008Dialect
+ * @see HibernateDialectMappings#loadDialect(String)
  */
-public interface JpaEmbeddable extends EntityTypeMetaData, ExplicitPredicate {
+public class SaneSQLServer2012Dialect extends SQLServer2012Dialect {
 
-	EntityType<JpaEmbeddable> T = EntityTypes.T(JpaEmbeddable.class);
+	private static final int NVARCHAR_MAX_LENGTH = 4000;
+
+	public SaneSQLServer2012Dialect() {
+		fixVarcharProblem();
+	}
+
+	private void fixVarcharProblem() {
+		registerColumnType(Types.VARCHAR, NVARCHAR_MAX_LENGTH, "nvarchar($l)");
+		registerColumnType(Types.VARCHAR, "nvarchar(MAX)");
+	}
 
 }

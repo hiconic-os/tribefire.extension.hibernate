@@ -59,7 +59,7 @@ public class SessionRollbackExample_Main {
 		BasicScalarEntity bse = BasicScalarEntity.T.create();
 		bse.setName("BSE 1");
 
-		session.save(bse);
+		session.persist(bse);
 		spOut("ENTITY:" + bse);
 
 		String QUERY = "select e from com.braintribe.model.access.hibernate.base.model.simple.BasicScalarEntity e";

@@ -15,35 +15,14 @@
 // ============================================================================
 package com.braintribe.model.access.hibernate.time;
 
-import static com.braintribe.utils.lcd.CollectionTools2.asList;
-
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.hibernate.SessionFactory;
-import org.hibernate.dialect.Dialect;
-import org.hibernate.engine.spi.QueryParameters;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.engine.spi.TypedValue;
-import org.hibernate.hql.internal.ast.ASTQueryTranslatorFactory;
-import org.hibernate.hql.internal.ast.QueryTranslatorImpl;
-import org.hibernate.hql.spi.QueryTranslatorFactory;
-import org.hibernate.param.NamedParameterSpecification;
-import org.hibernate.param.ParameterSpecification;
-import org.hibernate.query.internal.QueryImpl;
-import org.hibernate.type.LiteralType;
-import org.hibernate.type.Type;
 
-import com.braintribe.exception.Exceptions;
 import com.braintribe.logging.Logger;
 import com.braintribe.logging.Logger.LogLevel;
 import com.braintribe.model.access.hibernate.HibernateAccess;
@@ -51,7 +30,6 @@ import com.braintribe.model.access.hibernate.HibernateApplyStatistics;
 import com.braintribe.model.access.hibernate.HibernateLogging;
 import com.braintribe.model.processing.query.stringifier.BasicQueryStringifier;
 import com.braintribe.utils.StringTools;
-import com.braintribe.utils.lcd.CollectionTools;
 
 /**
  * This class is used by the HibernateAccess to print timing information into the log. If a certain time threshold is
@@ -165,9 +143,9 @@ public class HibernateAccessTiming {
 			if (logging.logHQLStatements()) {
 				enrichHQLStatements(sb);
 			}
-			if (logging.logSQLStatements()) {
-				enrichSQLStatments(sb, logging.enrichSQLParameters());
-			}
+//			if (logging.logSQLStatements()) {
+//				enrichSQLStatments(sb, logging.enrichSQLParameters());
+//			}
 			if (logging.logStatistics()) {
 				enrichStatistics(sb);
 			}
@@ -191,7 +169,7 @@ public class HibernateAccessTiming {
 			enrichLogTimings(now, totalDuration, sb);
 			enrichGMStatements(sb);
 			enrichHQLStatements(sb);
-			enrichSQLStatments(sb, false);
+//			enrichSQLStatments(sb, false);
 			enrichStatistics(sb);
 			if (!manipulationEvents.isEmpty()) {
 				String events = manipulationEvents.stream() //
@@ -296,19 +274,19 @@ public class HibernateAccessTiming {
 		}
 	}
 
-	private void enrichSQLStatments(StringBuilder sb, boolean enrichSQLParameters) {
-		if (this.hqlQuery != null) {
-			try {
-				String sqlQuery = this.getSqlFromHqlQuery(enrichSQLParameters);
-				sb.append("SQL Query:           ");
-				sb.append(sqlQuery);
-				sb.append('\n');
-			} catch (Exception e) {
-				myLogger.debug("Could not convert HQL query to SQL.", e);
-			}
-		}
-	}
-
+//	private void enrichSQLStatments(StringBuilder sb, boolean enrichSQLParameters) {
+//		if (this.hqlQuery != null) {
+//			try {
+//				String sqlQuery = this.getSqlFromHqlQuery(enrichSQLParameters);
+//				sb.append("SQL Query:           ");
+//				sb.append(sqlQuery);
+//				sb.append('\n');
+//			} catch (Exception e) {
+//				myLogger.debug("Could not convert HQL query to SQL.", e);
+//			}
+//		}
+//	}
+//
 	private void enrichLogTimings(long now, long totalDuration, StringBuilder sb) {
 		sb.append("Processing (");
 		sb.append(this.type);
@@ -348,128 +326,128 @@ public class HibernateAccessTiming {
 		}
 	}
 
-	private static final HqlLogSilencer hqlLogSilencer = new HqlLogSilencer();
+//	private static final HqlLogSilencer hqlLogSilencer = new HqlLogSilencer();
+//
+//	private String getSqlFromHqlQuery(boolean enrichSQLParameters) {
+//		if (hqlQuery == null || hibernateSessionFactory == null)
+//			return "n/a";
+//
+//		hqlLogSilencer.mute();
+//		try {
+//			return tryGetSqlFromHqlQuery(enrichSQLParameters);
+//
+//		} finally {
+//			hqlLogSilencer.unmute();
+//		}
+//	}
 
-	private String getSqlFromHqlQuery(boolean enrichSQLParameters) {
-		if (hqlQuery == null || hibernateSessionFactory == null)
-			return "n/a";
+//	// Sometimes Hibernate tends to log errors internally, even 10 stack-traces for a single query.
+//	/* E.g.. org.hibernate.hql.internal.ast.ErrorTracker ' Unknown entity: com.braintribe.model.process.Process
+//	 * [cause=org.hibernate.MappingException: Unknown entity: com.braintribe.model.process.Process]' */
+//	private static class HqlLogSilencer {
+//		private final java.util.logging.Logger hibLog = java.util.logging.Logger.getLogger("org.hibernate.hql.internal");
+//		private final Level configuredLevel = hibLog.getLevel();
+//		private final ReentrantLock lock = new ReentrantLock();
+//
+//		private int count = 0;
+//
+//		public void mute() {
+//			lock.lock();
+//			try {
+//				if (count++ == 0)
+//					hibLog.setLevel(Level.OFF);
+//			} finally {
+//				lock.unlock();
+//			}
+//		}
+//
+//		public void unmute() {
+//			lock.lock();
+//			try {
+//				if (--count == 0)
+//					hibLog.setLevel(configuredLevel);
+//			} finally {
+//				lock.unlock();
+//			}
+//		}
+//	}
 
-		hqlLogSilencer.mute();
-		try {
-			return tryGetSqlFromHqlQuery(enrichSQLParameters);
-
-		} finally {
-			hqlLogSilencer.unmute();
-		}
-	}
-
-	// Sometimes Hibernate tends to log errors internally, even 10 stack-traces for a single query.
-	/* E.g.. org.hibernate.hql.internal.ast.ErrorTracker ' Unknown entity: com.braintribe.model.process.Process
-	 * [cause=org.hibernate.MappingException: Unknown entity: com.braintribe.model.process.Process]' */
-	private static class HqlLogSilencer {
-		private final java.util.logging.Logger hibLog = java.util.logging.Logger.getLogger("org.hibernate.hql.internal");
-		private final Level configuredLevel = hibLog.getLevel();
-		private ReentrantLock lock = new ReentrantLock();
-
-		private int count = 0;
-
-		public void mute() {
-			lock.lock();
-			try {
-				if (count++ == 0)
-					hibLog.setLevel(Level.OFF);
-			} finally {
-				lock.unlock();
-			}
-		}
-
-		public void unmute() {
-			lock.lock();
-			try {
-				if (--count == 0)
-					hibLog.setLevel(configuredLevel);
-			} finally {
-				lock.unlock();
-			}
-		}
-	}
-
-	private String tryGetSqlFromHqlQuery(boolean enrichSQLParameters) {
-		try {
-			final QueryTranslatorFactory ast = new ASTQueryTranslatorFactory();
-			final QueryTranslatorImpl newQueryTranslator = (QueryTranslatorImpl) ast.createQueryTranslator("", this.hqlQuery.getQueryString(),
-					Collections.EMPTY_MAP, (SessionFactoryImplementor) this.hibernateSessionFactory, null);
-			newQueryTranslator.compile(null, false);
-			String sql = newQueryTranslator.getSQLString();
-
-			Map<String, List<String>> parameters = new HashMap<>();
-			if (enrichSQLParameters) {
-				Dialect dialect = null;
-				if (hibernateSessionFactory instanceof SessionFactoryImplementor) {
-					SessionFactoryImplementor hibernateSessionFactoryImpl = (SessionFactoryImplementor) hibernateSessionFactory;
-					dialect = hibernateSessionFactoryImpl.getJdbcServices().getDialect();
-				}
-
-				TreeMap<ParameterKey, String> params = new TreeMap<>();
-				if (this.hqlQuery instanceof QueryImpl) {
-					QueryImpl<?> queryImpl = (QueryImpl<?>) hqlQuery;
-					QueryParameters queryParameters = queryImpl.getQueryParameters();
-					Map<String, TypedValue> namedParameters = queryParameters.getNamedParameters();
-
-					for (Map.Entry<String, TypedValue> namedParameter : namedParameters.entrySet()) {
-						TypedValue typedValue = namedParameter.getValue();
-						Type type = typedValue.getType();
-
-						String objectToSQLString = null;
-						if (type instanceof LiteralType) {
-							LiteralType<Object> literalType = (LiteralType<Object>) type;
-							try {
-								objectToSQLString = literalType.objectToSQLString(typedValue.getValue(), dialect);
-							} catch (Exception e) {
-								throw Exceptions.unchecked(e,
-										"Could not get SQL string from '" + typedValue.getValue() + "' using dialect: '" + dialect + "'");
-							}
-						}
-
-						ParameterKey parameterKey = new ParameterKey(namedParameter.getKey());
-						params.put(parameterKey, objectToSQLString);
-					}
-				}
-				params.forEach((k, v) -> {
-					if (k.parameterIndex == -1) {
-						parameters.put(k.parameterName, asList(v));
-					} else {
-						if (parameters.containsKey(k.parameterName)) {
-							parameters.get(k.parameterName).add(v);
-						} else {
-							parameters.put(k.parameterName, asList(v));
-						}
-					}
-				});
-			}
-
-			final List<ParameterSpecification> parameterSpecifications = newQueryTranslator.getCollectedParameterSpecifications();
-			if (!CollectionTools.isEmpty(parameterSpecifications)) {
-				for (ParameterSpecification parameter : parameterSpecifications) {
-					if (parameter instanceof NamedParameterSpecification) {
-						NamedParameterSpecification namedParameter = (NamedParameterSpecification) parameter;
-						if (enrichSQLParameters) {
-							String parameterName = namedParameter.getName();
-							String parameterValue = StringTools.createStringFromCollection(parameters.get(parameterName), ",");
-							sql = StringTools.replaceOnce(sql, "?", parameterValue);
-						} else {
-							sql = StringTools.replaceOnce(sql, "?", ":" + namedParameter.getName());
-						}
-
-					}
-				}
-			}
-			return sql;
-		} catch (Exception e) {
-			myLogger.debug("Could not get SQL query from HQL query " + this.hqlQuery.getQueryString(), e);
-			return "n/a - '" + e.getMessage() + "'";
-		}
-	}
+//	private String tryGetSqlFromHqlQuery(boolean enrichSQLParameters) {
+//		try {
+//			final QueryTranslatorFactory ast = new ASTQueryTranslatorFactory();
+//			final QueryTranslatorImpl newQueryTranslator = (QueryTranslatorImpl) ast.createQueryTranslator("", this.hqlQuery.getQueryString(),
+//					Collections.EMPTY_MAP, (SessionFactoryImplementor) this.hibernateSessionFactory, null);
+//			newQueryTranslator.compile(null, false);
+//			String sql = newQueryTranslator.getSQLString();
+//
+//			Map<String, List<String>> parameters = new HashMap<>();
+//			if (enrichSQLParameters) {
+//				Dialect dialect = null;
+//				if (hibernateSessionFactory instanceof SessionFactoryImplementor) {
+//					SessionFactoryImplementor hibernateSessionFactoryImpl = (SessionFactoryImplementor) hibernateSessionFactory;
+//					dialect = hibernateSessionFactoryImpl.getJdbcServices().getDialect();
+//				}
+//
+//				TreeMap<ParameterKey, String> params = new TreeMap<>();
+//				if (this.hqlQuery instanceof QueryImpl) {
+//					QueryImpl<?> queryImpl = (QueryImpl<?>) hqlQuery;
+//					QueryParameters queryParameters = queryImpl.getQueryParameters();
+//					Map<String, TypedValue> namedParameters = queryParameters.getNamedParameters();
+//
+//					for (Map.Entry<String, TypedValue> namedParameter : namedParameters.entrySet()) {
+//						TypedValue typedValue = namedParameter.getValue();
+//						Type type = typedValue.getType();
+//
+//						String objectToSQLString = null;
+//						if (type instanceof LiteralType) {
+//							LiteralType<Object> literalType = (LiteralType<Object>) type;
+//							try {
+//								objectToSQLString = literalType.objectToSQLString(typedValue.getValue(), dialect);
+//							} catch (Exception e) {
+//								throw Exceptions.unchecked(e,
+//										"Could not get SQL string from '" + typedValue.getValue() + "' using dialect: '" + dialect + "'");
+//							}
+//						}
+//
+//						ParameterKey parameterKey = new ParameterKey(namedParameter.getKey());
+//						params.put(parameterKey, objectToSQLString);
+//					}
+//				}
+//				params.forEach((k, v) -> {
+//					if (k.parameterIndex == -1) {
+//						parameters.put(k.parameterName, asList(v));
+//					} else {
+//						if (parameters.containsKey(k.parameterName)) {
+//							parameters.get(k.parameterName).add(v);
+//						} else {
+//							parameters.put(k.parameterName, asList(v));
+//						}
+//					}
+//				});
+//			}
+//
+//			final List<ParameterSpecification> parameterSpecifications = newQueryTranslator.getCollectedParameterSpecifications();
+//			if (!CollectionTools.isEmpty(parameterSpecifications)) {
+//				for (ParameterSpecification parameter : parameterSpecifications) {
+//					if (parameter instanceof NamedParameterSpecification) {
+//						NamedParameterSpecification namedParameter = (NamedParameterSpecification) parameter;
+//						if (enrichSQLParameters) {
+//							String parameterName = namedParameter.getName();
+//							String parameterValue = StringTools.createStringFromCollection(parameters.get(parameterName), ",");
+//							sql = StringTools.replaceOnce(sql, "?", parameterValue);
+//						} else {
+//							sql = StringTools.replaceOnce(sql, "?", ":" + namedParameter.getName());
+//						}
+//
+//					}
+//				}
+//			}
+//			return sql;
+//		} catch (Exception e) {
+//			myLogger.debug("Could not get SQL query from HQL query " + this.hqlQuery.getQueryString(), e);
+//			return "n/a - '" + e.getMessage() + "'";
+//		}
+//	}
 
 	public void addManipulationEvent(long startNanos, String context) {
 		if (manipulationEventsCounter < MAX_MANIPULATIONS_RECORDED) {

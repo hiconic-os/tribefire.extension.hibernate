@@ -21,14 +21,12 @@ import java.util.Optional;
 
 import com.braintribe.model.accessdeployment.hibernate.meta.EntityMapping;
 import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
-import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbeddable;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaPropertyMapping;
 import com.braintribe.model.meta.GmEntityType;
 import com.braintribe.model.meta.GmProperty;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
 import com.braintribe.model.processing.deployment.hibernate.mapping.hints.EntityHint;
 import com.braintribe.model.processing.deployment.hibernate.mapping.hints.PropertyHint;
-import com.braintribe.model.processing.meta.cmd.builders.EntityMdResolver;
 
 public class MappingHelper {
 
@@ -75,15 +73,16 @@ public class MappingHelper {
 		return false;
 	}
 
-	@SuppressWarnings("deprecation")
-	public static boolean isEmbeddable(GmEntityType gmEntityType, HbmXmlGenerationContext context) {
-		EntityMdResolver entityMdResolver = context.entityMd(gmEntityType);
-		if (entityMdResolver.is(JpaEmbeddable.T))
-			return true;
-
-		EntityMapping em = entityMdResolver.meta(EntityMapping.T).exclusive();
-		return em != null && em.getIsEmbeddable();
-	}
+	// REMOVED EMBEDDABLE
+	// @SuppressWarnings("deprecation")
+	// public static boolean isEmbeddable(GmEntityType gmEntityType, HbmXmlGenerationContext context) {
+	// EntityMdResolver entityMdResolver = context.entityMd(gmEntityType);
+	// if (entityMdResolver.is(JpaEmbeddable.T))
+	// return true;
+	//
+	// EntityMapping em = entityMdResolver.meta(EntityMapping.T).exclusive();
+	// return em != null && em.getIsEmbeddable();
+	// }
 
 	public static JpaPropertyMapping resolveJpaPropertyMapping(HbmXmlGenerationContext context, GmEntityType gmEntityType, GmProperty gmProperty) {
 		return context.getMappingMetaDataResolver().getPropertyMapping(gmEntityType, gmProperty);

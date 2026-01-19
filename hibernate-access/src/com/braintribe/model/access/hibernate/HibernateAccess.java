@@ -38,11 +38,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import javax.persistence.OptimisticLockException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-
 import org.hibernate.FlushMode;
 import org.hibernate.PessimisticLockException;
 import org.hibernate.Session;
@@ -114,6 +109,11 @@ import com.braintribe.model.usersession.UserSessionType;
 import com.braintribe.utils.lcd.CollectionTools2;
 import com.braintribe.utils.lcd.CommonTools;
 import com.braintribe.utils.lcd.NullSafe;
+
+import jakarta.persistence.OptimisticLockException;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 /**
  * Implements the {@link IncrementalAccess} interface to a Hibernate-managed database persistence layer.
@@ -210,7 +210,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 	 * <p>
 	 * As there is now dedicated deadlock exception, we consider any transaction that ends up with a {@link LockAcquisitionException},
 	 * {@link LockingStrategyException}, alongside {@link PessimisticLockException}, {@link OptimisticLockException} and
-	 * {@link javax.persistence.PessimisticLockException}.
+	 * {@link jakarta.persistence.PessimisticLockException}.
 	 */
 	// TODO this retry is not just for deadlock, but also for optimistic locking
 	public void setDeadlockRetryLimit(Integer deadlockRetryLimit) {
@@ -440,11 +440,11 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 				return result;
 
 			} catch (LockAcquisitionException | LockingStrategyException | PessimisticLockException | OptimisticLockException
-					| javax.persistence.PessimisticLockException e) {
+					| jakarta.persistence.PessimisticLockException e) {
 				/* This can either indicate a deadlock or dirty writes in case of OptimisticLockException. I've seen LockAcquisitionException and
 				 * OptimisticLockException (not JPA but hibernate one). Either way, to be safe we consider all these as something worth re-try. Worst
 				 * case we'll get the same error over and over again. */
-				throw new RetryWorthyException(e);
+				 throw new RetryWorthyException(e);
 
 			} catch (NotFoundException e) {
 				/* "Expected" exceptions are not logged, they do not indicate a problem in HA. Client should handle it himself. */
@@ -826,7 +826,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 
 				// I'm a simple man. I see 'Lock' in the name of the exception and I add it to this list.
 			} catch (LockAcquisitionException | LockingStrategyException | PessimisticLockException | OptimisticLockException
-					| javax.persistence.PessimisticLockException e) {
+					| jakarta.persistence.PessimisticLockException e) {
 
 				rollbackTransaction(actionType, transaction, e);
 				throw new RetryWorthyException(e);

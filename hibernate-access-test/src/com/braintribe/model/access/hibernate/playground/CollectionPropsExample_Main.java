@@ -119,7 +119,7 @@ public class CollectionPropsExample_Main {
 		scalars.getEnumValueMap().put(TEXT, ScalarEnum.earth);
 		scalars.getDecimalValueMap().put(TEXT, BigDecimal.ONE);
 
-		session.save(scalars);
+		session.persist(scalars);
 
 		t.commit();
 		session.close();

@@ -13,11 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ============================================================================
-package com.braintribe.gm.hibernate.access.wire;
+package com.braintribe.model.accessdeployment.jpa.meta;
 
-import com.braintribe.wire.api.module.WireModule;
+import com.braintribe.model.generic.reflection.EntityType;
+import com.braintribe.model.generic.reflection.EntityTypes;
+import com.braintribe.model.meta.data.EntityTypeMetaData;
+import com.braintribe.model.meta.data.ExplicitPredicate;
 
-public enum DerbyHibernateAccessWireModule implements WireModule {
-	INSTANCE;
+/**
+ * Specifies that a given entity type is embeddable, i.e. this type cannot be mapped to a table and all the properties
+ * of that type are embedded within the owner entity's table. The mapping for these embedded properties must either be
+ * provided by {@link JpaEmbeddedX} meta-data, or an xml snippet.
+ */
+public interface JpaEmbeddableX extends EntityTypeMetaData, ExplicitPredicate {
+
+	EntityType<JpaEmbeddableX> T = EntityTypes.T(JpaEmbeddableX.class);
 
 }

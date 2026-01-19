@@ -15,7 +15,7 @@
 // ============================================================================
 package com.braintribe.model.accessdeployment.hibernate.meta;
 
-import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbeddable;
+//import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbeddable;
 import com.braintribe.model.generic.annotation.Initializer;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EntityTypes;

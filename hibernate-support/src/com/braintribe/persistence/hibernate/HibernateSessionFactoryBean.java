@@ -325,7 +325,7 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 		}
 
 		@Override
-		public void configure(Map properties) throws HibernateException {
+		public void configure(Map<String, Object> properties) throws HibernateException {
 			String id = (String) properties.get("factoryBeanId");
 			HibernateSessionFactoryBean sessionFactoryBean = getSessionFactoryBean(id);
 			dataSource = sessionFactoryBean.getDataSource();
@@ -342,7 +342,7 @@ public class HibernateSessionFactoryBean extends LocalSessionFactoryBean
 		}
 
 		@Override
-		public boolean isUnwrappableAs(Class unwrapType) {
+		public boolean isUnwrappableAs(Class<?> unwrapType) {
 			return false;
 		}
 

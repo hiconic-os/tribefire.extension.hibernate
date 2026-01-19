@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
-import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbedded;
+import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbeddedX;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaPropertyMapping;
 import com.braintribe.model.meta.GmEntityType;
 import com.braintribe.model.meta.GmProperty;
@@ -35,16 +35,16 @@ import com.braintribe.model.processing.meta.oracle.EntityTypeOracle;
  * 
  * @author peter.gazdik
  */
-public class ComponentDescriptor extends PropertyDescriptor {
+public class ComponentDescriptorX extends PropertyDescriptor {
 
-	private final JpaEmbedded jpaEmbedded;
+	private final JpaEmbeddedX jpaEmbedded;
 	private final List<PropertyDescriptor> embeddedProperties;
 
-	public ComponentDescriptor(HbmXmlGenerationContext context, EntityDescriptor descriptor, GmProperty gmProperty,
+	public ComponentDescriptorX(HbmXmlGenerationContext context, EntityDescriptor descriptor, GmProperty gmProperty,
 			PropertyDescriptorMetaData metaData) {
 		super(context, descriptor, gmProperty, metaData);
 
-		this.jpaEmbedded = (JpaEmbedded) metaData.jpaPropertyMapping;
+		this.jpaEmbedded = (JpaEmbeddedX) metaData.jpaPropertyMapping;
 		this.embeddedProperties = createEmbeddedProperties();
 	}
 

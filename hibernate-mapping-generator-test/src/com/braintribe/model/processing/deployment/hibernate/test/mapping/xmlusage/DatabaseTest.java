@@ -15,9 +15,9 @@
 // ============================================================================
 package com.braintribe.model.processing.deployment.hibernate.test.mapping.xmlusage;
 
-import org.hibernate.dialect.DerbyTenFiveDialect;
+import org.hibernate.dialect.DerbyDialect;
 import org.hibernate.dialect.Dialect;
-import org.hibernate.dialect.Oracle10gDialect;
+import org.hibernate.dialect.OracleDialect;
 
 import com.braintribe.processing.test.db.derby.DerbyServerControl;
 
@@ -34,13 +34,13 @@ public abstract class DatabaseTest {
 	protected static String user = "braintribe";
 	protected static String password = "1234";
 	protected static String url = "jdbc:oracle:thin:@localhost:1521:xe";
-	protected static Class<? extends Dialect> dialect = Oracle10gDialect.class;
+	protected static Class<? extends Dialect> dialect = OracleDialect.class;
 
 	private static final String derbyDriver = "org.apache.derby.jdbc.ClientDriver";
 	private static final String derbyUser = "cortex";
 	private static final String derbyPassword = "cortex";
 	private static final String derbyUrl = "jdbc:derby://localhost:1527/tmp/db/hibernateAccessTest;create=true";
-	private static final Class<? extends Dialect> derbyDialect = DerbyTenFiveDialect.class;
+	private static final Class<? extends Dialect> derbyDialect = DerbyDialect.class;
 	
 
 	private static DerbyServerControl derbyServerControl = null;

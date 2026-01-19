@@ -49,8 +49,8 @@ import com.braintribe.model.accessdeployment.hibernate.meta.EntityMapping;
 import com.braintribe.model.accessdeployment.hibernate.meta.PropertyMapping;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaColumn;
 import com.braintribe.model.accessdeployment.jpa.meta.JpaCompositeId;
-import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbeddable;
-import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbedded;
+//import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbeddable;
+//import com.braintribe.model.accessdeployment.jpa.meta.JpaEmbedded;
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.StandardIdentifiable;
 import com.braintribe.model.generic.StandardStringIdentifiable;
@@ -785,28 +785,29 @@ public class MappingGenerationFromLocalModelsTest {
 		return result;
 	}
 
-	@Test
-	public void testEmbedded() throws Exception {
-		String tag = "testEmbedded";
-
-		List<EntityType<?>> types = asList(ComplexEntity.T);
-
-		GmMetaModel metaModel = provideModel(tag, types);
-
-		JpaEmbedded embedded = JpaEmbedded.T.create();
-		embedded.setEmbeddedPropertyMappings(asMap(//
-				SimpleEntity.longProperty, columnMapping(SimpleEntity.longProperty, "long"), //
-				SimpleEntity.stringProperty, columnMapping(SimpleEntity.stringProperty, "string") //
-		));
-
-		BasicModelMetaDataEditor editor = new BasicModelMetaDataEditor(metaModel);
-		editor.onEntityType(SimpleEntity.T).addMetaData(JpaEmbeddable.T.create());
-		editor.onEntityType(ComplexEntity.T).addPropertyMetaData(ComplexEntity.entityProperty, embedded);
-
-		renderMappings(metaModel);
-
-		assertMapping(tag, ComplexEntity.T);
-	}
+	// REMOVED EMBEDDABLE
+	// @Test
+	// public void testEmbedded() throws Exception {
+	// String tag = "testEmbedded";
+	//
+	// List<EntityType<?>> types = asList(ComplexEntity.T);
+	//
+	// GmMetaModel metaModel = provideModel(tag, types);
+	//
+	// JpaEmbedded embedded = JpaEmbedded.T.create();
+	// embedded.setEmbeddedPropertyMappings(asMap(//
+	// SimpleEntity.longProperty, columnMapping(SimpleEntity.longProperty, "long"), //
+	// SimpleEntity.stringProperty, columnMapping(SimpleEntity.stringProperty, "string") //
+	// ));
+	//
+	// BasicModelMetaDataEditor editor = new BasicModelMetaDataEditor(metaModel);
+	// editor.onEntityType(SimpleEntity.T).addMetaData(JpaEmbeddable.T.create());
+	// editor.onEntityType(ComplexEntity.T).addPropertyMetaData(ComplexEntity.entityProperty, embedded);
+	//
+	// renderMappings(metaModel);
+	//
+	// assertMapping(tag, ComplexEntity.T);
+	// }
 
 	private PropertyMapping columnMapping(String columnName, String type) {
 		PropertyMapping result = PropertyMapping.T.create();

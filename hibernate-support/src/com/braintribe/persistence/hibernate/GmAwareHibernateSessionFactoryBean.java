@@ -31,11 +31,12 @@ public class GmAwareHibernateSessionFactoryBean extends HibernateSessionFactoryB
 		this.setEntityInterceptor(new GmAdaptionInterceptor());
 	}
 	
-	
-	@Override
-	protected void enrich(BootstrapServiceRegistryBuilder builder) {
-		builder.applyIntegrator(new GmTuplizerIntegrator());
-	}
+
+	// REMOVED INTEGRATOR
+//	@Override
+//	protected void enrich(BootstrapServiceRegistryBuilder builder) {
+//		builder.applyIntegrator(new GmTuplizerIntegrator());
+//	}
 
 	private static ClassLoader itwOrModuleClassLoader() {
 		if (isLoadedByModule())

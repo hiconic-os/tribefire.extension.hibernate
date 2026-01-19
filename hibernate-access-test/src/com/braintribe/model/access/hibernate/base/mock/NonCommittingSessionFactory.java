@@ -19,13 +19,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import javax.transaction.Synchronization;
-
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
+
+import jakarta.transaction.Synchronization;
 
 /**
  * A delegating {@link SessionFactory} implementation which doesn't propagate a commit on a session to prevent data from actually being written to the
