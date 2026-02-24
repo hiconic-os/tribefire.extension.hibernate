@@ -78,6 +78,16 @@ public class Scalars_HbmTest extends HibernateBaseModelTestBase {
 		findsBseByProperty("color", BasicColor.green);
 	}
 
+	@Test
+	public void findsByNullProperty() throws Exception {
+		BasicScalarEntity bse = session.create(BasicScalarEntity.T);
+		bse.setName("BSE 1");
+		session.commit();
+		resetGmSession();
+
+		findsBseByProperty("stringValue", null);
+	}
+
 	private void findsBseByProperty(String propertyName, Object propertyValue) {
 		BasicScalarEntity bse = session.query().select(queryBseByProperty(propertyName, propertyValue)).first();
 		assertThat(bse).isNotNull();
