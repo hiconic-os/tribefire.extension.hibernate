@@ -104,6 +104,7 @@ public class OptimisticLockingExample_Main {
 	private void queryUpdateCommit() {
 		try {
 			doHibernateTransaction(session -> {
+				@SuppressWarnings("deprecation")
 				Query<VersionedEntity> query = session.createQuery("select e from VersionedEntity e where id = ?1");
 				query.setParameter(1, id);
 				// query.setParameter(1, 1L);

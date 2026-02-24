@@ -49,6 +49,7 @@ public class SessionRollbackExample_Main {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private void run() throws Exception {
 		SessionFactory sessionFactory = HibernateAccessSetupHelper.hibernateSessionFactory(modelSupplier,
 				HibernateAccessSetupHelper.dataSource_H2(dbName));

@@ -196,6 +196,8 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 	}
 
 	private void renderCollectionProperty(CollectionPropertyDescriptor pd) {
+		boolean enumsAreStrings = context.versionImpliesStringsForCollectionEnums();
+		
 		openTag(pd.tag);
 		attr("name", pd.name);
 		if (!pd.isOneToMany)
@@ -222,11 +224,11 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 
 			} else if (pd.getIsMap()) {
 				if (pd.hasScalarMapKey) {
-					boolean isEnumKeyAsString = pd.hasEnumMapKey && context.versionImpliesStringsForCollectionEnums();
-					
 					openTag("map-key");
-					if (!isEnumKeyAsString)
+					if (!pd.hasEnumMapKey)
 						attr("type", pd.mapKeySimpleType);
+					else if (!enumsAreStrings)
+						attr("type", "serializable");
 					endOpenTag();
 
 					levelUp();
@@ -237,8 +239,8 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 						optAttr("length", pd.mapKeyLength);
 						closeTag();
 
-						if (isEnumKeyAsString)
-							renderTypeForEnum(pd.mapKeySignature);
+						if (pd.hasEnumMapKey && enumsAreStrings)
+							renderTypeForEnumAsString(pd.mapKeySignature);
 					}
 					levelDown();
 
@@ -264,13 +266,13 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 			}
 
 			if (pd.hasScalarElement) {
-				boolean isEnumElementAsString = pd.hasEnumElement && context.versionImpliesStringsForCollectionEnums();
-
 				openTag("element");
 				attr("column", pd.getQuotedElementColumn());
-				if (!isEnumElementAsString)
+				if (!pd.hasEnumElement)
 					attr("type", pd.elementSimpleType);
-
+				else if (!enumsAreStrings)
+					attr("type", "serializable");
+				
 				optAttr("length", pd.length);
 				optAttr("precision", pd.precision);
 				optAttr("scale", pd.scale);
@@ -278,11 +280,11 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 				optAttr("unique", pd.isUnique);
 				optAttr("not-null", pd.isNotNull);
 
-				if (!isEnumElementAsString) {
+				if (!pd.hasEnumElement || !enumsAreStrings) {
 					closeTag();
 				} else {
 					endOpenTag();
-					renderTypeForEnum(pd.elementSignature); // Test should fail
+					renderTypeForEnumAsString(pd.elementSignature);
 					closeTag("element");
 				}
 
@@ -319,14 +321,14 @@ public class HbmXmlFastRenderer extends AbstractStringifier {
 
 		levelUp();
 		{
-			renderTypeForEnum(pd.enumClass);
+			renderTypeForEnumAsString(pd.enumClass);
 		}
 		levelDown();
 
 		closeTag("property");
 	}
 
-	private void renderTypeForEnum(String enumTypeSignature) {
+	private void renderTypeForEnumAsString(String enumTypeSignature) {
 		openTag("type");
 		attr("name", "org.hibernate.type.EnumType");
 		endOpenTag();

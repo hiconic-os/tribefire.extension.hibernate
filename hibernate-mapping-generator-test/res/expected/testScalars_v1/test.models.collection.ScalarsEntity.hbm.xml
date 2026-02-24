@@ -55,14 +55,14 @@
 		<property name="doubleV" column="doubleV" type="double" />
 		<map name="enumKeyMap" table="ScalarsEntityEnumKeyMap">
 			<key column="ScalarsEntityId" />
-			<map-key type="test.models.collection.ScalarEnum">
+			<map-key type="serializable">
 				<column name="EnumKeyMapKey" />
 			</map-key>
 			<element column="EnumKeyMap" type="string" />
 		</map>
 		<set name="enumSet" table="ScalarsEntityEnumSet">
 			<key column="ScalarsEntityId" />
-			<element column="EnumSet" type="test.models.collection.ScalarEnum" />
+			<element column="EnumSet" type="serializable" />
 		</set>
 		<property name="enumV" column="enumV">
 			<type name="org.hibernate.type.EnumType">
@@ -75,7 +75,7 @@
 			<map-key type="string">
 				<column name="EnumValueMapKey" />
 			</map-key>
-			<element column="EnumValueMap" type="test.models.collection.ScalarEnum" />
+			<element column="EnumValueMap" type="serializable" />
 		</map>
 		<set name="floatSet" table="ScalarsEntityFloatSet">
 			<key column="ScalarsEntityId" />

@@ -64,16 +64,12 @@ public class HibernateAccessTestTools {
 		}
 
 		for (final File mappingsFolder : NullSafe.iterable(initializationContext.getHibernateMappingsFolders())) {
-			if (debug) {
-				logger.debug("Adding mappings folder " + mappingsFolder + " ...");
-			}
+			logger.debug(() -> "Adding mappings folder " + mappingsFolder + " ...");
 			configuration.addDirectory(mappingsFolder);
 		}
 
 		for (final URL mappingsResourceUrl : NullSafe.iterable(initializationContext.getHibernateMappingsResources())) {
-			if (debug) {
-				logger.debug("Adding mappings resource " + mappingsResourceUrl + " ...");
-			}
+			logger.debug(() -> "Adding mappings resource " + mappingsResourceUrl + " ...");
 			configuration.addURL(mappingsResourceUrl);
 		}
 
@@ -119,9 +115,6 @@ public class HibernateAccessTestTools {
 
 		hibernateAccess.setExpertRegistry(newRegistry);
 
-		if (debug) {
-			logger.debug("Successfully initialized HibernateAccess.");
-		}
 		return hibernateAccess;
 	}
 }
