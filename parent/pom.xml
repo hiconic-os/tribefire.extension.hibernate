@@ -16,11 +16,11 @@ limitations under the License.
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>tribefire.extension.hibernate</groupId>
 	<artifactId>parent</artifactId>
-	<version>2.0.17</version>
+	<version>3.0.1</version>
 	<packaging>pom</packaging>
 	<properties>
 		<java.version>21</java.version>
-		<V.tribefire.extension.hibernate>[2.0,2.1)</V.tribefire.extension.hibernate>
+		<V.tribefire.extension.hibernate>[3.0,3.1)</V.tribefire.extension.hibernate>
 
 		<!-- non-gm -->
 		<V.com.braintribe.codec>[2.0,2.1)</V.com.braintribe.codec>
