@@ -21,7 +21,6 @@ import static com.braintribe.utils.lcd.CollectionTools2.newList;
 import static com.braintribe.utils.lcd.CollectionTools2.newSet;
 import static com.braintribe.utils.lcd.ReflectionTools.ensureValidJavaBeansName;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -465,11 +464,31 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 	}
 
 	private void encodeComparison(Object leftOperand, Operator operator, Object rightOperand) {
+		if (operator == Operator.equal || operator == Operator.notEqual)
+			if (leftOperand == null || rightOperand == null) {
+				encodeComparisonWithNull(leftOperand, operator, rightOperand);
+				return;
+			}
+
 		encodeComparisonOperand(leftOperand, rightOperand);
 		builder.append(' ');
 		encodeOperator(builder, operator);
 		builder.append(' ');
 		encodeComparisonOperand(rightOperand, leftOperand);
+	}
+
+	private void encodeComparisonWithNull(Object leftOperand, Operator operator, Object rightOperand) {
+		if (leftOperand == null && rightOperand == null) {
+			builder.append(operator == Operator.equal ? "1=1" : "1=0");
+			return;
+		}
+
+		if (rightOperand == null)
+			encodeComparisonOperand(leftOperand, null);
+		else
+			encodeComparisonOperand(rightOperand, null);
+
+		builder.append(operator == Operator.equal ? " is null" : " is not null");
 	}
 
 	/**
@@ -692,7 +711,7 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 	}
 
 	private GenericEntity getEntity(String typeSignature, Object id) {
-		return session.get(typeReflection.getEntityType(typeSignature).getJavaType(), (Serializable) id);
+		return session.get(typeReflection.getEntityType(typeSignature).getJavaType(), id);
 	}
 
 	@SuppressWarnings("deprecation")
