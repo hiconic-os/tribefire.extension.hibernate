@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 import com.braintribe.model.access.hibernate.base.HibernateAccessRecyclingTestBase;
 import com.braintribe.model.access.hibernate.base.model.acl.AclHaTestEntity;
+import com.braintribe.model.access.hibernate.base.model.collection.EnumCollectionEntity;
 import com.braintribe.model.access.hibernate.base.model.collection.ScalarsEntity;
 import com.braintribe.model.access.hibernate.base.model.index.IndexedEntity;
 import com.braintribe.model.access.hibernate.base.model.index.ReferencedEntity;
@@ -117,6 +118,10 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 	private static final List<EntityType<?>> scalarCollectionTypes = asList( //
 			ScalarsEntity.T //
+	);
+
+	private static final List<EntityType<?>> enumCollectionTypes = asList( //
+			EnumCollectionEntity.T //
 	);
 
 	private static final List<EntityType<?>> versionedTypes = asList( //
@@ -248,6 +253,12 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	}
 
 	@Override
+	@Managed
+	public GmMetaModel enumCollections() {
+		return unmapGlobalIdAndPartition(enumCollectionRaw());
+	}
+
+	@Override
 	public GmMetaModel versioned() {
 		GmMetaModel result = verisionedRaw();
 
@@ -298,6 +309,7 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	private GmMetaModel graphRaw() { return rawModel("graph", graphTypes); }
 	private GmMetaModel indexedRaw() { return rawModel("indexed", indexedTypes); }
 	private GmMetaModel scalarCollectionRaw() { return rawModel("scalar-collection", scalarCollectionTypes); }
+	private GmMetaModel enumCollectionRaw() { return rawModel("enumr-collection", enumCollectionTypes); }
 	private GmMetaModel verisionedRaw() { return rawModel("versioned", versionedTypes); }
 	private GmMetaModel aclRaw() { return rawModel("acl", aclTypes); }
 	// @formatter:on
