@@ -17,11 +17,11 @@
 		<list name="enumList" table="SimpleCollEntityEnumList">
 			<key column="SimpleCollectionsEntityId" />
 			<list-index column="SimpleCollEntityEnumListIdx" />
-			<element column="EnumList" type="test.models.basic.SimpleEnum" />
+			<element column="EnumList" type="serializable" />
 		</list>
 		<set name="enumSet" table="SimpleCollectionsEntityEnumSet">
 			<key column="SimpleCollectionsEntityId" />
-			<element column="EnumSet" type="test.models.basic.SimpleEnum" />
+			<element column="EnumSet" type="serializable" />
 		</set>
 		<property name="globalId" column="globalId" type="string" />
 		<list name="integerList" table="SimpleCollEntityIntegerList">

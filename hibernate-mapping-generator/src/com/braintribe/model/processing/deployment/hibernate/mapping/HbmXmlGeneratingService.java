@@ -46,7 +46,7 @@ public class HbmXmlGeneratingService {
 	 * Original versions with some issues:
 	 * <ul>
 	 * <li>Collections of Enums have values stored as binary, not strings
-	 * <li>Collections of Dates have values stored as date only, rather timestamp (i.e. time is missing)
+	 * <li>Collections of Dates have values stored as date only, rather than timestamp (i.e. time is missing)
 	 * </ul>
 	 */
 	public static final int MAPPING_VERSION_1 = 1;

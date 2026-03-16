@@ -59,4 +59,5 @@ public interface HibernateModelsContract extends WireSpace {
 	/** Model for testing optimistic locking, see {@link VersionedEntity} */
 	GmMetaModel versioned();
 
+	GmMetaModel enumCollections();
 }

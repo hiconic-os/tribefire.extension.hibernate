@@ -186,7 +186,7 @@ public class LocalSessionFactoryBean {
 		Configuration cfg = new Configuration(serviceRegistry);
 
 		if (dataSource != null)
-			cfg.getProperties().put(Environment.DATASOURCE, dataSource);
+			cfg.getProperties().put(Environment.JAKARTA_JTA_DATASOURCE, dataSource);
 
 		if (configLocations != null)
 			// Load Hibernate configuration from given location.
@@ -245,8 +245,10 @@ public class LocalSessionFactoryBean {
 		configuration = cfg;
 		sessionFactory = cfg.buildSessionFactory();
 	}
-	
+
+	@SuppressWarnings("unused")
 	protected void enrich(BootstrapServiceRegistryBuilder builder) {
+		// empty
 	}
 
 	private BootstrapServiceRegistry bootstrapServiceRegistry() {

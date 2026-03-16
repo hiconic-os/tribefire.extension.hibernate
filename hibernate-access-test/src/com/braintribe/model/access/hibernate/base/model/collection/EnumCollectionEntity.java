@@ -13,25 +13,33 @@
 // ============================================================================
 package com.braintribe.model.access.hibernate.base.model.collection;
 
-import com.braintribe.model.generic.base.EnumBase;
-import com.braintribe.model.generic.reflection.EnumType;
-import com.braintribe.model.generic.reflection.EnumTypes;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.braintribe.model.generic.GenericEntity;
+import com.braintribe.model.generic.reflection.EntityType;
+import com.braintribe.model.generic.reflection.EntityTypes;
 
 /**
  * @author peter.gazdik
  */
-public enum ScalarEnum implements EnumBase<ScalarEnum> {
+public interface EnumCollectionEntity extends GenericEntity {
 
-	earth,
-	wind,
-	fire,
-	water;
+	EntityType<EnumCollectionEntity> T = EntityTypes.T(EnumCollectionEntity.class);
 
-	public static final EnumType<ScalarEnum> T = EnumTypes.T(ScalarEnum.class);
+	String getName();
+	void setName(String name);
 
-	@Override
-	public EnumType<ScalarEnum> type() {
-		return T;
-	}
+	Set<ScalarEnum> getEnumSet();
+	void setEnumSet(Set<ScalarEnum> enumSet);
 
+	List<ScalarEnum> getEnumList();
+	void setEnumList(List<ScalarEnum> enumList);
+	
+	Map<ScalarEnum, String> getEnumKeyMap();
+	void setEnumKeyMap(Map<ScalarEnum, String> enumKeyMap);
+
+	Map<String, ScalarEnum> getEnumValueMap();
+	void setEnumValueMap(Map<String, ScalarEnum> enumValueMap);
 }

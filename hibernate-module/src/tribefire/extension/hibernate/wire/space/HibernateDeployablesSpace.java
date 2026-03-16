@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
 import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.Dialect;
 
 import com.braintribe.cartridge.common.processing.DialectAutoSense;
@@ -218,6 +219,9 @@ public class HibernateDeployablesSpace implements WireSpace {
 		bean.setDefaultCatalog(deployable.getDefaultCatalog());
 		bean.setDefaultBatchFetchSize(30);
 
+		if (isMappingVersion1())
+			bean.getProperties().setProperty(Environment.ID_DB_STRUCTURE_NAMING_STRATEGY, "single");
+
 		// Setting the additional properties last as these must be prioritized over inferred default values.
 		bean.setAdditionalProperties(deployable.getProperties());
 
@@ -225,6 +229,11 @@ public class HibernateDeployablesSpace implements WireSpace {
 				() -> "Creating HibernateSessionFactoryBean " + deployable.getConnector() + " for " + deployable.getExternalId() + ": " + stopWatch);
 
 		return bean;
+	}
+
+	private boolean isMappingVersion1() {
+		Integer v = hibernateProperties.TRIBEFIRE_HBM_MAPPING_VERSION();
+		return v != null && v == HbmXmlGeneratingService.MAPPING_VERSION_1;
 	}
 
 	private void handleDbSchemaAutoUpdate(ExpertContext<HibernateAccess> context, HibernateSessionFactoryBean bean, StopWatch stopWatch) {

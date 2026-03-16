@@ -502,7 +502,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 				log.debug(info);
 				long start = System.nanoTime();
 
-				session.delete(entity);
+				session.remove(entity);
 
 				timing.addManipulationEvent(start, info);
 				statistics.increaseDeletions();
@@ -553,7 +553,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 				Object setId = newEntity.getId();
 				long start = System.nanoTime();
 
-				session.save(typeSignature, newEntity);
+				session.persist(typeSignature, newEntity);
 
 				timing.addManipulationEvent(start, info);
 

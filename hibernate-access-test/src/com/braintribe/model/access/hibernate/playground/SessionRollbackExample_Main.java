@@ -1,6 +1,4 @@
 // ============================================================================
-// Copyright BRAINTRIBE TECHNOLOGY GMBH, Austria, 2002-2022
-//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -49,6 +47,7 @@ public class SessionRollbackExample_Main {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private void run() throws Exception {
 		SessionFactory sessionFactory = HibernateAccessSetupHelper.hibernateSessionFactory(modelSupplier,
 				HibernateAccessSetupHelper.dataSource_H2(dbName));

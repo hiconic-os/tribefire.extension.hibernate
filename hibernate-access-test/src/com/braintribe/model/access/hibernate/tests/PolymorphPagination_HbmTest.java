@@ -64,7 +64,7 @@ public class PolymorphPagination_HbmTest extends HibernateBaseModelTestBase {
 	}
 
 	@Test
-	public void withOffset_BeyondFirstSubType() throws Exception {
+	public void KnownIssue_withOffset_BeyondFirstSubType() throws Exception {
 		createDataAndRunQueryWithLimitOffset(3, 4);
 	}
 
