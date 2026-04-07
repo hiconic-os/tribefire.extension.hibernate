@@ -26,7 +26,7 @@ import com.braintribe.model.generic.reflection.EnumTypes;
  * This list was created based on classes listed on
  * <a href="http://docs.jboss.org/hibernate/orm/5.2/javadocs/org/hibernate/dialect/package-tree.html">this hibernate documentation</a>.
  */
-public enum HibernateDialect implements EnumBase {
+public enum HibernateDialect implements EnumBase<HibernateDialect> {
 
 	Cache71Dialect,
 	CUBRIDDialect,

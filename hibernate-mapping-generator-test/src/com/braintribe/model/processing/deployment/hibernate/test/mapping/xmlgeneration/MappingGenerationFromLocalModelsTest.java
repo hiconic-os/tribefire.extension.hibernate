@@ -15,13 +15,12 @@
 // ============================================================================
 package com.braintribe.model.processing.deployment.hibernate.test.mapping.xmlgeneration;
 
-import static com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService.MAPPING_VERSION_1;
-import static com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService.MAPPING_VERSION_2;
-import static com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService.MAPPING_VERSION_3;
+import static com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion.MAPPING_VERSION_1;
+import static com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion.MAPPING_VERSION_2;
+import static com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion.MAPPING_VERSION_3;
 import static com.braintribe.model.processing.deployment.hibernate.mapping.utils.ResourceUtils.loadResourceToString;
 import static com.braintribe.model.processing.deployment.hibernate.mapping.utils.ResourceUtils.loadResourceToStrings;
 import static com.braintribe.utils.SysPrint.spOut;
-import static com.braintribe.utils.lcd.CollectionTools2.asMap;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 

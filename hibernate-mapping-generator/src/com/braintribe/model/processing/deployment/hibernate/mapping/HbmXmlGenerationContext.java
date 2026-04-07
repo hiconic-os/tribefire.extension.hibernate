@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import com.braintribe.model.access.hibernate.meta.aspects.HibernateDialectAspect;
 import com.braintribe.model.accessdeployment.hibernate.HibernateDialect;
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.meta.GmEntityType;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.meta.GmProperty;
@@ -39,9 +40,6 @@ import com.braintribe.model.processing.meta.cmd.builders.PropertyMdResolver;
 import com.braintribe.model.processing.meta.oracle.BasicModelOracle;
 import com.braintribe.model.processing.meta.oracle.ModelOracle;
 
-/**
- * 
- */
 public class HbmXmlGenerationContext {
 
 	private GmMetaModel gmMetaModel;
@@ -53,7 +51,7 @@ public class HbmXmlGenerationContext {
 	private EntityHintProvider entityHintProvider;
 
 	/** @see HbmXmlGeneratingService#mappingVersion(Integer) */
-	public int mappingVersion;
+	public int mappingVersion = -1;
 	public File outputFolder;
 	public Consumer<SourceDescriptor> entityMappingConsumer;
 
@@ -121,6 +119,33 @@ public class HbmXmlGenerationContext {
 		return getMetaData().entityType(gmEntityType);
 	}
 
+	public boolean versionImpliesTimestamptForCollectionDates() {
+		return mappingVersion() >= 2;
+	}
+
+	public boolean versionImpliesStringsForCollectionEnums() {
+		return mappingVersion() >= 2;
+	}
+
+	public boolean versionSupportsIndices() {
+		return mappingVersion() >= 3;
+	}
+
+	private int mappingVersion() {
+		if (mappingVersion == -1)
+			mappingVersion = resolveMappingVersionViaMd();
+
+		return mappingVersion;
+	}
+
+	private int resolveMappingVersionViaMd() {
+		MappingVersion mv = getCmdResolver().getMetaData().meta(MappingVersion.T).exclusive();
+		if (mv != null)
+			return mv.getVersion();
+		else
+			return 1; // for as long as we have cortex in place, let's just keep the default at 1
+	}
+
 	public ModelMdResolver getMetaData() {
 		ModelMdResolver result = getCmdResolver().getMetaData().useCase(JPA_USE_CASE);
 		if (dialect != null)
@@ -145,18 +170,6 @@ public class HbmXmlGenerationContext {
 			entityHintProvider = new EntityHintProvider(typeHints, typeHintsFile);
 
 		return entityHintProvider;
-	}
-
-	public boolean versionImpliesTimestamptForCollectionDates() {
-		return mappingVersion >= 2;
-	}
-
-	public boolean versionImpliesStringsForCollectionEnums() {
-		return mappingVersion >= 2;
-	}
-
-	public boolean versionSupportsIndices() {
-		return mappingVersion >= 3;
 	}
 
 }

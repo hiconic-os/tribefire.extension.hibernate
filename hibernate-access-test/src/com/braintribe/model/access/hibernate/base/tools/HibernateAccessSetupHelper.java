@@ -28,12 +28,12 @@ import org.hibernate.SessionFactory;
 
 import com.braintribe.common.db.DbTestDataSources;
 import com.braintribe.model.access.hibernate.HibernateAccess;
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.generic.processing.IdGenerator;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.processing.core.expert.api.GmExpertRegistry;
 import com.braintribe.model.processing.core.expert.impl.ConfigurableGmExpertRegistry;
 import com.braintribe.model.processing.deployment.hibernate.HibernateMappingsDirectorySupplier;
-import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
 import com.braintribe.model.processing.idgenerator.basic.DateIdGenerator;
 import com.braintribe.model.processing.idgenerator.basic.UuidGenerator;
 
@@ -42,7 +42,7 @@ import com.braintribe.model.processing.idgenerator.basic.UuidGenerator;
  */
 public class HibernateAccessSetupHelper {
 
-	private static final int DEFAULT_MAPPING_VERSION = HbmXmlGeneratingService.MAPPING_VERSION_2;
+	private static final int DEFAULT_MAPPING_VERSION = MappingVersion.MAPPING_VERSION_2;
 
 	private static final List<AutoCloseable> closeables = newList();
 

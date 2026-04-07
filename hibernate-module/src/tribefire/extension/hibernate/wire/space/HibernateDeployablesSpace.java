@@ -49,6 +49,7 @@ import com.braintribe.model.accessdeployment.hibernate.HibernateAccess;
 import com.braintribe.model.accessdeployment.hibernate.HibernateComponent;
 import com.braintribe.model.accessdeployment.hibernate.HibernateDialect;
 import com.braintribe.model.accessdeployment.hibernate.HibernateEnhancedConnectionPool;
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.deployment.Deployable;
 import com.braintribe.model.deployment.database.pool.DatabaseConnectionPool;
 import com.braintribe.model.generic.processing.IdGenerator;
@@ -233,7 +234,7 @@ public class HibernateDeployablesSpace implements WireSpace {
 
 	private boolean isMappingVersion1() {
 		Integer v = hibernateProperties.TRIBEFIRE_HBM_MAPPING_VERSION();
-		return v != null && v == HbmXmlGeneratingService.MAPPING_VERSION_1;
+		return v != null && v == MappingVersion.MAPPING_VERSION_1;
 	}
 
 	private void handleDbSchemaAutoUpdate(ExpertContext<HibernateAccess> context, HibernateSessionFactoryBean bean, StopWatch stopWatch) {

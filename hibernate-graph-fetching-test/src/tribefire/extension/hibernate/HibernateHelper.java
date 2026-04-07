@@ -12,12 +12,12 @@ import javax.sql.DataSource;
 import org.hibernate.SessionFactory;
 
 import com.braintribe.model.access.hibernate.HibernateAccess;
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.generic.processing.IdGenerator;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.processing.core.expert.api.GmExpertRegistry;
 import com.braintribe.model.processing.core.expert.impl.ConfigurableGmExpertRegistry;
 import com.braintribe.model.processing.deployment.hibernate.HibernateMappingsDirectorySupplier;
-import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
 import com.braintribe.model.processing.idgenerator.basic.DateIdGenerator;
 import com.braintribe.model.processing.idgenerator.basic.UuidGenerator;
 import com.braintribe.persistence.hibernate.GmAwareHibernateSessionFactoryBean;
@@ -87,7 +87,7 @@ public class HibernateHelper {
 	private static File mappingsFolder(Supplier<GmMetaModel> modelSupplier) {
 		HibernateMappingsDirectorySupplier bean = new HibernateMappingsDirectorySupplier();
 		bean.setMetaModel(modelSupplier.get());
-		bean.setMappingVersion(HbmXmlGeneratingService.MAPPING_VERSION_2);
+		bean.setMappingVersion(MappingVersion.MAPPING_VERSION_2);
 
 		return bean.get();
 	}

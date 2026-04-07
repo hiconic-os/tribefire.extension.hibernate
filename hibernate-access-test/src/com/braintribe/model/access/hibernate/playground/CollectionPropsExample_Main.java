@@ -39,8 +39,8 @@ import com.braintribe.model.access.hibernate.base.model.collection.ScalarsEntity
 import com.braintribe.model.access.hibernate.base.tools.HibernateAccessSetupHelper;
 import com.braintribe.model.access.hibernate.base.tools.TestHibernateSessionFactoryBean;
 import com.braintribe.model.access.hibernate.base.wire.space.HibernateModelsSpace;
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.meta.GmMetaModel;
-import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
 
 /**
  * @see ScalarsEntity
@@ -59,7 +59,7 @@ public class CollectionPropsExample_Main {
 	private static DbVendor DB_VENDOR = DbVendor.postgres;
 	// private static DbVendor DB_VENDOR = DbVendor.h2;
 
-	private static Integer MAPPING_VERSION = HbmXmlGeneratingService.MAPPING_VERSION_1;
+	private static Integer MAPPING_VERSION = MappingVersion.MAPPING_VERSION_1;
 
 	public static void main(String[] args) throws Exception {
 		try {

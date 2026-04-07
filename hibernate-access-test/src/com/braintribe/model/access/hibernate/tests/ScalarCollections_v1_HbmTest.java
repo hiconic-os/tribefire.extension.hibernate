@@ -18,8 +18,8 @@ package com.braintribe.model.access.hibernate.tests;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.meta.GmMetaModel;
-import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
 
 /**
  * Uses older version of hbm mappings.
@@ -34,7 +34,7 @@ public class ScalarCollections_v1_HbmTest extends ScalarCollections_HbmTest {
 
 	@Override
 	protected int mappingVersion() {
-		return HbmXmlGeneratingService.MAPPING_VERSION_1;
+		return MappingVersion.MAPPING_VERSION_1;
 	}
 
 	@Override

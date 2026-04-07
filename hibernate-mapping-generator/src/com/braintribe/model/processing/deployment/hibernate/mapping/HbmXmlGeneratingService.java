@@ -21,8 +21,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.braintribe.model.accessdeployment.hibernate.HibernateDialect;
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.accessdeployment.hibernate.meta.ModelMapping;
-import com.braintribe.model.generic.annotation.meta.Indexed;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.meta.data.MetaData;
 import com.braintribe.model.processing.deployment.hibernate.mapping.exception.HbmXmlGeneratingServiceException;
@@ -42,27 +42,14 @@ public class HbmXmlGeneratingService {
 
 	public static final String INDICES_JSON_FILE_NAME = "indices.json";
 
-	/**
-	 * Original versions with some issues:
-	 * <ul>
-	 * <li>Collections of Enums have values stored as binary, not strings
-	 * <li>Collections of Dates have values stored as date only, rather than timestamp (i.e. time is missing)
-	 * </ul>
-	 */
+	/** @deprecated use {@link MappingVersion#MAPPING_VERSION_1} */
+	@Deprecated
 	public static final int MAPPING_VERSION_1 = 1;
-
-	/**
-	 * Changes from v1:
-	 * <ul>
-	 * <li>Collections of Enums have values stored as strings
-	 * <li>Collections of Dates are proper timestamps (i.e. including time, not just Date)
-	 * </ul>
-	 */
+	/** @deprecated use {@link MappingVersion#MAPPING_VERSION_2} */
+	@Deprecated
 	public static final int MAPPING_VERSION_2 = 2;
-
-	/**
-	 * Adds indices (for now).
-	 */
+	/** @deprecated use {@link MappingVersion#MAPPING_VERSION_3} */
+	@Deprecated
 	public static final int MAPPING_VERSION_3 = 3;
 
 	private final HbmXmlGenerationContext context = new HbmXmlGenerationContext();
@@ -126,22 +113,10 @@ public class HbmXmlGeneratingService {
 		context.tablePrefix = prefix;
 	}
 
-	/**
-	 * Version:
-	 * 
-	 * <pre>
-	 * 1 - default, as it's been for years
-	 * 2 - Introduced support for indices:
-	 * 	- For entity properties {@link Indexed} MD indexes the foreign-key column in the owner entity table
-	 * 	- For collection properties {@link Indexed} MD indexes the value column in the many-to-many table
-	 * 	- For collection properties the foreign key in the many-to-many table is automatically indexed
-	 * 3 - Changes some default mappings
-	 * 	- For collections of enums the values are stored as strings, not binary
-	 * 	- For collections of dates a date with time is used, not just day/month/year (was really a bug)
-	 * </pre>
-	 */
+	/** @see MappingVersion	 */
 	public HbmXmlGeneratingService mappingVersion(Integer mappingVersion) {
-		context.mappingVersion = mappingVersion == null ? 1 : mappingVersion;
+		if (mappingVersion != null)
+			context.mappingVersion = mappingVersion;
 		return this;
 	}
 

@@ -30,7 +30,7 @@ public interface EntityMapping extends EntityTypeMetaData {
 	Boolean getMapToDb();
 	void setMapToDb(Boolean mapToDb);
 
-	/** @deprecated use {@link JpaEmbeddable} instead */
+	/** We just don't support this anymore with Hibernate 6 */
 	@Deprecated
 	boolean getIsEmbeddable();
 	@Deprecated

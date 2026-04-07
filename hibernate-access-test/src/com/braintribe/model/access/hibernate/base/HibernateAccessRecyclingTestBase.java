@@ -39,6 +39,7 @@ import com.braintribe.model.access.hibernate.base.model.HibernateAccessEntity;
 import com.braintribe.model.access.hibernate.base.tools.HibernateAccessSetupHelper;
 import com.braintribe.model.access.hibernate.base.wire.contract.HibernateModelsContract;
 import com.braintribe.model.access.hibernate.tests.CompositeId_HbmTest;
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.generic.eval.Evaluator;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.meta.GmMetaModel;
@@ -112,7 +113,7 @@ public abstract class HibernateAccessRecyclingTestBase {
 	public static final boolean COMMIT_HIB_SESSION = false;
 
 	/** We do not test version 3 - which currently includes indices, as I would like to have indices in a different way... */
-	private static final int DEFAULT_MAPPING_VERSION = HbmXmlGeneratingService.MAPPING_VERSION_2;
+	private static final int DEFAULT_MAPPING_VERSION = MappingVersion.MAPPING_VERSION_2;
 
 	/** Before each test we prepare the {@link HibernateAccess}, {@link PersistenceGmSession} session and an {@link AccessDriver}. */
 	@Before
