@@ -17,10 +17,13 @@ package com.braintribe.model.access.hibernate.tests;
 
 import static com.braintribe.utils.lcd.CollectionTools2.asMap;
 import static com.braintribe.utils.lcd.CollectionTools2.asSet;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -59,6 +62,22 @@ public class NativeHql_HbmTest extends HibernateNativeModelTestBase {
 
 		qra.assertContains("Wilt", "Chamberlain");
 		qra.assertContains("Shaq", "default");
+	}
+
+	@Test
+	public void selectEntity() throws Exception {
+		player("Wilt", "Chamberlain");
+		player("Shaq", (String) null);
+		session.commit();
+
+		executeNativeQuery(queryRequest("select e from Player e"));
+
+		Set<String> names = qra.resultList.stream() //
+				.map(Player.class::cast) //
+				.map(Player::getName) //
+				.collect(Collectors.toSet());
+
+		assertThat(names).containsExactlyInAnyOrder("Wilt", "Shaq");
 	}
 
 	/** Exactly the same as {@link #simpleQuery()} but uses a fully-qualified entity name in the HQL */

@@ -60,4 +60,8 @@ public interface HibernateModelsContract extends WireSpace {
 	GmMetaModel versioned();
 
 	GmMetaModel enumCollections();
+
+	/** Model for testing if child property can be mapped if parentId column exists */
+	GmMetaModel inverseOneToMany();
+
 }

@@ -29,6 +29,7 @@ import com.braintribe.model.access.hibernate.base.model.collection.EnumCollectio
 import com.braintribe.model.access.hibernate.base.model.collection.ScalarsEntity;
 import com.braintribe.model.access.hibernate.base.model.index.IndexedEntity;
 import com.braintribe.model.access.hibernate.base.model.index.ReferencedEntity;
+import com.braintribe.model.access.hibernate.base.model.inverse1toN.KnowsParent;
 import com.braintribe.model.access.hibernate.base.model.n8ive.AmbiguousEntity;
 import com.braintribe.model.access.hibernate.base.model.n8ive.Player;
 import com.braintribe.model.access.hibernate.base.model.optimistic.VersionedEntity;
@@ -125,6 +126,10 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 	private static final List<EntityType<?>> versionedTypes = asList( //
 			VersionedEntity.T //
+	);
+
+	private static final List<EntityType<?>> inverse1toNTypes = asList( //
+			KnowsParent.T //
 	);
 	// @formatter:on
 
@@ -271,6 +276,26 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 		return result;
 	}
 
+	@Override
+	public GmMetaModel inverseOneToMany() {
+		GmMetaModel result = rawModel("inverse1toN", inverse1toNTypes);
+
+		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
+		unmapGlobalIdAndPartition(md);
+
+		String xml = """
+				<set name="children" inverse="true" lazy="true">
+					<key column="parentId" />
+					<one-to-many class="com.braintribe.model.access.hibernate.base.model.inverse1toN.KnowsParent" />
+				</set>
+				""";
+
+		md.onEntityType(KnowsParent.T) //
+				.addPropertyMetaData(KnowsParent.children, xmlPropertyMapping(xml));
+		
+		return result;
+	}
+	
 	// ###################################################
 	// ## . . . . . . . Mapping helpers . . . . . . . . ##
 	// ###################################################
@@ -343,6 +368,12 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 	private PropertyMapping length(Long length) {
 		PropertyMapping result = PropertyMapping.T.create();
 		result.setLength(length);
+		return result;
+	}
+
+	private PropertyMapping xmlPropertyMapping(String xml) {
+		PropertyMapping result = PropertyMapping.T.create();
+		result.setXml(xml);
 		return result;
 	}
 
