@@ -15,6 +15,7 @@
 // ============================================================================
 package com.braintribe.model.access.hibernate.hql;
 
+import static com.braintribe.utils.SysPrint.spOut;
 import static com.braintribe.utils.lcd.CollectionTools2.first;
 import static com.braintribe.utils.lcd.CollectionTools2.isEmpty;
 import static com.braintribe.utils.lcd.CollectionTools2.newList;
@@ -173,7 +174,8 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 	}
 
 	protected <R> Query<R> finishQuery() {
-		HibernateQueryBuilder<R> hqb = new HibernateQueryBuilder<>(session, builder.toString());
+		String hql = builder.toString();
+		HibernateQueryBuilder<R> hqb = new HibernateQueryBuilder<>(session, hql);
 
 		applyPaging(hqb);
 
@@ -927,7 +929,7 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 			builder.append(".id");
 	}
 
-	private boolean mapped(PropertyOperand propertyOperand) {
+	protected boolean mapped(PropertyOperand propertyOperand) {
 		Source source = propertyOperand.getSource();
 		if (source != null && !context.mappedSources.contains(source))
 			return false;

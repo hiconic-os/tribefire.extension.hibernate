@@ -368,17 +368,15 @@ public class SelectHqlBuilder extends HqlBuilder<SelectQuery> {
 
 	private void encodeGroupBy() {
 		List<Object> groupBys = resolveGroupBys();
+		if (groupBys.isEmpty())
+			return;
 
-		boolean first = true;
+		builder.append(" GROUP BY ");
+
+		boolean needsLeadingComma = false;
 		for (Object groupBy : groupBys) {
-			if (first) {
-				builder.append(" GROUP BY ");
-				first = false;
-			} else {
-				builder.append(',');
-			}
-
-			encodeGroupByOperand(groupBy);
+			encodeGroupByOperand(groupBy, needsLeadingComma);
+			needsLeadingComma = true;
 		}
 	}
 
@@ -405,23 +403,23 @@ public class SelectHqlBuilder extends HqlBuilder<SelectQuery> {
 		return aggregationUsed ? nonAggregatedSelections : Collections.emptyList();
 	}
 
-	private void encodeGroupByOperand(Object groupBy) {
+	private void encodeGroupByOperand(Object groupBy, boolean needsLeadingComma) {
 		if (groupBy instanceof PropertyOperand)
-			encodeGroupByPropertyOperand((PropertyOperand) groupBy);
+			encodeGroupByPropertyOperand((PropertyOperand) groupBy, needsLeadingComma);
 		else if (groupBy instanceof Source)
-			encodeGroupBySource((Source) groupBy);
+			encodeGroupBySource((Source) groupBy, needsLeadingComma);
 		else
-			encodeGroupByStandard(groupBy);
+			encodeGroupByStandard(groupBy, needsLeadingComma);
 	}
 
-	private void encodeGroupByPropertyOperand(PropertyOperand po) {
+	private void encodeGroupByPropertyOperand(PropertyOperand po, boolean needsLeadingComma) {
 		if (po.getPropertyName() == null)
-			encodeGroupBySource(po.getSource());
+			encodeGroupBySource(po.getSource(), needsLeadingComma);
 		else
-			encodeGroupByRealPropertyOperand(po);
+			encodeGroupByRealPropertyOperand(po, needsLeadingComma);
 	}
 
-	private void encodeGroupByRealPropertyOperand(PropertyOperand po) {
+	private void encodeGroupByRealPropertyOperand(PropertyOperand po, boolean needsLeadingComma) {
 		GenericModelType propertyType = context.getPropertyType(po);
 
 		if (propertyType instanceof EntityType)
@@ -429,36 +427,41 @@ public class SelectHqlBuilder extends HqlBuilder<SelectQuery> {
 					+ " That is not supported, please do an explicit join for this source. Referenced entity type:"
 					+ propertyType.getTypeSignature());
 
-		encodeGroupByStandard(po);
+		if (mapped(po))
+			encodeGroupByStandard(po, needsLeadingComma);
+		
 	}
 
-	private void encodeGroupBySource(Source source) {
+	private void encodeGroupBySource(Source source, boolean needsLeadingComma) {
 		GenericModelType sourceType = context.getSourceType(source);
 
 		if (!(sourceType instanceof EntityType)) {
-			encodeGroupByStandard(source);
+			encodeGroupByStandard(source, needsLeadingComma);
 			return;
 		}
 
 		PropertyOperand po = PropertyOperand.T.create();
 		po.setSource(source);
 
-		boolean first = true;
 		for (Property p : ((EntityType<?>) sourceType).getProperties()) {
 			if (p.getType() instanceof CollectionType)
 				continue;
 
-			if (first)
-				first = false;
-			else
+			po.setPropertyName(p.getName());
+			if (!mapped(po))
+				continue;
+
+			if (needsLeadingComma)
 				builder.append(',');
 
-			po.setPropertyName(p.getName());
 			encodeOperand(po, false, true);
+			needsLeadingComma = true;
 		}
 	}
 
-	private void encodeGroupByStandard(Object groupBy) {
+	private void encodeGroupByStandard(Object groupBy, boolean needsLeadingComma) {
+		if (needsLeadingComma)
+			builder.append(',');
 		encodeOperand(groupBy, true, true);
 	}
 
