@@ -1,4 +1,4 @@
-<!--
+<?xml version="1.0" encoding="UTF-8"?><!--
 Copyright BRAINTRIBE TECHNOLOGY GMBH, Austria, 2002-2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,6 +76,11 @@ limitations under the License.
             <artifactId>service-persistence-model</artifactId>
             <version>${V.com.braintribe.gm}</version>
             <?tag asset ?>
+        </dependency>
+        <dependency>
+            <groupId>com.braintribe.gm</groupId>
+            <artifactId>tribefire-runtime</artifactId>
+            <version>${V.com.braintribe.gm}</version>
         </dependency>
     </dependencies>
 </project>
