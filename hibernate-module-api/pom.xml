@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>tribefire.extension.hibernate</groupId>
+        <artifactId>parent</artifactId>
+        <version>[3.0,3.1)</version>
+    </parent>
+    <artifactId>hibernate-module-api</artifactId>
+    <version>3.0.1</version>
+    <properties/>
+    <dependencies>
+        <!-- no dependencies -->
+        <dependency>
+            <groupId>com.braintribe.wire</groupId>
+            <artifactId>wire-api</artifactId>
+            <version>${V.com.braintribe.wire}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.braintribe.gm</groupId>
+            <artifactId>graph-fetching-api</artifactId>
+            <version>${V.com.braintribe.gm}</version>
+        </dependency>
+    </dependencies>
+</project>

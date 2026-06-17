@@ -20,14 +20,12 @@ import static java.util.Objects.requireNonNull;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import javax.sql.DataSource;
@@ -42,6 +40,7 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 
 import com.braintribe.common.lcd.function.CheckedSupplier;
+import com.braintribe.exception.Exceptions;
 import com.braintribe.utils.FileTools;
 
 /**
@@ -181,71 +180,93 @@ public class LocalSessionFactoryBean {
 		return hibernateProperties;
 	}
 
+
 	public void afterPropertiesSet() {
 		BootstrapServiceRegistry serviceRegistry = bootstrapServiceRegistry();
 		Configuration cfg = new Configuration(serviceRegistry);
-
+		
 		if (dataSource != null)
 			cfg.getProperties().put(Environment.JAKARTA_JTA_DATASOURCE, dataSource);
-
+		
 		if (configLocations != null)
 			// Load Hibernate configuration from given location.
 			for (URL url : configLocations)
 				cfg.configure(url);
-
+		
 		if (mappingLocations != null)
 			// Register given Hibernate mapping definitions, contained in resource files.
 			for (URL url : mappingLocations)
 				cfg.addInputStream(CheckedSupplier.uncheckedGet(url::openStream));
-
+		
 		if (mappingInputSuppliers != null)
 			// Register given Hibernate mapping definitions, directly from InputStreams
 			for (Supplier<InputStream> supplier : mappingInputSuppliers)
 				cfg.addInputStream(supplier.get());
-
+		
 		if (cacheableMappingLocations != null)
 			// Register given cacheable Hibernate mapping definitions, read from the file system.
 			for (File file : cacheableMappingLocations)
 				cfg.addCacheableFile(file);
-
+		
 		if (mappingJarLocations != null)
 			// Register given Hibernate mapping definitions, contained in jar files.
 			for (File file : mappingJarLocations)
 				cfg.addJar(file);
-
+		
 		if (mappingDirectoryLocations != null) {
 			// Register all Hibernate mapping definitions in the given directories.
 			XmlMappingBinderAccess binderAccess = cfg.getXmlMappingBinderAccess();
 			for (File folder : mappingDirectoryLocations) {
 				List<File> fileList = FileTools.listFiles(folder, f -> f.getName().endsWith(".hbm.xml"));
 				Binding<?>[] bindings = new Binding[fileList.size()];
-				try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+				Future<Exception>[] bindExceptions = new Future[fileList.size()];
+
+				
+				// Using Executors.newVirtualThreadPerTaskExecutor() may lead to a deadlock (happened to be while debugging) 
+				try (var executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
 					for (int i = 0; i < fileList.size(); ++i) {
 						final int pos = i;
-						executor.submit(() -> {
+						bindExceptions[pos] = executor.submit(() -> {
 							try (InputStream in = new BufferedInputStream(new FileInputStream(fileList.get(pos)))) {
 								bindings[pos] = binderAccess.bind(in);
-							} catch (IOException ioe) {
-								throw new UncheckedIOException(ioe);
+							} catch (Exception e) {
+								return e;
 							}
+							return null;
 						});
 					}
 				}
-				Arrays.stream(bindings).forEach(b -> cfg.addXmlMapping(b));
+
+				for (Future<Exception> future : bindExceptions) {
+					Exception bindingException = getPossibleBindingException(future);
+					if (bindingException != null)
+						throw Exceptions.unchecked(bindingException);
+				}
+
+				for (Binding<?> b : bindings) {
+					cfg.addXmlMapping(b);
+				}
 			}
 		}
-
+		
 		if (entityInterceptor != null)
 			cfg.setInterceptor(entityInterceptor);
-
+		
 		if (hibernateProperties != null)
 			cfg.addProperties(hibernateProperties);
-
+		
 		// Build SessionFactory instance.
 		configuration = cfg;
 		sessionFactory = cfg.buildSessionFactory();
 	}
 
+	private Exception getPossibleBindingException(Future<Exception> future) {
+		try {
+			return future.get();
+		} catch (Exception e) {
+			throw new RuntimeException("Error while binding hibernate mapping file", e);
+		}
+	}
 	@SuppressWarnings("unused")
 	protected void enrich(BootstrapServiceRegistryBuilder builder) {
 		// empty

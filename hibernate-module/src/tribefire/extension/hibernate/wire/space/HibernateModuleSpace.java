@@ -15,6 +15,10 @@
 // ============================================================================
 package tribefire.extension.hibernate.wire.space;
 
+import org.hibernate.SessionFactory;
+
+import com.braintribe.gm.graphfetching.api.query.FetchQueryFactory;
+import com.braintribe.model.access.hibernate.HibernateComponent;
 import com.braintribe.model.accessdeployment.hibernate.HibernateAccess;
 import com.braintribe.model.accessdeployment.hibernate.selector.HibernateDbVendorSelector;
 import com.braintribe.model.accessdeployment.hibernate.selector.HibernateDialectSelector;
@@ -23,6 +27,8 @@ import com.braintribe.model.processing.deployment.api.binding.DenotationBindingB
 import com.braintribe.wire.api.annotation.Import;
 import com.braintribe.wire.api.annotation.Managed;
 
+import tribefire.extension.hibernate.api.HibernateContract;
+import tribefire.extension.hibernate.graphfetching.HibernateSqlFetching;
 import tribefire.extension.hibernate.meta.experts.HibernateDbVendorSelectorExpert;
 import tribefire.extension.hibernate.meta.experts.HibernateDialectSelectorExpert;
 import tribefire.module.api.DenotationMorpher;
@@ -41,7 +47,7 @@ import tribefire.module.wire.contract.WebPlatformHardwiredExpertsContract;
  * </ul>
  */
 @Managed
-public class HibernateModuleSpace implements TribefireModuleContract {
+public class HibernateModuleSpace implements TribefireModuleContract, HibernateContract {
 
 	// @formatter:off
 	@Import private TribefireWebPlatformContract tfPlatform;
@@ -68,6 +74,17 @@ public class HibernateModuleSpace implements TribefireModuleContract {
 	@Override
 	public void bindInitializers(InitializerBindingBuilder bindings) {
 		hibernateInitializer.bindInitializers(bindings);
+	}
+
+	@Override
+	public FetchQueryFactory newFetchQueryFactory(String hibernateAccessId) {
+		HibernateComponent hibernateComponent = tfPlatform.deployment() //
+				.deployedComponentResolver() //
+				.resolve(hibernateAccessId, com.braintribe.model.accessdeployment.hibernate.HibernateComponent.T);
+
+		SessionFactory sessionFactory = hibernateComponent.getSessionFactory();
+
+		return HibernateSqlFetching.queryFactory(sessionFactory);
 	}
 
 }

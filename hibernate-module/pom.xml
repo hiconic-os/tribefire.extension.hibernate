@@ -1,4 +1,4 @@
-<!--
+<?xml version="1.0" encoding="UTF-8"?><!--
 Copyright BRAINTRIBE TECHNOLOGY GMBH, Austria, 2002-2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,6 +81,16 @@ limitations under the License.
             <groupId>com.braintribe.gm</groupId>
             <artifactId>tribefire-runtime</artifactId>
             <version>${V.com.braintribe.gm}</version>
+        </dependency>
+        <dependency>
+            <groupId>tribefire.extension.hibernate</groupId>
+            <artifactId>hibernate-module-api</artifactId>
+            <version>${V.tribefire.extension.hibernate}</version>
+        </dependency>
+        <dependency>
+            <groupId>tribefire.extension.hibernate</groupId>
+            <artifactId>hibernate-graph-fetching</artifactId>
+            <version>${V.tribefire.extension.hibernate}</version>
         </dependency>
     </dependencies>
 </project>
