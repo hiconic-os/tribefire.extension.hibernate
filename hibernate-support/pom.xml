@@ -20,7 +20,7 @@ limitations under the License.
         <version>[3.0,3.1)</version>
     </parent>
     <artifactId>hibernate-support</artifactId>
-    <version>3.0.5</version>
+    <version>3.0.6</version>
     <properties>
         <archetype>library</archetype>
     </properties>
