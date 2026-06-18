@@ -33,6 +33,7 @@ import tribefire.extension.hibernate.meta.experts.HibernateDbVendorSelectorExper
 import tribefire.extension.hibernate.meta.experts.HibernateDialectSelectorExpert;
 import tribefire.module.api.DenotationMorpher;
 import tribefire.module.api.InitializerBindingBuilder;
+import tribefire.module.api.WireContractBindingBuilder;
 import tribefire.module.wire.contract.TribefireModuleContract;
 import tribefire.module.wire.contract.TribefireWebPlatformContract;
 import tribefire.module.wire.contract.WebPlatformHardwiredExpertsContract;
@@ -74,6 +75,11 @@ public class HibernateModuleSpace implements TribefireModuleContract, HibernateC
 	@Override
 	public void bindInitializers(InitializerBindingBuilder bindings) {
 		hibernateInitializer.bindInitializers(bindings);
+	}
+
+	@Override
+	public void bindWireContracts(WireContractBindingBuilder bindings) {
+		bindings.bind(HibernateContract.class, this);
 	}
 
 	@Override

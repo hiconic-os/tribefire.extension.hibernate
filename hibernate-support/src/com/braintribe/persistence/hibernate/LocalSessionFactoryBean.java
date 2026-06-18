@@ -222,7 +222,8 @@ public class LocalSessionFactoryBean {
 				Future<Exception>[] bindExceptions = new Future[fileList.size()];
 
 				
-				// Using Executors.newVirtualThreadPerTaskExecutor() may lead to a deadlock (happened to be while debugging) 
+				// [newVirtualThreadPerTaskExecutor()] may cause deadlock (happened to me, threads starved during class-loading)
+				// try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 				try (var executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
 					for (int i = 0; i < fileList.size(); ++i) {
 						final int pos = i;
@@ -230,6 +231,8 @@ public class LocalSessionFactoryBean {
 							try (InputStream in = new BufferedInputStream(new FileInputStream(fileList.get(pos)))) {
 								bindings[pos] = binderAccess.bind(in);
 							} catch (Exception e) {
+								// When we had some issues as Hibernate was in different modules and also loaded by different class-loaders, we saw:
+								// java.lang.ClassNotFoundException: org.glassfish.jaxb.runtime.v2.ContextFactory
 								return e;
 							}
 							return null;
