@@ -48,8 +48,10 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	public boolean hasScalarElement; // elementType is GmScalarType
 	public boolean hasEnumElement; // elementType is GmEnumType
 	public boolean isOneToMany; // defines if the (entity type) element must be mapped as <one-to-many> instead of the
-									// default <many-to-many>
+								// default <many-to-many>
 	public String manyToManyFetch;
+
+	public boolean suppressAutomaticCollectionIndices;
 
 	// map related properties
 	public boolean hasScalarMapKey;
@@ -82,7 +84,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 	public GmCollectionType getGmType() {
 		return (GmCollectionType) super.getGmType();
 	}
-	
+
 	private void initCollectionType(EntityDescriptor descriptor, GmProperty gmProperty) {
 		GmType colType = gmProperty.getType();
 		GmType elementType = null, keyType = null;
@@ -100,7 +102,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 		ownerSimpleName = descriptor.getSimpleName();
 
 		hasScalarElement = !elementType.isGmEntity();
-		hasEnumElement= elementType.isGmEnum();
+		hasEnumElement = elementType.isGmEnum();
 		if (hasScalarElement) {
 			elementSimpleType = resolveScalarTypeForCollection(elementType);
 		}
@@ -124,7 +126,7 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 			collectionKeyName = NameConverter.convert(collectionKeyName, style);
 			collectionElementName = NameConverter.convert(collectionElementName, style);
 		}
-		
+
 		if (getIsMap()) {
 			initMapKey(keyType);
 		}
@@ -181,10 +183,10 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 
 		if (propertyMetaData.getCollectionKeyColumn() != null)
 			this.keyColumn = propertyMetaData.getCollectionKeyColumn();
-		
+
 		if (propertyMetaData.getCollectionKeyColumnNotNull() != null)
 			this.keyColumnNotNull = propertyMetaData.getCollectionKeyColumnNotNull();
-		
+
 		if (propertyMetaData.getCollectionKeyPropertyRef() != null)
 			this.keyPropertyRef = propertyMetaData.getCollectionKeyPropertyRef();
 
@@ -196,6 +198,9 @@ public class CollectionPropertyDescriptor extends PropertyDescriptor {
 
 		if (propertyMetaData.getCollectionElementFetch() != null)
 			this.manyToManyFetch = propertyMetaData.getCollectionElementFetch();
+
+		if (propertyMetaData.getSuppressAutomaticCollectionIndices() != null)
+			this.suppressAutomaticCollectionIndices = propertyMetaData.getSuppressAutomaticCollectionIndices();
 
 		// map
 		if (propertyMetaData.getMapKeyColumn() != null)

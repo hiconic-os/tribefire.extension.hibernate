@@ -28,4 +28,7 @@ public interface IndexedEntity extends GenericEntity {
 	Map<String, String> getStrStrMap();
 	void setStrStrMap(Map<String, String> strMap);
 
+	Set<String> getNoIndexSet();
+	void setNoIndexSet(Set<String> noIndexSet);
+
 }

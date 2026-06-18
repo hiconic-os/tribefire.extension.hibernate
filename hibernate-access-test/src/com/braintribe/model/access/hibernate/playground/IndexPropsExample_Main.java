@@ -35,6 +35,7 @@ import com.braintribe.model.access.hibernate.base.tools.HibernateAccessSetupHelp
 import com.braintribe.model.access.hibernate.base.tools.TestHibernateSessionFactoryBean;
 import com.braintribe.model.access.hibernate.base.wire.space.HibernateModelsSpace;
 import com.braintribe.model.access.hibernate.schema.meta.DbIndexCreator;
+import com.braintribe.model.accessdeployment.hibernate.meta.MappingVersion;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
@@ -57,6 +58,8 @@ public class IndexPropsExample_Main {
 
 	private static final Supplier<GmMetaModel> modelSupplier = HibernateAccessRecyclingTestBase.hibernateModels::indexed;
 
+	private static final int MAPPING_VERSION = MappingVersion.MAPPING_VERSION_3;
+	
 	private static DbVendor DB_VENDOR = DbVendor.postgres;
 	// private static DbVendor DB_VENDOR = DbVendor.h2;
 
@@ -79,9 +82,9 @@ public class IndexPropsExample_Main {
 
 		DataSource dataSource = dataSource();
 
-		TestHibernateSessionFactoryBean hsfb = hibernateSessionFactoryBean(modelSupplier, dataSource);
+		TestHibernateSessionFactoryBean hsfb = hibernateSessionFactoryBean(modelSupplier, dataSource, MAPPING_VERSION);
 		hsfb.setShowSql(false);
-		hsfb.addAfterSchemaCreationTask(() -> dbIndexCreator(dataSource, hsfb).createIndices());
+		hsfb.addAfterSchemaCreationTask(() -> createIndicesIfRelevant(dataSource, hsfb));
 		hsfb.postConstruct();
 
 		SessionFactory sessionFactory = hsfb.getObject();
@@ -111,14 +114,35 @@ public class IndexPropsExample_Main {
 
 		JdbcTools.withConnection(dataSource, false, () -> "Verifying created indices.", connection -> {
 			//
-			tableName = toTableName(IndexedEntity.T); // ixindexedentityidindentstst
-			indicesExist(connection, propIx("entity"), propIx("str"));
+			tableName = toTableName(IndexedEntity.T); // indexedentity
+			indicesExist(connection, propIx("entity"), propIx("str")); // indices are defined as metadata, see  modelSupplier
+			
+			// as for id:
+			// table name: indexedEntityStrSet
+			// owner simple name: indexedEntity
+			// column name: indexedEntityId
+			// index name: ix + (columnName - ownerSimpleName) + tableName = ix + Id + tableName = propIx("Id") 
+			tableName = toTableName(IndexedEntity.T, "strSet"); // indexedentitystrset
+			indicesExist(connection, propIx("Id"), propIx("strSet")); // indices are defined as metadata, see  modelSupplier
+
+			tableName = toTableName(IndexedEntity.T, "noIxSet"); // indexedentitystrset
+			indicesExist(connection, propIx("Id"), propIx("noIxSet")); // expected to be empty
 		});
+	}
+
+	private void createIndicesIfRelevant(DataSource dataSource, TestHibernateSessionFactoryBean hsfb) {
+		DbIndexCreator dbIndexCreator = dbIndexCreator(dataSource, hsfb);
+		if (dbIndexCreator != null) 
+			dbIndexCreator.createIndices();
 	}
 
 	private DbIndexCreator dbIndexCreator(DataSource dataSource, TestHibernateSessionFactoryBean hsfb) {
 		File mappingsDirectory = hsfb.mappingDirectoryLocations()[0];
 		File indicesJson = new File(mappingsDirectory, HbmXmlGeneratingService.INDICES_JSON_FILE_NAME);
+		if ( !indicesJson.exists()) {
+			spOut("File [" + HbmXmlGeneratingService.INDICES_JSON_FILE_NAME + "] not found, will not create any index!");
+			return null;
+		}
 
 		List<IndexDescriptor> indexDescriptors = HbmXmlGeneratingService.readIndexDescriptors(indicesJson);
 
@@ -148,13 +172,23 @@ public class IndexPropsExample_Main {
 
 	private String toTableName(EntityType<?> et) {
 		String shortName = et.getShortName();
+		return convertCaseForVendor(shortName);
+	}
+
+	private String toTableName(EntityType<?> et, String collectionProperty) {
+		return toTableName(et) + convertCaseForVendor(collectionProperty);
+	}
+
+	
+	private String convertCaseForVendor(String s) {
 		return switch (DB_VENDOR) {
-			case h2 -> shortName.toUpperCase();
-			case postgres -> shortName.toLowerCase();
+			case h2 -> s.toUpperCase();
+			case postgres -> s.toLowerCase();
 			default -> throw new IllegalArgumentException("Unsupported db vendor: " + DB_VENDOR);
 		};
 	}
 
+	
 	private String propIx(String propName) {
 		// return "IX" + propName.toUpperCase() + tableName;
 		return "Ix" + StringTools.capitalize(propName) + tableName;

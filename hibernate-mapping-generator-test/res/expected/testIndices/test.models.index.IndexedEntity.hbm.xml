@@ -6,6 +6,10 @@
 			<generator class="native" />
 		</id>
 		<property name="globalId" column="globalId" type="string" />
+		<set name="noIndexSet" table="IndexedEntityNoIndexSet">
+			<key column="IndexedEntityId" />
+			<element column="NoIndexSet" type="string" />
+		</set>
 		<property name="partition" column="partition_" type="string" />
 		<property name="str" column="str" type="string" />
 		<list name="strList" table="IndexedEntityStrList">

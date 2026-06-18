@@ -15,15 +15,15 @@
 // ============================================================================
 package com.braintribe.model.accessdeployment.hibernate.meta;
 
-
 import com.braintribe.model.accessdeployment.jpa.meta.JpaPropertyMapping;
 import com.braintribe.model.generic.annotation.Initializer;
+import com.braintribe.model.generic.annotation.meta.Indexed;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EntityTypes;
 
 /** Information need for Hibernate mapping of given property. */
 
-public interface PropertyMapping  extends JpaPropertyMapping {
+public interface PropertyMapping extends JpaPropertyMapping {
 
 	EntityType<PropertyMapping> T = EntityTypes.T(PropertyMapping.class);
 
@@ -47,8 +47,8 @@ public interface PropertyMapping  extends JpaPropertyMapping {
 	void setColumnName(String columnName);
 
 	/**
-	 * If set to true, given value should not be configured by the user, but is set automatically by Hibernate/Db. Example is an
-	 * auto-increment id property.
+	 * If set to true, given value should not be configured by the user, but is set automatically by Hibernate/Db. Example is an auto-increment id
+	 * property.
 	 */
 	Boolean getAutoAssignable();
 	void setAutoAssignable(Boolean autoAssignable);
@@ -57,10 +57,9 @@ public interface PropertyMapping  extends JpaPropertyMapping {
 	void setType(String type);
 
 	/**
-	 * By default Hibernate uses the id column for references. For example, if a <code>Person</code> has a property
-	 * <code>friend</code>, which references another <code>Person</code>, Hibernate by default creates a column
-	 * <code>friend</code> which holds the value of the id property of the other person. Using <code>propertyRef</code>
-	 * one can specify the name of the property to be used instead of the id property.
+	 * By default Hibernate uses the id column for references. For example, if a <code>Person</code> has a property <code>friend</code>, which
+	 * references another <code>Person</code>, Hibernate by default creates a column <code>friend</code> which holds the value of the id property of
+	 * the other person. Using <code>propertyRef</code> one can specify the name of the property to be used instead of the id property.
 	 */
 	String getReferencedProperty();
 	void setReferencedProperty(String referencedProperty);
@@ -135,9 +134,8 @@ public interface PropertyMapping  extends JpaPropertyMapping {
 	void setCollectionElementFetch(String collectionElementFetch);
 
 	/**
-	 * Whether or not to ignore invalid references. If enabled, invalid references will be ignored (i.e. entity property
-	 * will be set to <code>null</code>). If disabled (which is the default), invalid references will cause an
-	 * exception.<br/>
+	 * Whether or not to ignore invalid references. If enabled, invalid references will be ignored (i.e. entity property will be set to
+	 * <code>null</code>). If disabled (which is the default), invalid references will cause an exception.<br/>
 	 * Note that fortunately invalid references usually cannot exist (when foreign key constraints are properly set).
 	 */
 	Boolean getInvalidReferencesIgnored();
@@ -148,6 +146,16 @@ public interface PropertyMapping  extends JpaPropertyMapping {
 
 	String getMapKeyForeignKey();
 	void setMapKeyForeignKey(String mapKeyForeignKey);
+
+	/**
+	 * If <code>true</code> the mapping generator will not automatically generate the foreign-key indices (owner id, map key), which it does starting
+	 * with MappingVersion 3.
+	 * <p>
+	 * Note these are different indices than the ones controlled by {@link Indexed} annotation (and it's corresponding MD), which imply indices on
+	 * value columns.
+	 */
+	Boolean getSuppressAutomaticCollectionIndices();
+	void setSuppressAutomaticCollectionIndices(Boolean suppressAutomaticCollectionIndices);
 
 	@Override
 	default boolean isMapped() {

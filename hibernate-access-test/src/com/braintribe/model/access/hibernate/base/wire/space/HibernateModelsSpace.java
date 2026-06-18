@@ -233,12 +233,16 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 		Index index = Index.T.create();
 
+		PropertyMapping noIndex = PropertyMapping.T.create();
+		noIndex.setSuppressAutomaticCollectionIndices(true);
+
 		md.onEntityType(IndexedEntity.T) //
 				.addPropertyMetaData("str", index) //
 				.addPropertyMetaData("entity", index) //
 				.addPropertyMetaData("strSet", index) //
 				.addPropertyMetaData("strList", index) //
 				.addPropertyMetaData("strStrMap", index) //
+				.addPropertyMetaData("noIxSet", noIndex) //
 		;
 
 		return result;

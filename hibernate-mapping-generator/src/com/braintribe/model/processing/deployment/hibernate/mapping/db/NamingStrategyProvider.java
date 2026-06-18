@@ -192,15 +192,20 @@ public class NamingStrategyProvider {
 
 		String tableName = cpd.many2ManyTable;
 
+		if (cpd.hasIndexMd)
+			createCollectionRelatedIndex(cpd, tableName, cpd.elementColumn, IndexPurpose.COLLECTION_ELEMENT);
+
+		// Auto-generated indices for collections:
+
+		if (cpd.suppressAutomaticCollectionIndices)
+			return;
+
 		if (cpd.getIsMap()) {
 			String columnName = cpd.mapKeyColumn;
 			cpd.mapKeyIndexName = generateAndRegisterIndexName(tableName, columnName);			
 		}
 
 		createCollectionRelatedIndex(cpd, tableName, cpd.keyColumn, IndexPurpose.COLLECTION_FOREIGN_KEY);
-
-		if (cpd.hasIndexMd)
-			createCollectionRelatedIndex(cpd, tableName, cpd.elementColumn, IndexPurpose.COLLECTION_ELEMENT);
 	}
 
 	private void createCollectionRelatedIndex(CollectionPropertyDescriptor cpd, String tableName, String keyColumnName, IndexPurpose purpose) {

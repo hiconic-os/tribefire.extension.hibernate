@@ -45,4 +45,7 @@ public interface IndexedEntity extends HibernateAccessEntity {
 	Map<String, String> getStrStrMap();
 	void setStrStrMap(Map<String, String> strMap);
 
+	// This will have MD so that both indices are off
+	Set<String> getNoIxSet();
+	void setNoIxSet(Set<String> noIxSet);
 }

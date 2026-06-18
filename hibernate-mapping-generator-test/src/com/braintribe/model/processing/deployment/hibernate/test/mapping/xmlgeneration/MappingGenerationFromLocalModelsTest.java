@@ -807,14 +807,14 @@ public class MappingGenerationFromLocalModelsTest {
 	//
 	// assertMapping(tag, ComplexEntity.T);
 	// }
-
-	private PropertyMapping columnMapping(String columnName, String type) {
-		PropertyMapping result = PropertyMapping.T.create();
-		result.setColumnName(columnName);
-		result.setType(type);
-
-		return result;
-	}
+	//
+	// private PropertyMapping columnMapping(String columnName, String type) {
+	// PropertyMapping result = PropertyMapping.T.create();
+	// result.setColumnName(columnName);
+	// result.setType(type);
+	//
+	// return result;
+	// }
 
 	@Test
 	public void testIndices() throws Exception {
@@ -823,12 +823,15 @@ public class MappingGenerationFromLocalModelsTest {
 		GmMetaModel metaModel = provideModel(tag, asList(IndexedEntity.T));
 
 		Index index = Index.T.create();
+		PropertyMapping noIndex = PropertyMapping.T.create();
+		noIndex.setSuppressAutomaticCollectionIndices(Boolean.TRUE);
 
 		BasicModelMetaDataEditor editor = new BasicModelMetaDataEditor(metaModel);
 		editor.onEntityType(IndexedEntity.T) //
 				.addPropertyMetaData("strSet", index) //
 				.addPropertyMetaData("strList", index) //
 				.addPropertyMetaData("strStrMap", index) //
+				.addPropertyMetaData("noIndexSet", noIndex) //
 		;
 
 		renderMappings(metaModel);
