@@ -215,7 +215,10 @@ public class HibernateDeployablesSpace implements WireSpace {
 		stopWatch.intermediate("Mappings");
 
 		bean.setDataSource(dataSoureInfo.dataSource);
-		bean.setDialect(dataSoureInfo.dialectClass);
+		// Commenting out dialect configuration as it leads to a warning log.
+		/* WARNING deprecation 'HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property
+		 * setting and it will be selected by default)' */
+		// bean.setDialect(dataSoureInfo.dialectClass);
 		bean.setDefaultSchema(deployable.getDefaultSchema());
 		bean.setDefaultCatalog(deployable.getDefaultCatalog());
 		bean.setDefaultBatchFetchSize(30);
