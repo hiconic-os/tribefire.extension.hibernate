@@ -202,12 +202,14 @@ public class HibernateDeployablesSpace implements WireSpace {
 
 		stopWatch.intermediate("SchemaUpdate Creation");
 
+		CmdResolver cmdResolver = cmdResolver(context);
+
 		// @formatter:off
 		ObjectRelationalMappings
 			.applyMappings(
 					bean::setMappingInputSuppliers, 
 					deployable,
-					cmdResolver(context),
+					cmdResolver,
 					() -> configureGeneratedMappings(context, bean, stopWatch)
 				);
 		// @formatter:on
@@ -223,7 +225,8 @@ public class HibernateDeployablesSpace implements WireSpace {
 		bean.setDefaultCatalog(deployable.getDefaultCatalog());
 		bean.setDefaultBatchFetchSize(30);
 
-		if (isMappingVersion1())
+		int mappingVersion = mappingVersion(cmdResolver);
+		if (mappingVersion == MappingVersion.MAPPING_VERSION_1)
 			bean.getProperties().setProperty(Environment.ID_DB_STRUCTURE_NAMING_STRATEGY, "single");
 
 		// Setting the additional properties last as these must be prioritized over inferred default values.
@@ -233,11 +236,6 @@ public class HibernateDeployablesSpace implements WireSpace {
 				() -> "Creating HibernateSessionFactoryBean " + deployable.getConnector() + " for " + deployable.getExternalId() + ": " + stopWatch);
 
 		return bean;
-	}
-
-	private boolean isMappingVersion1() {
-		Integer v = hibernateProperties.TRIBEFIRE_HBM_MAPPING_VERSION();
-		return v != null && v == MappingVersion.MAPPING_VERSION_1;
 	}
 
 	private void handleDbSchemaAutoUpdate(ExpertContext<HibernateAccess> context, HibernateSessionFactoryBean bean, StopWatch stopWatch) {
@@ -383,9 +381,11 @@ public class HibernateDeployablesSpace implements WireSpace {
 	private HibernateMappingsDirectorySupplier hibernateMappingsDirectorySupplier(ExpertContext<HibernateAccess> context) {
 		HibernateAccess deployable = context.getDeployable();
 
+		CmdResolver cmdResolver = cmdResolver(context);
+
 		HibernateMappingsDirectorySupplier factory = new HibernateMappingsDirectorySupplier();
 		factory.setMetaModel(resolveModel(deployable));
-		factory.setMappingVersion(hibernateProperties.TRIBEFIRE_HBM_MAPPING_VERSION());
+		factory.setMappingVersion(mappingVersion(cmdResolver));
 		factory.setDefaultSchema(deployable.getDefaultSchema());
 		factory.setDefaultCatalog(deployable.getDefaultCatalog());
 		factory.setObjectNamePrefix(deployable.getObjectNamePrefix());
@@ -393,7 +393,7 @@ public class HibernateDeployablesSpace implements WireSpace {
 		factory.setForeignKeyNamePrefix(deployable.getForeignKeyNamePrefix());
 		factory.setUniqueKeyNamePrefix(deployable.getUniqueKeyNamePrefix());
 		factory.setIndexNamePrefix(deployable.getIndexNamePrefix());
-		factory.setCmdResolver(cmdResolver(context));
+		factory.setCmdResolver(cmdResolver);
 		factory.setCmdResolverFactory(this::newCmdResolver);
 		factory.setDialect(resolveDataSourceInfo(context).dialect);
 
@@ -418,6 +418,20 @@ public class HibernateDeployablesSpace implements WireSpace {
 
 	private CmdResolverBuilder newCmdResolver(GmMetaModel model) {
 		return tfPlatform.modelApi().newCmdResolver(model);
+	}
+
+	private int mappingVersion(CmdResolver cmdResolver) {
+		Integer v = hibernateProperties.TRIBEFIRE_HBM_MAPPING_VERSION();
+		if (v != null)
+			return v;
+
+		if (cmdResolver != null) {
+			MappingVersion mv = cmdResolver.getMetaData().meta(MappingVersion.T).exclusive();
+			if (mv != null)
+				return mv.getVersion();
+		}
+
+		return HbmXmlGeneratingService.DEFAULT_MAPPING_VERSION;
 	}
 
 	// ###############################################

@@ -143,7 +143,7 @@ public class HbmXmlGenerationContext {
 		if (mv != null)
 			return mv.getVersion();
 		else
-			return 1; // for as long as we have cortex in place, let's just keep the default at 1
+			return HbmXmlGeneratingService.DEFAULT_MAPPING_VERSION;
 	}
 
 	public ModelMdResolver getMetaData() {

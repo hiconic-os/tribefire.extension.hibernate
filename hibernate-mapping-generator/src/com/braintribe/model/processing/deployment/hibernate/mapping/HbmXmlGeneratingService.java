@@ -54,6 +54,9 @@ public class HbmXmlGeneratingService {
 
 	private final HbmXmlGenerationContext context = new HbmXmlGenerationContext();
 
+	// for as long as we have cortex in place, let's just keep the default at 1
+	public static final int DEFAULT_MAPPING_VERSION = MappingVersion.MAPPING_VERSION_1;
+
 	public HbmXmlGeneratingService() {
 	}
 
@@ -113,7 +116,7 @@ public class HbmXmlGeneratingService {
 		context.tablePrefix = prefix;
 	}
 
-	/** @see MappingVersion	 */
+	/** @see MappingVersion */
 	public HbmXmlGeneratingService mappingVersion(Integer mappingVersion) {
 		if (mappingVersion != null)
 			context.mappingVersion = mappingVersion;
