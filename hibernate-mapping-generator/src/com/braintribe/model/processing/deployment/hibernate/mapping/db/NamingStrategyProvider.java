@@ -16,6 +16,7 @@
 package com.braintribe.model.processing.deployment.hibernate.mapping.db;
 
 import static com.braintribe.utils.lcd.CollectionTools2.acquireSet;
+import static com.braintribe.utils.lcd.CollectionTools2.index;
 import static com.braintribe.utils.lcd.CollectionTools2.newList;
 import static com.braintribe.utils.lcd.CollectionTools2.newMap;
 import static com.braintribe.utils.lcd.CollectionTools2.newSet;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.braintribe.logging.Logger;
+import com.braintribe.model.meta.data.query.CompositeIndex;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
 import com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexPurpose;
@@ -47,6 +50,8 @@ public class NamingStrategyProvider {
 	private final Map<String, Set<String>> reservedColumnNames = newMap();
 
 	private final List<IndexDescriptor> indexDescriptors = newList();
+
+	private static final Logger log = Logger.getLogger(NamingStrategyProvider.class);
 
 	public NamingStrategyProvider(HbmXmlGenerationContext context, OutputDescriptors outputDescriptors) {
 		this.context = context;
@@ -71,7 +76,7 @@ public class NamingStrategyProvider {
 			if (entityDescriptor.tableName != null) {
 				registerTableName(entityDescriptor.tableName);
 
-				for (PropertyDescriptor propertyDescriptor : entityDescriptor.getProperties())
+				for (PropertyDescriptor propertyDescriptor : entityDescriptor.properties)
 					registerProvidedNames(propertyDescriptor);
 			}
 		}
@@ -114,10 +119,12 @@ public class NamingStrategyProvider {
 			// if (!entityDescriptor.getDbNamesFromMappingMetadata() && !entityDescriptor.getDbNamesFromGeneratorHistory()) {
 			provideNamesForEntity(entityDescriptor);
 			// }
-			for (PropertyDescriptor propertyDescriptor : entityDescriptor.getProperties()) {
+			for (PropertyDescriptor propertyDescriptor : entityDescriptor.properties) {
 				// if (propertyDescriptor.getDbNamesFromMappingMetadata() || propertyDescriptor.getDbNamesFromGeneratorHistory()) continue;
 				provideNamesForProperty(propertyDescriptor);
 			}
+
+			createCompositeIndices(entityDescriptor);
 		}
 	}
 
@@ -186,6 +193,49 @@ public class NamingStrategyProvider {
 		}
 	}
 
+	private void createCompositeIndices(EntityDescriptor ed) {
+		if (!context.versionSupportsIndices())
+			return;
+
+		if (ed.getCompositeIndices().isEmpty())
+			return;
+
+		Map<String, PropertyDescriptor> propsByName = index(ed.properties).by(PropertyDescriptor::getName).unique();
+
+		for (CompositeIndex cpd : ed.getCompositeIndices()) {
+			List<String> propNames = cpd.getPropertyNames();
+			List<String> colNames = toColNames(ed, propsByName, propNames);
+			if (colNames == null)
+				continue;
+
+			var idxDescriptor = IndexDescriptor.T.create();
+			idxDescriptor.setIndexName(generateAndRegisterCompositeIndexName(ed.tableName, colNames));
+			idxDescriptor.setTableName(ed.tableName);
+			idxDescriptor.setColumnNames(colNames);
+			idxDescriptor.setEntityTypeSignature(ed.fullName);
+			idxDescriptor.setPropertyNames(propNames);
+			idxDescriptor.setPurpose(IndexPurpose.COMPOSITE_INDEX);
+
+			indexDescriptors.add(idxDescriptor);
+		}
+	}
+
+	private List<String> toColNames(EntityDescriptor ed, Map<String, PropertyDescriptor> propsByName, List<String> propNames) {
+		List<String> result = newList();
+
+		for (String propName : propNames) {
+			PropertyDescriptor pd = propsByName.get(propName);
+			if (pd == null) {
+				log.warn("Property '" + propName + "' not found for entity '" + ed.fullName
+						+ "'. It was referenced as part of composite index for properties: " + propNames);
+				return null;
+			}
+			result.add(pd.columnName);
+		}
+
+		return result;
+	}
+
 	private void createIndicesForCollectionProperty(CollectionPropertyDescriptor cpd) {
 		if (!context.versionSupportsIndices())
 			return;
@@ -202,7 +252,7 @@ public class NamingStrategyProvider {
 
 		if (cpd.getIsMap()) {
 			String columnName = cpd.mapKeyColumn;
-			cpd.mapKeyIndexName = generateAndRegisterIndexName(tableName, columnName);			
+			cpd.mapKeyIndexName = generateAndRegisterIndexName(tableName, columnName);
 		}
 
 		createCollectionRelatedIndex(cpd, tableName, cpd.keyColumn, IndexPurpose.COLLECTION_FOREIGN_KEY);
@@ -212,9 +262,9 @@ public class NamingStrategyProvider {
 		var idxDescriptor = IndexDescriptor.T.create();
 		idxDescriptor.setIndexName(generateAndRegisterCollectionIndexName(cpd.ownerSimpleName, tableName, keyColumnName));
 		idxDescriptor.setTableName(tableName);
-		idxDescriptor.setColumnName(keyColumnName);
+		idxDescriptor.getColumnNames().add(keyColumnName);
 		idxDescriptor.setEntityTypeSignature(cpd.entityDescriptor.fullName);
-		idxDescriptor.setPropertyName(cpd.getPropertyName());
+		idxDescriptor.getPropertyNames().add(cpd.getPropertyName());
 		idxDescriptor.setPurpose(purpose);
 
 		indexDescriptors.add(idxDescriptor);
@@ -235,6 +285,10 @@ public class NamingStrategyProvider {
 
 		return applyConfiguredCase(uniqueColumnName(tableName, columnName));
 	}
+
+	//
+	// Collection index name
+	//
 
 	private String generateAndRegisterCollectionIndexName(String ownerSimpleName, String tableName, String columnName) {
 		// Just to make the index name shorter in case we use auto-generated table and column name
@@ -267,8 +321,9 @@ public class NamingStrategyProvider {
 		if (!indexNameExceedsMaxLength(indexName))
 			return indexName;
 
-		// 12 chars are already used - 10 for shorterTableName and 2 for "Ix" prefix
-		String shorterColumnName = shorten(columnName, namingLimitations.getColumnNameMaxLength() - 12);
+		// chars are already used - 2 for Ix prefix + shorterTabName
+		int charsUsed = 2 /* Ix */ + shorterTabName.length();
+		String shorterColumnName = shorten(columnName, namingLimitations.getColumnNameMaxLength() - charsUsed);
 		indexName = deriveIndexName(shorterTabName, shorterColumnName);
 		if (!indexNameExceedsMaxLength(indexName))
 			return indexName;
@@ -278,6 +333,54 @@ public class NamingStrategyProvider {
 
 	private String deriveIndexName(String tableName, String columnName) {
 		return "Ix" + StringTools.capitalize(columnName) + StringTools.capitalize(tableName);
+	}
+
+	//
+	// Collection index name
+	//
+
+	private String generateAndRegisterCompositeIndexName(String tableName, List<String> columnNames) {
+		String indexName = deriveCompositeIndexName(tableName, columnNames);
+		if (indexNameExceedsMaxLength(indexName))
+			indexName = generateShortEnoughCompositeIndexName(tableName, columnNames);
+
+		String result = applyConfiguredCase(uniqueIndexName(indexName));
+		registerIndexName(result);
+
+		return result;
+	}
+
+	private String generateShortEnoughCompositeIndexName(String tableName, List<String> columnNames) {
+		String indexName;
+
+		String shorterTabName = shorten(tableName, 10);
+		indexName = deriveCompositeIndexName(shorterTabName, columnNames);
+		if (!indexNameExceedsMaxLength(indexName))
+			return indexName;
+
+		// chars are already used - 2 for Ix prefix + shorterTabName
+		int charsUsed = 2 /* Ix */ + shorterTabName.length();
+		// distribute the remaining budget evenly among the columns, but keep at least 3 chars per column
+		int charsPerColumn = Math.max(3, (namingLimitations.getColumnNameMaxLength() - charsUsed) / columnNames.size());
+
+		List<String> shorterColumnNames = newList();
+		for (String columnName : columnNames)
+			shorterColumnNames.add(shorten(columnName, charsPerColumn));
+
+		indexName = deriveCompositeIndexName(shorterTabName, shorterColumnNames);
+		if (!indexNameExceedsMaxLength(indexName))
+			return indexName;
+
+		return shorten(indexName, namingLimitations.getColumnNameMaxLength());
+	}
+
+	private String deriveCompositeIndexName(String tableName, List<String> columnNames) {
+		StringBuilder sb = new StringBuilder("Ix");
+		for (String columnName : columnNames)
+			sb.append(StringTools.capitalize(columnName));
+		sb.append(StringTools.capitalize(tableName));
+
+		return sb.toString();
 	}
 
 	private void registerTableName(String tableName) {

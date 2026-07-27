@@ -59,7 +59,7 @@ public class IndexPropsExample_Main {
 	private static final Supplier<GmMetaModel> modelSupplier = HibernateAccessRecyclingTestBase.hibernateModels::indexed;
 
 	private static final int MAPPING_VERSION = MappingVersion.MAPPING_VERSION_3;
-	
+
 	private static DbVendor DB_VENDOR = DbVendor.postgres;
 	// private static DbVendor DB_VENDOR = DbVendor.h2;
 
@@ -115,15 +115,18 @@ public class IndexPropsExample_Main {
 		JdbcTools.withConnection(dataSource, false, () -> "Verifying created indices.", connection -> {
 			//
 			tableName = toTableName(IndexedEntity.T); // indexedentity
-			indicesExist(connection, propIx("entity"), propIx("str")); // indices are defined as metadata, see  modelSupplier
-			
+			indicesExist(connection, //
+					// indices are defined as metadata, see modelSupplier
+					propIx("entity"), propIx("str"), compositeIx("str", "xtr")
+			);
+
 			// as for id:
 			// table name: indexedEntityStrSet
 			// owner simple name: indexedEntity
 			// column name: indexedEntityId
-			// index name: ix + (columnName - ownerSimpleName) + tableName = ix + Id + tableName = propIx("Id") 
+			// index name: ix + (columnName - ownerSimpleName) + tableName = ix + Id + tableName = propIx("Id")
 			tableName = toTableName(IndexedEntity.T, "strSet"); // indexedentitystrset
-			indicesExist(connection, propIx("Id"), propIx("strSet")); // indices are defined as metadata, see  modelSupplier
+			indicesExist(connection, propIx("Id"), propIx("strSet")); // indices are defined as metadata, see modelSupplier
 
 			tableName = toTableName(IndexedEntity.T, "noIxSet"); // indexedentitystrset
 			indicesExist(connection, propIx("Id"), propIx("noIxSet")); // expected to be empty
@@ -132,14 +135,14 @@ public class IndexPropsExample_Main {
 
 	private void createIndicesIfRelevant(DataSource dataSource, TestHibernateSessionFactoryBean hsfb) {
 		DbIndexCreator dbIndexCreator = dbIndexCreator(dataSource, hsfb);
-		if (dbIndexCreator != null) 
+		if (dbIndexCreator != null)
 			dbIndexCreator.createIndices();
 	}
 
 	private DbIndexCreator dbIndexCreator(DataSource dataSource, TestHibernateSessionFactoryBean hsfb) {
 		File mappingsDirectory = hsfb.mappingDirectoryLocations()[0];
 		File indicesJson = new File(mappingsDirectory, HbmXmlGeneratingService.INDICES_JSON_FILE_NAME);
-		if ( !indicesJson.exists()) {
+		if (!indicesJson.exists()) {
 			spOut("File [" + HbmXmlGeneratingService.INDICES_JSON_FILE_NAME + "] not found, will not create any index!");
 			return null;
 		}
@@ -179,7 +182,6 @@ public class IndexPropsExample_Main {
 		return toTableName(et) + convertCaseForVendor(collectionProperty);
 	}
 
-	
 	private String convertCaseForVendor(String s) {
 		return switch (DB_VENDOR) {
 			case h2 -> s.toUpperCase();
@@ -188,10 +190,18 @@ public class IndexPropsExample_Main {
 		};
 	}
 
-	
 	private String propIx(String propName) {
 		// return "IX" + propName.toUpperCase() + tableName;
 		return "Ix" + StringTools.capitalize(propName) + tableName;
+	}
+
+	/** Derives the composite index name the same way as NamingStrategyProvider.deriveCompositeIndexName: Ix + columns (in order) + table */
+	private String compositeIx(String... propNames) {
+		StringBuilder sb = new StringBuilder("Ix");
+		for (String propName : propNames)
+			sb.append(StringTools.capitalize(propName));
+
+		return sb.append(tableName).toString();
 	}
 
 }

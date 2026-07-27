@@ -75,7 +75,7 @@ public class EntityHintPersistence {
 			
 			int propertiesSize = 
 					(entityDescriptor.getIdProperty() != null ? 1 : 0) + 
-					(entityDescriptor.getProperties() != null ? entityDescriptor.getProperties().size() : 0);
+					(entityDescriptor.properties != null ? entityDescriptor.properties.size() : 0);
 			
 			if (propertiesSize > 0) {
 				entityHint.properties = new HashMap<>(propertiesSize);
@@ -84,8 +84,8 @@ public class EntityHintPersistence {
 					entityHint.properties.put(entityDescriptor.getIdProperty().getName(), createPropertyHint(entityDescriptor.getIdProperty()));
 				}
 				
-				if (entityDescriptor.getProperties() != null) {
-					for (PropertyDescriptor propertyDescriptor : entityDescriptor.getProperties()) {
+				if (entityDescriptor.properties != null) {
+					for (PropertyDescriptor propertyDescriptor : entityDescriptor.properties) {
 						entityHint.properties.put(propertyDescriptor.getName(), createPropertyHint(propertyDescriptor));
 					}
 				}

@@ -60,6 +60,7 @@ import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.meta.GmType;
 import com.braintribe.model.meta.data.MetaData;
 import com.braintribe.model.meta.data.constraint.TypeSpecification;
+import com.braintribe.model.meta.data.query.CompositeIndex;
 import com.braintribe.model.meta.data.query.Index;
 import com.braintribe.model.meta.data.query.Version;
 import com.braintribe.model.processing.meta.editor.BasicModelMetaDataEditor;
@@ -233,10 +234,14 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 		Index index = Index.T.create();
 
+		CompositeIndex compositeIndex = CompositeIndex.T.create();
+		compositeIndex.setPropertyNames(asList("str", "xtr"));
+
 		PropertyMapping noIndex = PropertyMapping.T.create();
 		noIndex.setSuppressAutomaticCollectionIndices(true);
 
 		md.onEntityType(IndexedEntity.T) //
+				.addMetaData(compositeIndex) //
 				.addPropertyMetaData("str", index) //
 				.addPropertyMetaData("entity", index) //
 				.addPropertyMetaData("strSet", index) //

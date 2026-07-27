@@ -124,7 +124,7 @@ public class DbUpdateStatementGenerator {
 		List<PropertyDescriptor> result = newList();
 
 		do {
-			result.addAll(ed.getProperties());
+			result.addAll(ed.properties);
 			ed = ed.parent;
 
 		} while (ed != null);

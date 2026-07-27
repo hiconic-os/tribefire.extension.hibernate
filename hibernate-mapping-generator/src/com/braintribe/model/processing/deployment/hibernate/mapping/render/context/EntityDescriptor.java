@@ -18,7 +18,6 @@ package com.braintribe.model.processing.deployment.hibernate.mapping.render.cont
 import static com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityMappingContextTools.quoteIdentifier;
 import static com.braintribe.utils.lcd.CollectionTools2.isEmpty;
 import static com.braintribe.utils.lcd.CollectionTools2.newList;
-import static com.braintribe.utils.lcd.CollectionTools2.nullSafe;
 import static com.braintribe.utils.lcd.StringTools.isBlank;
 import static java.util.Collections.emptySet;
 
@@ -33,6 +32,7 @@ import com.braintribe.model.accessdeployment.jpa.meta.JpaCompositeId;
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.meta.GmEntityType;
 import com.braintribe.model.meta.data.display.NameConversion;
+import com.braintribe.model.meta.data.query.CompositeIndex;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
 import com.braintribe.model.processing.deployment.hibernate.mapping.hints.EntityHint;
 import com.braintribe.model.processing.deployment.hibernate.mapping.utils.ResourceUtils;
@@ -75,6 +75,7 @@ public class EntityDescriptor extends AbstractDescriptor {
 		public EntityMapping em;
 		public NameConversion nameConversion;
 		public List<DbUpdateStatement> dbUpdateStatements;
+		public List<CompositeIndex> compositeIndices;
 	}
 
 	public EntityDescriptor(EntityDescriptor parent, HbmEntityType et, EntityHint entityHint, HbmXmlGenerationContext context) {
@@ -109,16 +110,13 @@ public class EntityDescriptor extends AbstractDescriptor {
 		result.em = mdResolver.meta(EntityMapping.T).exclusive();
 		result.nameConversion = mdResolver.meta(NameConversion.T).exclusive();
 		result.dbUpdateStatements = mdResolver.meta(DbUpdateStatement.T).list();
+		result.compositeIndices = mdResolver.meta(CompositeIndex.T).list();
 
 		return result;
 	}
 
 	private static String valueOrNullIfEmpty(String s) {
 		return CommonTools.isEmpty(s) ? null : s;
-	}
-
-	protected void applyUpdateStatemetns(List<DbUpdateStatement> statements) {
-		metaData.dbUpdateStatements = newList(nullSafe(statements));
 	}
 
 	protected void applyMetaData() {
@@ -279,10 +277,6 @@ public class EntityDescriptor extends AbstractDescriptor {
 		return "" + getAbstractFlag();
 	}
 
-	public List<PropertyDescriptor> getProperties() {
-		return this.properties;
-	}
-
 	public PropertyDescriptor getIdProperty() {
 		return this.idProperty;
 	}
@@ -325,6 +319,10 @@ public class EntityDescriptor extends AbstractDescriptor {
 
 	public List<DbUpdateStatement> getUpdateStatements() {
 		return metaData.dbUpdateStatements;
+	}
+
+	public List<CompositeIndex> getCompositeIndices() {
+		return metaData.compositeIndices;
 	}
 
 	public String getHbmSuperType() {

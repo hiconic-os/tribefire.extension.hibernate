@@ -3,6 +3,7 @@ package com.braintribe.model.access.hibernate.schema.meta;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
@@ -53,9 +54,11 @@ public class DbIndexCreator {
 		String ifNotExists = supportsIfNotExists ? "if not exists " : "";
 
 		JdbcTools.withStatement(dataSource, () -> "Ensuring indices f " + contextDescription, dbStatement -> {
-			for (IndexDescriptor iDesc : indexDescriptors)
+			for (IndexDescriptor iDesc : indexDescriptors) {
+				String props = iDesc.getColumnNames().stream().collect(Collectors.joining(","));
 				ensure(dbStatement, iDesc, "create index " + ifNotExists + //
-						iDesc.getIndexName() + " on " +  iDesc.getTableName() + "(" + iDesc.getColumnName() + ")");
+						iDesc.getIndexName() + " on " +  iDesc.getTableName() + "(" + props + ")");
+			}
 		});
 	}
 
@@ -67,8 +70,8 @@ public class DbIndexCreator {
 		} catch (SQLException e) {
 			// For now we don't care that much about DBs that don't support "ifNotExists"
 			if (supportsIfNotExists)
-				log.warn("Error while ensureing index " + iDesc.getIndexName() + " for entity: " + iDesc.getEntityTypeSignature() + ", property: "
-						+ iDesc.getPropertyName() + " [" + contextDescription + "]", e);
+				log.warn("Error while ensureing index " + iDesc.getIndexName() + " for entity: " + iDesc.getEntityTypeSignature() + ", properties: "
+						+ iDesc.getPropertyNames() + " [" + contextDescription + "]", e);
 		}
 	}
 

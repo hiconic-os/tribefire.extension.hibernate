@@ -111,7 +111,7 @@ public class EntityDescriptorFactory {
 	/**
 	 * Creates {@link PropertyDescriptor} instances for the given {@link EntityDescriptor}.
 	 * <p>
-	 * After invocation, the created {@link PropertyDescriptor} instances are accessible through {@link EntityDescriptor#getProperties()}
+	 * After invocation, the created {@link PropertyDescriptor} instances are accessible through {@link EntityDescriptor#properties}
 	 */
 	private void buildProperties(EntityDescriptor ed) {
 		List<PropertyDescriptor> commonProps = newList();
@@ -134,7 +134,7 @@ public class EntityDescriptorFactory {
 				// id properties shall always be the first added to the entity descriptor
 				PropertyDescriptor idPd = pd;
 				ed.setIdProperty(idPd);
-				ed.getProperties().add(idPd);
+				ed.properties.add(idPd);
 
 				log.trace(() -> propName + " property was added as id into top level " + ed.getFullName() + " descriptor");
 			}
@@ -144,8 +144,7 @@ public class EntityDescriptorFactory {
 			throw new UnmappableModelException("Unmappable model: Id property not found for top-level entity: " + ed.getFullName());
 
 		// non-id properties shall always be added after a possible id property
-		ed.getProperties().addAll(commonProps);
-
+		ed.properties.addAll(commonProps);
 	}
 
 	/** Creates a {@link PropertyDescriptor} based on given arguments. */

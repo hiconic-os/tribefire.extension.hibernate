@@ -1,49 +1,73 @@
 [
  {"_type": "com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor", "_id": "0",
-  "columnName": "StrList",
+  "columnNames": [
+   "StrList"
+  ],
   "entityTypeSignature": "test.models.index.IndexedEntity",
   "indexName": "IxStrListIndexedEntityStrList",
-  "propertyName": "strList",
+  "propertyNames": [
+   "strList"
+  ],
   "purpose": "COLLECTION_ELEMENT",
   "tableName": "IndexedEntityStrList"
  },
  {"_type": "com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor", "_id": "1",
-  "columnName": "IndexedEntityId",
+  "columnNames": [
+   "IndexedEntityId"
+  ],
   "entityTypeSignature": "test.models.index.IndexedEntity",
   "indexName": "IxIdIndexedEntityStrList",
-  "propertyName": "strList",
+  "propertyNames": [
+   "strList"
+  ],
   "purpose": "COLLECTION_FOREIGN_KEY",
   "tableName": "IndexedEntityStrList"
  },
  {"_type": "com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor", "_id": "2",
-  "columnName": "StrSet",
+  "columnNames": [
+   "StrSet"
+  ],
   "entityTypeSignature": "test.models.index.IndexedEntity",
   "indexName": "IxStrSetIndexedEntityStrSet",
-  "propertyName": "strSet",
+  "propertyNames": [
+   "strSet"
+  ],
   "purpose": "COLLECTION_ELEMENT",
   "tableName": "IndexedEntityStrSet"
  },
  {"_type": "com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor", "_id": "3",
-  "columnName": "IndexedEntityId",
+  "columnNames": [
+   "IndexedEntityId"
+  ],
   "entityTypeSignature": "test.models.index.IndexedEntity",
   "indexName": "IxIdIndexedEntityStrSet",
-  "propertyName": "strSet",
+  "propertyNames": [
+   "strSet"
+  ],
   "purpose": "COLLECTION_FOREIGN_KEY",
   "tableName": "IndexedEntityStrSet"
  },
  {"_type": "com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor", "_id": "4",
-  "columnName": "StrStrMap",
+  "columnNames": [
+   "StrStrMap"
+  ],
   "entityTypeSignature": "test.models.index.IndexedEntity",
   "indexName": "IxStrStrMapIndEntStSt",
-  "propertyName": "strStrMap",
+  "propertyNames": [
+   "strStrMap"
+  ],
   "purpose": "COLLECTION_ELEMENT",
   "tableName": "IndexedEntityStrStrMap"
  },
  {"_type": "com.braintribe.model.processing.deployment.hibernate.mapping.index.IndexDescriptor", "_id": "5",
-  "columnName": "IndexedEntityId",
+  "columnNames": [
+   "IndexedEntityId"
+  ],
   "entityTypeSignature": "test.models.index.IndexedEntity",
   "indexName": "IxIdIndexedEntityStrStrMap",
-  "propertyName": "strStrMap",
+  "propertyNames": [
+   "strStrMap"
+  ],
   "purpose": "COLLECTION_FOREIGN_KEY",
   "tableName": "IndexedEntityStrStrMap"
  }

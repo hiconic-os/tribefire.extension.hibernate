@@ -1,5 +1,7 @@
 package com.braintribe.model.processing.deployment.hibernate.mapping.index;
 
+import java.util.List;
+
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EntityTypes;
@@ -17,14 +19,14 @@ public interface IndexDescriptor extends GenericEntity {
 	String getTableName();
 	void setTableName(String tableName);
 
-	String getColumnName();
-	void setColumnName(String columnName);
+	List<String> getColumnNames();
+	void setColumnNames(List<String> columnName);
 
 	String getEntityTypeSignature();
 	void setEntityTypeSignature(String entityTypeSignature);
 
-	String getPropertyName();
-	void setPropertyName(String propertyName);
+	List<String> getPropertyNames();
+	void setPropertyNames(List<String> propertyName);
 
 	// Calling it purpose because IndexType is already used elsewhere
 	IndexPurpose getPurpose();
