@@ -20,7 +20,10 @@ import static com.braintribe.utils.lcd.CollectionTools2.newList;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,7 @@ import com.braintribe.logging.Logger;
 import com.braintribe.model.accessdeployment.hibernate.meta.DbUpdateStatement;
 import com.braintribe.model.generic.reflection.GmReflectionTools;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
+import com.braintribe.model.processing.deployment.hibernate.mapping.SourceDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.CollectionPropertyDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.PropertyDescriptor;
@@ -44,8 +48,10 @@ import com.braintribe.utils.template.model.MergeContext;
  * A utility class to prepare the SQL statements from {@link DbUpdateStatement} metadata. The {@link DbUpdateStatement#getExpression() expression} is
  * an SQL expression with dyanic values according to {@link DbUpdateStatementGenerator#getSyntaxDescription()}.
  * 
- * These SQL statements are written into temporary files (same directory as the hbm files) in YML format.
- * 
+ * These SQL statements are written into temporary files (same directory as the hbm files) in JSON format, see {@link #BEFORE_FILE_NAME} and
+ * {@link #AFTER_FILE_NAME}. If an {@link HbmXmlGenerationContext#entityMappingConsumer entity mapping consumer} is configured, the files are passed
+ * to that consumer instead, the same way as the hbm files. Use {@link #parseDbUpdateStatements(String)} to read such a file.
+ *
  * This needs to be done after all {@link EntityDescriptor} are finally processed (e.g. prepared from metadata, modified with DB naming
  * strategies,...)
  * 
@@ -56,8 +62,10 @@ public class DbUpdateStatementGenerator {
 
 	protected static Logger log = Logger.getLogger(DbUpdateStatementGenerator.class);
 
-	private static final String BEFORE_YML_FILE = "sql-statements-before.json";
-	private static final String AFTER_YML_FILE = "sql-statements-after.json";
+	/** Statements executed before the Hibernate schema update. */
+	public static final String BEFORE_FILE_NAME = "sql-statements-before.json";
+	/** Statements executed after the Hibernate schema update. */
+	public static final String AFTER_FILE_NAME = "sql-statements-after.json";
 
 	private final HbmXmlGenerationContext context;
 	private final Collection<EntityDescriptor> entityDescriptors;
@@ -89,8 +97,8 @@ public class DbUpdateStatementGenerator {
 	private void run() {
 		doPrepare();
 
-		writeDbSchemaModifications(BEFORE_YML_FILE, befores);
-		writeDbSchemaModifications(AFTER_YML_FILE, afters);
+		writeDbSchemaModifications(BEFORE_FILE_NAME, befores);
+		writeDbSchemaModifications(AFTER_FILE_NAME, afters);
 	}
 
 	private void doPrepare() {
@@ -150,7 +158,7 @@ public class DbUpdateStatementGenerator {
 		mergeContext.setVariableProvider(this::resolveTemplateVariable);
 		String sql = template.merge(mergeContext);
 
-		log.info(() -> "Replaced expression: '" + expression + "' to sql: '" + sql + "'");
+		log.debug(() -> "Replaced expression: '" + expression + "' to sql: '" + sql + "'");
 
 		return sql;
 	}
@@ -305,7 +313,12 @@ public class DbUpdateStatementGenerator {
 	}
 
 	public static List<DbUpdateStatement> readDbUpdateStatements(File folder, boolean before) {
-		return readStatements(folder, before ? BEFORE_YML_FILE : AFTER_YML_FILE);
+		return readStatements(folder, before ? BEFORE_FILE_NAME : AFTER_FILE_NAME);
+	}
+
+	/** Parses the content of a {@link #BEFORE_FILE_NAME} or {@link #AFTER_FILE_NAME} file. */
+	public static List<DbUpdateStatement> parseDbUpdateStatements(String json) {
+		return (List<DbUpdateStatement>) new JsonStreamMarshaller().unmarshall(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
 	}
 
 	// -----------------------------------------------------------------------
@@ -327,6 +340,19 @@ public class DbUpdateStatementGenerator {
 	private void writeDbSchemaModifications(String fileName, List<DbUpdateStatement> entries) {
 		if (entries.isEmpty())
 			return;
+
+		if (context.entityMappingConsumer != null) {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			new JsonStreamMarshaller().marshall(baos, entries);
+
+			SourceDescriptor sd = new SourceDescriptor();
+			sd.sourceCode = baos.toString(StandardCharsets.UTF_8);
+			sd.sourceRelativePath = fileName;
+
+			context.entityMappingConsumer.accept(sd);
+			log.debug(() -> "Passed '" + fileName + "' with '" + entries.size() + "' entries to the entity mapping consumer");
+			return;
+		}
 
 		File file = new File(context.outputFolder, fileName);
 

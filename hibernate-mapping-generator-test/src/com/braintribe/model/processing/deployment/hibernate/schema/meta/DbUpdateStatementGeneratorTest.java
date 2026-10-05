@@ -19,6 +19,7 @@ import static com.braintribe.utils.lcd.CollectionTools2.asList;
 import static com.braintribe.utils.lcd.CollectionTools2.asSet;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import com.braintribe.model.meta.GmType;
 import com.braintribe.model.meta.data.constraint.TypeSpecification;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmEntityTypeMapBuilder;
 import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGenerationContext;
+import com.braintribe.model.processing.deployment.hibernate.mapping.SourceDescriptor;
 import com.braintribe.model.processing.deployment.hibernate.mapping.db.NamingStrategyProvider;
 import com.braintribe.model.processing.deployment.hibernate.mapping.exception.HbmXmlGeneratorException;
 import com.braintribe.model.processing.deployment.hibernate.mapping.render.context.EntityDescriptor;
@@ -145,6 +147,48 @@ public class DbUpdateStatementGeneratorTest {
 
 		Assert.assertEquals(EMPTY, beforeFile());
 		Assert.assertEquals(SIMPLE, afterFile());
+	}
+
+	@Test
+	public void statementsArePassedToConsumerInsteadOfWritten() {
+		List<SourceDescriptor> consumed = new ArrayList<>();
+		context.entityMappingConsumer = consumed::add;
+
+		runGenerator(asList(SimpleEntity.T), asSet(SimpleEntity.T), SIMPLE);
+
+		Assert.assertEquals(1, consumed.size());
+		SourceDescriptor sd = consumed.get(0);
+		Assert.assertEquals(DbUpdateStatementGenerator.AFTER_FILE_NAME, sd.sourceRelativePath);
+
+		List<DbUpdateStatement> statements = DbUpdateStatementGenerator.parseDbUpdateStatements(sd.sourceCode);
+		Assert.assertEquals(1, statements.size());
+		Assert.assertEquals(SIMPLE, statements.get(0).getExpression());
+		Assert.assertFalse(statements.get(0).getBefore());
+
+		Assert.assertEquals(0, tempDir.list().length);
+	}
+
+	@Test
+	public void beforeStatementsArePassedToConsumerAsBeforeFile() {
+		List<SourceDescriptor> consumed = new ArrayList<>();
+		context.entityMappingConsumer = consumed::add;
+		before = true;
+
+		runGenerator(asList(SimpleEntity.T), asSet(SimpleEntity.T), SIMPLE);
+
+		Assert.assertEquals(1, consumed.size());
+		Assert.assertEquals(DbUpdateStatementGenerator.BEFORE_FILE_NAME, consumed.get(0).sourceRelativePath);
+		Assert.assertTrue(DbUpdateStatementGenerator.parseDbUpdateStatements(consumed.get(0).sourceCode).get(0).getBefore());
+	}
+
+	@Test
+	public void noStatementsPassNothingToConsumer() {
+		List<SourceDescriptor> consumed = new ArrayList<>();
+		context.entityMappingConsumer = consumed::add;
+
+		runGenerator(asList(SimpleEntity.T), asSet(SimpleEntity.T));
+
+		Assert.assertTrue(consumed.isEmpty());
 	}
 
 	@Test
