@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.hibernate.query.Query;
 
+import com.braintribe.common.lcd.Tuple.Tuple2;
 import com.braintribe.model.generic.i18n.LocalizedString;
 import com.braintribe.model.generic.reflection.CollectionType;
 import com.braintribe.model.generic.reflection.EntityType;
@@ -137,8 +138,7 @@ public class SelectHqlBuilder extends HqlBuilder<SelectQuery> {
 	}
 
 	private boolean isPropertyMapped(String typeSignature, String propertyName) {
-		Property property = typeReflection.getEntityType(typeSignature).getProperty(propertyName);
-		return mappedPropertyIndicator.test(property);
+		return mapped(typeReflection.getEntityType(typeSignature), propertyName);
 	}
 
 	/** Analyze which joins are mapped so we know which selections to replace with <code>null</code>. */
@@ -317,7 +317,11 @@ public class SelectHqlBuilder extends HqlBuilder<SelectQuery> {
 
 	// I guess we assume all the "froms" are mapped.
 	private boolean mapped(Source source) {
-		return source instanceof From || mapped(context.getQualifiedProperty((Join) source).val1());
+		if (source instanceof From)
+			return true;
+
+		Tuple2<EntityType<?>, Property> qualifiedProperty = context.getQualifiedProperty((Join) source);
+		return mapped(qualifiedProperty.val0(), qualifiedProperty.val1().getName());
 	}
 
 	private void encodeConditionForSelectedLocalizedStringsIfNeeded() {

@@ -16,6 +16,7 @@
 package com.braintribe.model.access.hibernate.base.wire.space;
 
 import static com.braintribe.model.access.hibernate.base.tools.HibernateMappings.UNMAPPED_P;
+import static com.braintribe.model.access.hibernate.base.tools.HibernateMappings.mappedProperty;
 import static com.braintribe.utils.lcd.CollectionTools2.asList;
 import static com.braintribe.utils.lcd.CollectionTools2.concat;
 import static com.braintribe.utils.lcd.CollectionTools2.first;
@@ -148,6 +149,20 @@ public class HibernateModelsSpace implements HibernateModelsContract {
 
 		md.onEntityType(StringIdWithCascadingEntity.T) //
 				.addPropertyMetaData(StringIdWithCascadingEntity.others, cascadeAll());
+
+		return result;
+	}
+
+	@Override
+	@Managed
+	public GmMetaModel basic_GlobalIdMappedForBasicEntityOnly() {
+		GmMetaModel result = allRaw("basic-globalIdMappedForBasicEntityOnly");
+
+		BasicModelMetaDataEditor md = new BasicModelMetaDataEditor(result);
+		unmapGlobalIdAndPartition(md);
+
+		md.onEntityType(BasicEntity.T) //
+				.addPropertyMetaData(GenericEntity.globalId, mappedProperty());
 
 		return result;
 	}

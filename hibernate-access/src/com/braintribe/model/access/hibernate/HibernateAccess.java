@@ -309,11 +309,12 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 	}
 
 	private Object queryPropertyValueObject(PropertyQuery query, Property property, Session session, HibernateAccessTiming timing) {
-		if (defaultPartition != null && property.isPartition() && !mappingInfoProvider.isPropertyMapped(property))
-			return defaultPartition;
-
 		PersistentEntityReference propertyOwnerRef = query.getEntityReference();
 		EntityType<?> entityType = propertyOwnerRef.valueType();
+
+		if (defaultPartition != null && property.isPartition() && !mappingInfoProvider.isPropertyMapped(entityType, property.getName()))
+			return defaultPartition;
+
 		Object id = propertyOwnerRef.getRefId();
 		if (hasCompositeId(entityType.getTypeSignature()))
 			id = CompositeIdValues.from(id);

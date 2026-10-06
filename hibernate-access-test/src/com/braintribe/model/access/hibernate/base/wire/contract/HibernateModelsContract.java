@@ -33,6 +33,9 @@ public interface HibernateModelsContract extends WireSpace {
 	/** Basic model with all types, partition is not mapped. */
 	GmMetaModel basic_NoPartition();
 
+	/** Basic model with all types, globalId is mapped for {@link BasicEntity} only, partition is not mapped. */
+	GmMetaModel basic_GlobalIdMappedForBasicEntityOnly();
+
 	/** {@link BasicEntity} has compositeId of integerValue + stringValue */
 	GmMetaModel compositeId();
 

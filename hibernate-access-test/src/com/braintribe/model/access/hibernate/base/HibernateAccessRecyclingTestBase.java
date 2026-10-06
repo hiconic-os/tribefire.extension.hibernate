@@ -44,7 +44,6 @@ import com.braintribe.model.generic.eval.Evaluator;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.meta.GmMetaModel;
 import com.braintribe.model.persistence.ExecuteNativeQuery;
-import com.braintribe.model.processing.deployment.hibernate.mapping.HbmXmlGeneratingService;
 import com.braintribe.model.processing.query.fluent.SelectQueryBuilder;
 import com.braintribe.model.processing.query.test.tools.QueryResultAssert;
 import com.braintribe.model.processing.query.tools.AccessDriver;

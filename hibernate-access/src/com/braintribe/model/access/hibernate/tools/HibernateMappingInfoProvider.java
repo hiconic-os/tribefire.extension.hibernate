@@ -17,10 +17,10 @@ package com.braintribe.model.access.hibernate.tools;
 
 import static com.braintribe.utils.lcd.CollectionTools2.newMap;
 import static com.braintribe.utils.lcd.CollectionTools2.newSet;
-import static java.util.stream.Collectors.toCollection;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityManagerFactory;
@@ -29,9 +29,7 @@ import jakarta.persistence.metamodel.Metamodel;
 
 import com.braintribe.model.access.hibernate.gm.CompositeIdValues;
 import com.braintribe.model.generic.GMF;
-import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.reflection.EntityType;
-import com.braintribe.model.generic.reflection.Property;
 import com.braintribe.model.meta.GmEntityType;
 
 /**
@@ -39,8 +37,10 @@ import com.braintribe.model.meta.GmEntityType;
  */
 public class HibernateMappingInfoProvider {
 
+	/** Mapped entity type signature -> GM names of its mapped properties (including inherited ones). */
 	private final Map<String, Set<String>> mappedPropertiesByEntity = newMap();
-	private final Set<Property> mappedProperties = newSet();
+	/** Unmapped entity type signature -> GM names of properties mapped in all its mapped sub-types. Computed lazily. */
+	private final Map<String, Set<String>> mappedPropertiesByUnmappedEntity = new ConcurrentHashMap<>();
 	private final Set<String> compositeIdEntityTypes = newSet();
 
 	public HibernateMappingInfoProvider(EntityManagerFactory emFactory) {
@@ -57,15 +57,12 @@ public class HibernateMappingInfoProvider {
 			compositeIdEntityTypes.add(entityName);
 
 		Set<? extends Attribute<?, ?>> attributes = javaxEntityType.getAttributes();
-		Set<String> propertyNamesSet = attributes.stream().map(Attribute::getName).collect(Collectors.toSet());
+		Set<String> propertyNamesSet = attributes.stream() //
+				.map(Attribute::getName) //
+				.map(this::ensureGmPropertyName) //
+				.collect(Collectors.toSet());
 
 		mappedPropertiesByEntity.put(entityName, propertyNamesSet);
-
-		EntityType<GenericEntity> entityType = GMF.getTypeReflection().getEntityType(entityName);
-
-		propertyNamesSet.stream().map(this::ensureGmPropertyName) //
-				.map(entityType::getProperty) //
-				.collect(toCollection(() -> mappedProperties));
 	}
 
 	private boolean hasCompositeId(jakarta.persistence.metamodel.EntityType<?> javaxEntityType) {
@@ -85,8 +82,35 @@ public class HibernateMappingInfoProvider {
 		return props != null && props.contains(propertyName);
 	}
 
-	public boolean isPropertyMapped(Property property) {
-		return mappedProperties.contains(property);
+	/**
+	 * Checks if given property is mapped for given owner type. The owner is the type through which the property is accessed (e.g. the type of a
+	 * query source), not the property's declaring type, because an inherited property might be mapped for one sub-type but not for another.
+	 * <p>
+	 * If the owner is not mapped itself (e.g. an abstract super-type), the property is considered mapped iff it is mapped in all its mapped sub-types.
+	 */
+	public boolean isPropertyMapped(EntityType<?> owner, String propertyName) {
+		Set<String> props = mappedPropertiesByEntity.get(owner.getTypeSignature());
+		if (props == null)
+			props = mappedPropertiesByUnmappedEntity.computeIfAbsent(owner.getTypeSignature(), sig -> mappedInAllSubTypes(owner));
+
+		return props.contains(propertyName);
+	}
+
+	private Set<String> mappedInAllSubTypes(EntityType<?> owner) {
+		Set<String> result = null;
+
+		for (Map.Entry<String, Set<String>> e : mappedPropertiesByEntity.entrySet()) {
+			EntityType<?> mappedType = GMF.getTypeReflection().getEntityType(e.getKey());
+			if (!owner.isAssignableFrom(mappedType))
+				continue;
+
+			if (result == null)
+				result = newSet(e.getValue());
+			else
+				result.retainAll(e.getValue());
+		}
+
+		return result == null ? Set.of() : result;
 	}
 
 	public boolean hasCompositeId(String typeSignature) {

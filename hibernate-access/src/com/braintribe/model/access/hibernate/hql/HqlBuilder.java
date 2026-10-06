@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -91,7 +92,8 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 	protected Session session;
 	protected String defaultPartition;
 	protected Predicate<EntityType<?>> mappedEntityIndicator = signature -> true;
-	protected Predicate<Property> mappedPropertyIndicator = property -> true;
+	/** Tests if a property (given by name) is mapped for given owner type, see {@link #mapped(EntityType, String)}. */
+	protected BiPredicate<EntityType<?>, String> mappedPropertyIndicator = (owner, propertyName) -> true;
 	protected BiFunction<String, Object, Object> idAdjuster = (signature, id) -> id;
 
 	private boolean adaptPagingForHasMore = false;
@@ -121,7 +123,7 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 		this.mappedEntityIndicator = mappedEntityIndicator;
 	}
 
-	public void setMappedPropertyIndicator(Predicate<Property> mappedPropertyIndicator) {
+	public void setMappedPropertyIndicator(BiPredicate<EntityType<?>, String> mappedPropertyIndicator) {
 		this.mappedPropertyIndicator = mappedPropertyIndicator;
 	}
 
@@ -938,7 +940,7 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 			// Shitty code, but I guess it means the operand doesn't reference a property but rather an entity, and thus it is mapped
 			return true;
 
-		return mapped(qualifiedProperty.val1());
+		return mapped(qualifiedProperty.val0(), qualifiedProperty.val1().getName());
 	}
 
 	/** @see DisjunctedInOptimizer */
@@ -974,31 +976,12 @@ public abstract class HqlBuilder<Q extends com.braintribe.model.query.Query> {
 	}
 
 	/**
-	 * This is tricky. We assume if a property is mapped anywhere (e.g. CustomType.partition), that it is mapped for all the types in the hierarchy
-	 * that have the property (i.e. GenericEntity.partition is mapped, and hence all the entities have partition mapped). The reason is that a query
-	 * like "select ge.partition from GenericEntity ge" is perfectly valid, and so we either replace it with "select null ..." if partition isn't
-	 * mapped, or leave it be if mapped. Therefore we simply collect the Property instances to see if something is mapped, we con't have to worry
-	 * about owner type.
-	 * 
-	 * NOTE: This is wrong anyway, we can have a super Property instance because of a different initializer, and if this super-level is not mapped,
-	 * queries on that level would not work. Example:
-	 * 
-	 * <pre>
-	 * SuperEntity extends GenericEntity {
-	 * 		String name;
-	 * }
-	 * 
-	 * SubEntity extends SuperEntity {
-	 * 		&#64;Initializer("Hell")
-	 * 		String name;
-	 * }
-	 * </pre>
-	 * 
-	 * If SuperEntity is not mapped, then the query "select se.name from SuperEntity" would always return nulls as it would think SuperEntity.name is
-	 * not mapped (see the underlying implementation).
+	 * Checks if the property is mapped for given owner. The owner must be the type through which the property is accessed (e.g. the type of the query
+	 * source), never {@link Property#getDeclaringType()}. An inherited property (e.g. globalId) is the same {@link Property} instance in every
+	 * sub-type, but it might be mapped for one sub-type and not for another.
 	 */
-	protected boolean mapped(Property property) {
-		return mappedPropertyIndicator.test(property);
+	protected boolean mapped(EntityType<?> owner, String propertyName) {
+		return mappedPropertyIndicator.test(owner, propertyName);
 	}
 
 }
