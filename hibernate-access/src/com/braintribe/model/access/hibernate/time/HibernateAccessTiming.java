@@ -62,6 +62,8 @@ public class HibernateAccessTiming {
 
 	private HibernateApplyStatistics statistics;
 
+	private int queryResultSize = -1;
+
 	public enum ActionType {
 		SelectQuery,
 		EntityQuery,
@@ -86,6 +88,10 @@ public class HibernateAccessTiming {
 		this.hibernateSessionFactory = _hibernateSessionFactory;
 		this.gmQuery = _gmQuery;
 		this.hqlQuery = _hqlQuery;
+	}
+
+	public void setQueryResultSize(int queryResultSize) {
+		this.queryResultSize = queryResultSize;
 	}
 
 	public void acquiredSession() {
@@ -171,6 +177,7 @@ public class HibernateAccessTiming {
 			enrichHQLStatements(sb);
 //			enrichSQLStatments(sb, false);
 			enrichStatistics(sb);
+			enrichQueryResultSize(sb);
 			if (!manipulationEvents.isEmpty()) {
 				String events = manipulationEvents.stream() //
 						.map(HibernateTimingEvent::toString) //
@@ -248,10 +255,15 @@ public class HibernateAccessTiming {
 		}
 	}
 
+	private void enrichQueryResultSize(StringBuilder sb) {
+		if (queryResultSize >= 0)
+			sb.append(", Result size: ");
+	}
+
 	private void enrichGMStatements(StringBuilder sb) {
-		if (this.gmQuery != null) {
+		if (gmQuery != null) {
 			try {
-				String stringified = BasicQueryStringifier.create().stringify(this.gmQuery);
+				String stringified = BasicQueryStringifier.create().stringify(gmQuery);
 				sb.append("GM Query:            ");
 				sb.append(stringified);
 				sb.append('\n');
@@ -262,9 +274,9 @@ public class HibernateAccessTiming {
 	}
 
 	private void enrichHQLStatements(StringBuilder sb) {
-		if (this.hqlQuery != null) {
+		if (hqlQuery != null) {
 			try {
-				String hqlQueryString = this.hqlQuery.getQueryString();
+				String hqlQueryString = hqlQuery.getQueryString();
 				sb.append("HQL Query:           ");
 				sb.append(hqlQueryString);
 				sb.append('\n');
@@ -289,7 +301,7 @@ public class HibernateAccessTiming {
 //
 	private void enrichLogTimings(long now, long totalDuration, StringBuilder sb) {
 		sb.append("Processing (");
-		sb.append(this.type);
+		sb.append(type);
 		sb.append("):\n");
 		sb.append("Total time:          ");
 		String totalDurationString = "" + totalDuration;
@@ -297,29 +309,29 @@ public class HibernateAccessTiming {
 		sb.append(totalDurationString);
 		sb.append(" ms\n");
 		sb.append("Preparation time:    ");
-		if (this.startProcessing > 0) {
-			sb.append(StringTools.extendStringInFront("" + (this.startProcessing - this.initialized), ' ', dataLength));
+		if (startProcessing > 0) {
+			sb.append(StringTools.extendStringInFront("" + (startProcessing - initialized), ' ', dataLength));
 			sb.append(" ms\n");
 		} else {
 			sb.append(StringTools.extendStringInFront("n/a\n", ' ', dataLength));
 		}
 		sb.append("Session acquistion:  ");
-		if (this.sessionAvailable > 0) {
-			sb.append(StringTools.extendStringInFront("" + (this.sessionAvailable - this.initialized), ' ', dataLength));
+		if (sessionAvailable > 0) {
+			sb.append(StringTools.extendStringInFront("" + (sessionAvailable - initialized), ' ', dataLength));
 			sb.append(" ms\n");
 		} else {
 			sb.append(StringTools.extendStringInFront("n/a\n", ' ', dataLength));
 		}
 		sb.append("Processing time:     ");
-		if (this.startProcessing > 0 && this.stopProcessing > 0) {
-			sb.append(StringTools.extendStringInFront("" + (this.stopProcessing - this.startProcessing), ' ', dataLength));
+		if (startProcessing > 0 && stopProcessing > 0) {
+			sb.append(StringTools.extendStringInFront("" + (stopProcessing - startProcessing), ' ', dataLength));
 			sb.append(" ms\n");
 		} else {
 			sb.append(StringTools.extendStringInFront("n/a\n", ' ', dataLength));
 		}
 		sb.append("Postprocessing time: ");
-		if (this.stopProcessing > 0) {
-			sb.append(StringTools.extendStringInFront("" + (now - this.stopProcessing), ' ', dataLength));
+		if (stopProcessing > 0) {
+			sb.append(StringTools.extendStringInFront("" + (now - stopProcessing), ' ', dataLength));
 			sb.append(" ms\n");
 		} else {
 			sb.append(StringTools.extendStringInFront("n/a\n", ' ', dataLength));
@@ -471,34 +483,35 @@ public class HibernateAccessTiming {
 	// Helper Class
 	// **************************************************************************
 
-	private class ParameterKey implements Comparable<ParameterKey> {
-		private String parameterName;
-		private int parameterIndex;
+//	private class ParameterKey implements Comparable<ParameterKey> {
+//		private String parameterName;
+//		private int parameterIndex;
+//
+//		private ParameterKey(String key) {
+//			if (key.contains("_")) {
+//				String[] split = key.split("_");
+//				parameterName = split[0];
+//				parameterIndex = Integer.parseInt(split[1]);
+//			} else {
+//				parameterName = key;
+//				parameterIndex = -1;
+//			}
+//		}
+//
+//		@Override
+//		public int compareTo(ParameterKey o) {
+//			if (parameterName.equals(o.parameterName)) {
+//				if (parameterIndex < o.parameterIndex) {
+//					return -1;
+//				} else if (parameterIndex > o.parameterIndex) {
+//					return 1;
+//				} else {
+//					return 0;
+//				}
+//			} else {
+//				return parameterName.compareTo(o.parameterName);
+//			}
+//		}
+//	}
 
-		private ParameterKey(String key) {
-			if (key.contains("_")) {
-				String[] split = key.split("_");
-				parameterName = split[0];
-				parameterIndex = Integer.parseInt(split[1]);
-			} else {
-				parameterName = key;
-				parameterIndex = -1;
-			}
-		}
-
-		@Override
-		public int compareTo(ParameterKey o) {
-			if (parameterName.equals(o.parameterName)) {
-				if (parameterIndex < o.parameterIndex) {
-					return -1;
-				} else if (parameterIndex > o.parameterIndex) {
-					return 1;
-				} else {
-					return 0;
-				}
-			} else {
-				return parameterName.compareTo(o.parameterName);
-			}
-		}
-	}
 }

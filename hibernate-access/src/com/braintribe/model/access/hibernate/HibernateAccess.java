@@ -120,19 +120,17 @@ import jakarta.persistence.criteria.Root;
  *
  * <h3>CompositeId</h3>
  * 
- * This access supports mappings of entities using composite-id (composite-key in the SQL DB) via {@link JpaCompositeId}
- * mapping. This mapping must in such a case be set on the id property, and it names the columns (not properties) which
- * together form the id.
+ * This access supports mappings of entities using composite-id (composite-key in the SQL DB) via {@link JpaCompositeId} mapping. This mapping must in
+ * such a case be set on the id property, and it names the columns (not properties) which together form the id.
  * <p>
  * Current implementation has a limited support of up to 30 columns for the composite-key.
  * <p>
- * Internally, it uses a special serializable object called {@link CompositeIdValues}, which is given to Hibernate and
- * contains all the values for the individual columns. On the outside, the value of the id is a string, and it is in
- * fact a comma-separated concatenation of the GM string representations of the individual values. See
- * {@link GmValueCodec} or {@link ScalarType#instanceToGmString(Object)}.
+ * Internally, it uses a special serializable object called {@link CompositeIdValues}, which is given to Hibernate and contains all the values for the
+ * individual columns. On the outside, the value of the id is a string, and it is in fact a comma-separated concatenation of the GM string
+ * representations of the individual values. See {@link GmValueCodec} or {@link ScalarType#instanceToGmString(Object)}.
  * <p>
- * When it comes to creating a new entity, the user has to set the id explicitly himself. For an id consisting of a long
- * and string value, it could look something like this:
+ * When it comes to creating a new entity, the user has to set the id explicitly himself. For an id consisting of a long and string value, it could
+ * look something like this:
  * 
  * {@code
  * 	CompositeIdEntity e = session.create(CompositeIdEntity.T);
@@ -141,14 +139,12 @@ import jakarta.persistence.criteria.Root;
  *  session.commit();
  * }
  * <p>
- * Note that if the columns that make up the composite-key are also mapped from other properties, and we'd try to set
- * the values to something else than what the id string implies, our values would be ignored. (At least on creation, not
- * sure what would happen on edit).
+ * Note that if the columns that make up the composite-key are also mapped from other properties, and we'd try to set the values to something else
+ * than what the id string implies, our values would be ignored. (At least on creation, not sure what would happen on edit).
  * 
  * <h3>Native requests</h3>
  * 
- * For security reasons, {@link NativePersistenceRequest} evaluation is only allowed for an internal user
- * ({@link UserSessionType#internal}).
+ * For security reasons, {@link NativePersistenceRequest} evaluation is only allowed for an internal user ({@link UserSessionType#internal}).
  * 
  * @author gunther.schenk
  * @author dirk.scheffler
@@ -275,6 +271,8 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 		boolean hasMore = hasMore(query, hqlResults);
 		List<Object> results = cloneSelectQueryResult(hqlResults, query, createStandardCloningContext());
 
+		timing.setQueryResultSize(results.size());
+
 		return selectQueryResult(results, hasMore);
 	}
 
@@ -305,7 +303,19 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 
 		Object value = clonePropertyQueryResult(requestedProperty, propertyValue, query);
 
+		timing.setQueryResultSize(sizeOf(value));
+
 		return propertyQueryResult(value, hasMore);
+	}
+
+	private int sizeOf(Object value) {
+		if (value == null)
+			return 0;
+		if (value instanceof Collection<?>)
+			return ((Collection<?>) value).size();
+		if (value instanceof Map<?, ?>)
+			return ((Map<?, ?>) value).size();
+		return 1;
 	}
 
 	private Object queryPropertyValueObject(PropertyQuery query, Property property, Session session, HibernateAccessTiming timing) {
@@ -406,15 +416,14 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 
 	/**
 	 * Deadlocks:<br/>
-	 * I have added the refMap when handling creates and deletes to stabilize the order in a desperate attempt to prevent DB
-	 * deadlocks. I don't know if the first touch of a give type means a lock is acquired,but what else could it be, right?
+	 * I have added the refMap when handling creates and deletes to stabilize the order in a desperate attempt to prevent DB deadlocks. I don't know
+	 * if the first touch of a give type means a lock is acquired,but what else could it be, right?
 	 *
 	 * Right now it only happens when creating entities, so if stabilizing the order works, it should fix the problem.
 	 * 
-	 * That being said, if this is causing it, this is not a fix, as we are separating updates (including deletes) and
-	 * creates. If say Transaction 1 creates Type1 and deletes Type2, and Transaction 2 is doing "the opposite", we might
-	 * have a deadlock again. If this is even the reason, we might then need to make sure the first contact of any kind
-	 * (query / create) is ordered by type signature, not operation type.
+	 * That being said, if this is causing it, this is not a fix, as we are separating updates (including deletes) and creates. If say Transaction 1
+	 * creates Type1 and deletes Type2, and Transaction 2 is doing "the opposite", we might have a deadlock again. If this is even the reason, we
+	 * might then need to make sure the first contact of any kind (query / create) is ordered by type signature, not operation type.
 	 */
 	private class ApplyManipulationHandler implements TriFunction<ManipulationRequest, Session, HibernateAccessTiming, ManipulationResponse> {
 
@@ -445,7 +454,7 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 				/* This can either indicate a deadlock or dirty writes in case of OptimisticLockException. I've seen LockAcquisitionException and
 				 * OptimisticLockException (not JPA but hibernate one). Either way, to be safe we consider all these as something worth re-try. Worst
 				 * case we'll get the same error over and over again. */
-				 throw new RetryWorthyException(e);
+				throw new RetryWorthyException(e);
 
 			} catch (NotFoundException e) {
 				/* "Expected" exceptions are not logged, they do not indicate a problem in HA. Client should handle it himself. */
@@ -636,6 +645,8 @@ public class HibernateAccess extends AbstractAccess implements HibernateComponen
 		ensureIdsAreGmValues(hqlResults);
 
 		hqlResults = cloneTuples(hqlResults, resolveTc(request), createStandardCloningContext());
+
+		timing.setQueryResultSize(hqlResults.size());
 
 		return hqlResults;
 	}
